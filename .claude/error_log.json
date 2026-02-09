@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": "2026-02-06T23:22:30.122369",
+    "agent": "tester",
+    "exit_code": 1,
+    "error_message": "Error: Session ID e5053a5a-9ecb-44c4-a30e-773cc49d4127 is already in use.\n",
+    "retry_count": 3,
+    "session_id": "e5053a5a-9ecb-44c4-a30e-773cc49d4127"
+  }
+]
