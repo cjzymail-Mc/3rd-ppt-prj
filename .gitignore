@@ -1,0 +1,4 @@
+.claude/settings.local.json
+.claude/state.json
+__pycache__
+debug
