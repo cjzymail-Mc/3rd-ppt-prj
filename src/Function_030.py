@@ -266,6 +266,127 @@ def chat_room(model="openai/gpt-5-mini"):  # 注意：OpenRouter的模型名需�
 
 
 
+def _to_float(value):
+    """安全转换为浮点数，失败返回 None。"""
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.strip())
+        except (ValueError, AttributeError):
+            return None
+    return None
+
+
+def build_questionnaire_summary_prompt(sample_name, respondent_count, mean_rows, high_rows):
+    """构建问卷汇总页（结论页）统一总结的提示词。"""
+    mean_text = '；'.join([f"{k}={v:.1f}" for k, v in mean_rows])
+    high_text = '；'.join([f"{k}={v:.1f}%" for k, v in high_rows])
+
+    mc_prompt = (
+        f"你是一名产品评测分析师。请基于以下问卷统计结果，对{sample_name}输出一段统一总结。"
+        f"样本量：{respondent_count}。"
+        f"均值统计：{mean_text}。"
+        f"高分占比统计（>=8分）：{high_text}。"
+        "要求：1）只输出一段自然语言结论；2）总字数不超过180字；3）不要输出分点、标题或分析过程；"
+        "4）语气客观，突出主要优势和需要改进的点。"
+    )
+
+    return mc_prompt
+
+
+def questionnaire_summary_slide(mc_sht, mc_ppt, mc_slide, sample_name, mc_gpt='n', mc_model='gpt-5-mini'):
+    """在【5】与【6】之间生成问卷汇总页（轻量统计+图表+统一总结）。"""
+
+    if mc_sht is None or '问卷' not in mc_sht.name:
+        return mc_slide
+
+    try:
+        mc_cell0 = get_range(mc_sht)
+        if mc_cell0 is None:
+            return mc_slide
+
+        raw_data = mc_cell0.api.CurrentRegion.Value
+        clean_data = parse_survey_data(raw_data)
+
+        if len(clean_data) < 2 or len(clean_data[0]) < 2:
+            return mc_slide
+
+        header = list(clean_data[0])
+        metric_names = [str(x) for x in header[1:]]
+        metric_values = []
+
+        for col_idx in range(1, len(header)):
+            col_data = []
+            for row in clean_data[1:]:
+                if col_idx < len(row):
+                    num = _to_float(row[col_idx])
+                    if num is not None:
+                        col_data.append(num)
+            metric_values.append(col_data)
+
+        mean_rows = []
+        high_rows = []
+        for name, values in zip(metric_names, metric_values):
+            if not values:
+                continue
+            avg = sum(values) / len(values)
+            high_ratio = (sum(1 for x in values if x >= 8) / len(values)) * 100
+            mean_rows.append((name, round(avg, 1)))
+            high_rows.append((name, round(high_ratio, 1)))
+
+        if not mean_rows:
+            return mc_slide
+
+        mean_rows.sort(key=lambda x: x[1], reverse=True)
+        high_rows.sort(key=lambda x: x[1], reverse=True)
+
+        # 优先使用 Template 2.1 的第14页（已合并“ppt模板 - 1”）作为问卷汇总页模板
+        summary_template_idx = 14 if len(mc_ppt.Slides) >= 14 else 4
+        mc_ppt.Slides(summary_template_idx).Select()
+        mc_ppt.Slides(summary_template_idx).Copy()
+        X = len(mc_ppt.Slides) + 1
+        time.sleep(random.random() * delay)
+        mc_slide = mc_ppt.Slides.Paste(X)
+
+        # 不清空模板内容，最大化复用现有版式
+        Title_1(mc_slide, Left=15, Top=15, Text='问卷汇总分析')
+
+        i = mc_cell0.api.CurrentRegion.Rows.Count
+        base_cell = mc_cell0.offset(row_offset=i + 8, column_offset=0)
+
+        mean_table = [('指标', '均值')] + [(k, v) for k, v in mean_rows]
+        base_cell.value = mean_table
+
+        high_cell = base_cell.offset(row_offset=len(mean_table) + 2, column_offset=0)
+        high_table = [('指标', '高分占比(%)')] + [(k, v) for k, v in high_rows]
+        high_cell.value = high_table
+
+        make_chart_for_questionnaire(base_cell, mc_slide, Left=40, Top=90, Width=360, Height=170)
+        make_chart_for_questionnaire(high_cell, mc_slide, Left=500, Top=90, Width=360, Height=170)
+
+        respondent_count = max(len(clean_data) - 1, 0)
+        top_mean = '、'.join([f"{k}{v:.1f}分" for k, v in mean_rows[:3]])
+        top_high = '、'.join([f"{k}{v:.1f}%" for k, v in high_rows[:3]])
+        stat_hint = f"样本量：{respondent_count}人；均值Top3：{top_mean}；高分占比Top3：{top_high}"
+        Text_1(mc_slide, Left=40, Top=275, Text=stat_hint, scale=0.95)
+
+        if mc_gpt == 'y':
+            prompt = build_questionnaire_summary_prompt(sample_name, respondent_count, mean_rows, high_rows)
+            summary_text = GPT_5(prompt, model=mc_model)
+        else:
+            summary_text = f"问卷共回收{respondent_count}份，{mean_rows[0][0]}等维度得分较高；建议持续优化{mean_rows[-1][0]}相关体验，以提升整体实战反馈。"
+
+        result = Result_Bullet_small(mc_slide, Left=40, Top=330, Text=summary_text, scale=0.95)
+        result.tr.ParagraphFormat.Bullet.Visible = 0
+
+    except Exception as e:
+        print(f"问卷汇总页生成失败：{e}")
+
+    return mc_slide
+
+
+
 # --------------------------- prompt 定制函数 --------------------------- 
 
 # 定义这个函数，用来定制 prompt，并请求一次GPT服务器获取一个 reply（completion）  ///  nonono  需要严格区分函数功能，聊天功能已经在GPT_5中严格实现了，这个只需要用来生成【问题】！@！@！@！
@@ -929,7 +1050,7 @@ def questionnaire_ppt(mc_ppt,mc_slide):
 
 # 将main中的【问卷生成ppt】函数挪到这里试试看   # 挪动后结果发现需要不断新增参数，因为发生了嵌套。。。
 
-def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model):
+def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_gpt="y"):
 
     #  这部分一空就是好多年。。  2025终于开动了，感谢AI时代。。
 
@@ -1198,6 +1319,16 @@ def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model):
 
 
 
+
+        # 问卷逐页处理完成后，追加问卷汇总页（B方案：统一一段总结）
+        mc_slide = questionnaire_summary_slide(
+            mc_sht,
+            mc_ppt,
+            mc_slide,
+            sample_name,
+            mc_gpt=mc_gpt,
+            mc_model=mc_model,
+        )
 
         return mc_sht, mc_slide     # 为了程序后续继续能够顺利运行   # for 运行完之后再return，否则for runner 提前终止了
                        #[0]         #[1]   

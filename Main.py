@@ -758,6 +758,7 @@ mc_slide = questionnaire_ppt(mc_ppt,mc_slide)   # 先增加一个【实战测试
 
 
 
+mc_sht = None
 for c in mc_book.sheets:   # c = 针对所有的 sheet（一共n个sheet）
 
     if '问卷' in c.name:
@@ -770,15 +771,15 @@ for c in mc_book.sheets:   # c = 针对所有的 sheet（一共n个sheet）
 
 
 
-if mc_gpt == 'y':
+if mc_gpt == 'y' and mc_sht is not None:
     
-    mc_work =questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model)     # 函数挪到 function.py中去了，节约空间
+    mc_work =questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name=sample_name, mc_gpt=mc_gpt)     # 问卷逐页+汇总整合到同一函数
                                                                                                                             # 结果报错，需要传递 mc_model这个参数。。。 GPT也是这样建议我
                                                                                                                               # 再次报错，mc_ppt也需要传入
 
     mc_sht = mc_work[0]
     mc_slide = mc_work[1]
-        
+
 
     
 
