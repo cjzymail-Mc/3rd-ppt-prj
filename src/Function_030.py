@@ -238,6 +238,24 @@ def get_messages():
     return messages
 
 
+def run_com_template_analysis(blank_ppt="0-空白 ppt 模板.pptx", standard_ppt="1-标准 ppt 模板.pptx", output_json="shape_detail_com.json"):
+    """调用独立 COM 分析脚本，输出 shape_detail_com.json。"""
+    from analyze_templates_com import analyze_templates
+    return analyze_templates(blank_ppt, standard_ppt, output_json)
+
+
+def run_com_build_final_ppt(template_ppt="1-标准 ppt 模板.pptx", data_excel="2025 数据 v2.2.xlsx", output_ppt="gemini-jules.pptx", slide_index=1):
+    """调用独立 COM 构建脚本，返回生成文件路径。"""
+    from build_codex_ppt_com import build_final_ppt
+    return build_final_ppt(template_ppt=template_ppt, data_excel=data_excel, output_ppt=output_ppt, slide_index=slide_index)
+
+
+def run_com_verify_fidelity(standard_ppt="1-标准 ppt 模板.pptx", generated_ppt="gemini-jules.pptx", output_json="fidelity_diff_report.json"):
+    """调用独立 COM 保真度校验脚本，输出 fidelity_diff_report.json。"""
+    from verify_ppt_fidelity_com import verify_ppt_fidelity
+    return verify_ppt_fidelity(std_ppt=standard_ppt, gen_ppt=generated_ppt, output_json=output_json)
+
+
 # ========= 聊天室函数 =========
 def chat_room(model="openai/gpt-5-mini"):  # 注意：OpenRouter的模型名需要带前缀
     """
@@ -341,16 +359,29 @@ def questionnaire_summary_slide(mc_sht, mc_ppt, mc_slide, sample_name, mc_gpt='n
         mean_rows.sort(key=lambda x: x[1], reverse=True)
         high_rows.sort(key=lambda x: x[1], reverse=True)
 
-        # 优先使用 Template 2.1 的第14页（已合并“ppt模板 - 1”）作为问卷汇总页模板
-        summary_template_idx = 14 if len(mc_ppt.Slides) >= 14 else 4
+        # Template 2.1：第14页为空白问卷模板，第15页为标准问卷模板，优先使用标准模板
+        summary_template_idx = 15 if len(mc_ppt.Slides) >= 15 else (14 if len(mc_ppt.Slides) >= 14 else 4)
         mc_ppt.Slides(summary_template_idx).Select()
         mc_ppt.Slides(summary_template_idx).Copy()
         X = len(mc_ppt.Slides) + 1
         time.sleep(random.random() * delay)
         mc_slide = mc_ppt.Slides.Paste(X)
 
-        # 不清空模板内容，最大化复用现有版式
-        Title_1(mc_slide, Left=15, Top=15, Text='问卷汇总分析')
+        # 不清空模板内容，最大化复用现有版式；标题采用覆盖方式，避免新增 shape 干扰模板
+        try:
+            title_candidates = []
+            for shp in mc_slide.Shapes:
+                if shp.HasTextFrame and shp.TextFrame.HasText:
+                    txt = str(shp.TextFrame.TextRange.Text or '').strip()
+                    if txt:
+                        title_candidates.append(shp)
+            if title_candidates:
+                title_shape = sorted(title_candidates, key=lambda s: (s.Top, s.Left))[0]
+                title_shape.TextFrame.TextRange.Text = '问卷汇总分析'
+            else:
+                Title_1(mc_slide, Left=15, Top=15, Text='问卷汇总分析')
+        except Exception:
+            Title_1(mc_slide, Left=15, Top=15, Text='问卷汇总分析')
 
         i = mc_cell0.api.CurrentRegion.Rows.Count
         base_cell = mc_cell0.offset(row_offset=i + 8, column_offset=0)
@@ -1319,16 +1350,6 @@ def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_g
 
 
 
-
-        # 问卷逐页处理完成后，追加问卷汇总页（B方案：统一一段总结）
-        mc_slide = questionnaire_summary_slide(
-            mc_sht,
-            mc_ppt,
-            mc_slide,
-            sample_name,
-            mc_gpt=mc_gpt,
-            mc_model=mc_model,
-        )
 
         return mc_sht, mc_slide     # 为了程序后续继续能够顺利运行   # for 运行完之后再return，否则for runner 提前终止了
                        #[0]         #[1]

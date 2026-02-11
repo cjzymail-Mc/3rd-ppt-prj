@@ -781,6 +781,19 @@ if mc_gpt == 'y' and mc_sht is not None:
     mc_slide = mc_work[1]
 
 
+# 【5.5】问卷汇总页：插入在【5】实战测评和【6】结论之间
+# 说明：无需再手工给模板 shape 命名，程序将优先复用模板现有文本框并自动覆盖标题内容。
+if mc_sht is not None:
+    mc_slide = questionnaire_summary_slide(
+        mc_sht,
+        mc_ppt,
+        mc_slide,
+        sample_name,
+        mc_gpt=mc_gpt,
+        mc_model=mc_model,
+    )
+
+
 
 
 
