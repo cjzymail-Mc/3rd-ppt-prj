@@ -1,0 +1,6 @@
+{
+  "status": "blocked",
+  "reason": "win32com unavailable: No module named 'win32com'",
+  "generated_at": "2026-02-12T05:16:06",
+  "new_shapes": []
+}
