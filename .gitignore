@@ -1,4 +1,41 @@
 .claude/settings.local.json
 .claude/state.json
-__pycache__
-debug
+__pycache__/
+debug/
+
+# Binary Office / document artifacts
+*.pptx
+*.ppt
+*.potx
+*.pot
+*.ppsx
+*.xlsx
+*.xls
+*.xlsm
+*.docx
+*.doc
+*.pdf
+
+# Binary images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tif
+*.tiff
+*.webp
+*.ico
+*.svg
+
+# Binary archives / media
+*.zip
+*.7z
+*.rar
+*.tar
+*.gz
+*.mp4
+*.mov
+*.avi
+*.mp3
+*.wav
