@@ -1,0 +1,68 @@
+{
+  "generated_at": "2026-02-18T23:06:46",
+  "budgets": [
+    {
+      "shape_name": "矩形 11",
+      "role": "title",
+      "max_chars": 18,
+      "max_lines": 1,
+      "max_bullets": 4
+    },
+    {
+      "shape_name": "矩形 12",
+      "role": "title",
+      "max_chars": 18,
+      "max_lines": 1,
+      "max_bullets": 4
+    },
+    {
+      "shape_name": "矩形 17",
+      "role": "sample_stat",
+      "max_chars": 40,
+      "max_lines": 3,
+      "max_bullets": 4
+    },
+    {
+      "shape_name": "矩形 19",
+      "role": "body",
+      "max_chars": 100,
+      "max_lines": 6,
+      "max_bullets": 4
+    },
+    {
+      "shape_name": "图片 39",
+      "role": "body",
+      "max_chars": 100,
+      "max_lines": 6,
+      "max_bullets": 4
+    },
+    {
+      "shape_name": "文本框 16",
+      "role": "title",
+      "max_chars": 18,
+      "max_lines": 1,
+      "max_bullets": 4
+    },
+    {
+      "shape_name": "图表 44",
+      "role": "chart",
+      "max_chars": 100,
+      "max_lines": 6,
+      "max_bullets": 4
+    },
+    {
+      "shape_name": "矩形 68",
+      "role": "long_summary",
+      "max_chars": 240,
+      "max_lines": 9,
+      "max_bullets": 4
+    },
+    {
+      "shape_name": "矩形 77",
+      "role": "long_summary",
+      "max_chars": 201,
+      "max_lines": 5,
+      "max_bullets": 4
+    }
+  ]
+}

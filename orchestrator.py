@@ -150,18 +150,35 @@ class TaskParser:
         """生成初始任务提示词"""
         base_prompt = f"""用户需求：{user_request}
 
-你正在执行“PPT 软件工程化交付”任务，请严格按角色职责工作。
+你正在执行"PPT 软件工程化交付"任务，请严格按角色职责工作。
 
 🚨 **硬性约束（最高优先级）**
-- 以 `ppt-workflow.md` 作为流程基线（规划→构建→测试→反馈→修改→交付）
+- 以 `new-ppt-workflow.md` 作为流程基线（v4.0执行规范）
 - 必须遵循现有脚本架构：`Main.py` + `src/` + `repo-scan-result.md`
 - PowerPoint 操作使用 `pywin32 + win32com.client`，Excel 使用 `xlwings + COM API`
 - **严禁使用 `python-pptx`**
 
+📊 **PPT流水线（5步）**
+- Step1: shape识别与指纹 (`01-shape-detail.py`)
+- Step2: shape->源数据映射与Prompt规格 (`02-shape-analysis.py`)
+- Step3A: 按shape角色构建内容 (`03-build_shape.py`)
+- Step3B: 模板克隆+内容写入 (`03-build_ppt_com.py`)
+- Step4: 严格差异测试 (`04-shape_diff_test.py`)
+
+🎯 **per-shape策略矩阵（禁止统一GPT）**
+- title: 模板锚点直出（非GPT）
+- sample_stat: 问卷样本量聚合（非GPT）
+- chart: 每项评分均值提取（非GPT）
+- body: extract_info/regex优先，GPT fallback
+- long_summary: 模板锚点+数据驱动GPT
+- insight: 模板锚点+行动建议GPT
+
+📏 **三层测试阈值**
+- Visual Score >= 98 | Readability Score >= 95 | Semantic Coverage = 100
+
 📁 **文件路径规范**
 - 所有输出文档保存在项目根目录
 - 使用相对路径（如 `PLAN.md`）
-- 源代码按计划落地（如 `src/*.py`、`orchestrator.py`、`.claude/agents/*.md`）
 - 始终使用正斜杠 `/` 作为路径分隔符
 """
 
@@ -183,9 +200,9 @@ class TaskParser:
 {scan_content[:3000]}
 ---
 
-请基于以上分析结果与 `ppt-workflow.md`，生成 `PLAN.md`（保存到项目根目录）：
+请基于以上分析结果与 `new-ppt-workflow.md`，生成 `PLAN.md`（保存到项目根目录）：
 - 先用 Read 检查 `PLAN.md` 是否已存在：已存在则用 Edit 更新，不存在则用 Write 创建
-- 计划必须体现 PPT 工程流程：规划→构建→测试→反馈→多轮迭代→交付
+- 计划必须包含：per-shape策略矩阵、可读性预算、三层测试阈值、迭代策略
 - 明确 COM 技术约束：PPT=pywin32，Excel=xlwings+COM，禁用 python-pptx
 - 严格复用现有主干：`Main.py` 与 `src/` 中既有能力
 """
@@ -200,16 +217,55 @@ class TaskParser:
 请按以下步骤工作：
 
 1. **第一步：PPT代码库分析**
-   - 核心读取：`Main.py`、`src/`、`ppt-workflow.md`、`repo-scan-result.md`
+   - 核心读取：`Main.py`、`src/`、`new-ppt-workflow.md`、`repo-scan-result.md`
    - 识别可复用 COM 能力（shape控制、字体类、图表处理、GPT提炼）
    - **使用 Write 工具**生成 `CODEBASE_ANALYSIS.md`（保存到项目根目录）
 
 2. **第二步：制定交付计划**
    - 先用 Read 检查 `PLAN.md` 是否已存在：已存在则用 Edit 更新，不存在则用 Write 创建
-   - 计划必须体现闭环：规划→构建→测试→反馈→修改→交付
+   - 计划必须包含：5步脚本链路、per-shape策略矩阵、可读性预算、三层测试阈值
    - 计划中必须明确：PPT=pywin32、Excel=xlwings+COM、禁用 python-pptx
 
 记住：先复用既有脚本思路，再扩展新能力。
+"""
+
+        # 为不同agent注入差异化PPT上下文
+        if agent_name == "developer":
+            base_prompt += """
+
+🔧 **Developer专项指令**
+- 严格执行per-shape策略矩阵，不得全量GPT
+- COM写入：文本仅写TextFrame.TextRange.Text，图表仅改ChartData
+- 所有COM属性访问必须try-except（getattr对COM对象无效！）
+- 可复用函数：GPT_5(), extract_info(), search(), color_key(), smart_color_text()
+- 数据缺口必须写入 shape_data_gap_report.md，不得静默跳过
+"""
+        elif agent_name == "tester":
+            base_prompt += """
+
+🧪 **Tester专项指令**
+- 对比对象：Template 2.1.pptx 第15页 vs codex X.Y.pptx 第1页
+- 三层门禁全部达标才能通过（Visual>=98, Readability>=95, Semantic=100）
+- 绝不允许"仅shape数量相同就通过"
+- 必须输出 diff_result.json（结构化评分）和 fix-ppt.md（修复建议）
+- fix-ppt.md中的修复路由：先改strategy -> 再改prompt -> 再改提取函数
+"""
+        elif agent_name == "optimizer":
+            base_prompt += """
+
+⚡ **Optimizer专项指令**
+- 重点优化COM稳定性（重试/释放/超时处理）
+- 加速迭代（缓存中间产物、减少重复COM读取）
+- 硬约束：不改变视觉结果、不改变测试阈值、不改变策略矩阵
+"""
+        elif agent_name == "security":
+            base_prompt += """
+
+🔒 **Security专项指令**
+- 检查所有.py文件中不得硬编码GPT/API key
+- 输出路径不得覆盖 src/Template 2.1.pptx 和 2025 数据 v2.2.xlsx
+- COM对象在异常路径上必须正确释放
+- 产出 SECURITY_AUDIT.md
 """
 
         # 追加进度文件记录指令
@@ -232,32 +288,37 @@ class TaskParser:
 class AgentScheduler:
     """规划执行阶段、管理agent配置"""
 
-    # Agent配置映射
+    # Agent配置映射（PPT流水线产物）
     AGENT_CONFIGS = {
         "architect": AgentConfig(
             name="architect",
             role_file=".claude/agents/01-arch.md",
-            output_files=["PLAN.md", "CODEBASE_ANALYSIS.md"]  # 可能生成代码库分析
+            output_files=["PLAN.md"]
         ),
         "tech_lead": AgentConfig(
             name="tech_lead",
             role_file=".claude/agents/02-tech.md",
-            output_files=["PLAN.md"]  # 审查并更新
+            output_files=["PLAN.md"]  # 审核并标注通过
         ),
         "developer": AgentConfig(
             name="developer",
             role_file=".claude/agents/03-dev.md",
-            output_files=["PROGRESS.md"]
+            output_files=[
+                "shape_detail_com.json", "shape_fingerprint_map.json",
+                "shape_analysis_map.json", "prompt_specs.json", "readability_budget.json",
+                "build_shape_content.json", "content_validation_report.md",
+                "build-ppt-report.md", "post_write_readback.json"
+            ]
         ),
         "tester": AgentConfig(
             name="tester",
             role_file=".claude/agents/04-test.md",
-            output_files=["BUG_REPORT.md"]
+            output_files=["fix-ppt.md", "diff_result.json", "diff_semantic_report.md"]
         ),
         "optimizer": AgentConfig(
             name="optimizer",
             role_file=".claude/agents/05-opti.md",
-            output_files=[]  # 直接修改代码
+            output_files=[]  # 直接优化代码
         ),
         "security": AgentConfig(
             name="security",
@@ -1274,15 +1335,16 @@ class Orchestrator:
         """清理 agent 生成的临时 md 文件（保留 claude-progress 和 PLAN.md）"""
         temp_files = [
             "CODEBASE_ANALYSIS.md",
-            "BUG_REPORT.md",
             "SECURITY_AUDIT.md",
             "PROGRESS.md",
         ]
-        for f in self.project_root.glob("BUG_REPORT_round*.md"):
-            try:
-                f.unlink()
-            except (OSError, PermissionError):
-                pass
+        # 清理PPT流水线归档文件
+        for pattern in ["fix-ppt-round*.md", "diff_result-round*.json"]:
+            for f in self.project_root.glob(pattern):
+                try:
+                    f.unlink()
+                except (OSError, PermissionError):
+                    pass
 
         for fname in temp_files:
             f = self.project_root / fname
@@ -2166,15 +2228,25 @@ class Orchestrator:
                 has_bugs, bug_summaries = self._check_bug_report()
                 if bug_summaries:
                     bug_info = "\n".join(f"  - {b}" for b in bug_summaries[:10])
+                    # 读取 fix-ppt.md 的修复建议
+                    fix_advice = ""
+                    fix_file = self.project_root / "fix-ppt.md"
+                    if fix_file.exists():
+                        try:
+                            fix_advice = fix_file.read_text(encoding='utf-8')[:2000]
+                        except (IOError, OSError):
+                            pass
                     round_prompt = f"""{task_prompt}
 
 ---
 
-⚠️ 上一轮测试发现以下问题，请优先修复：
+⚠️ 上一轮PPT差异测试未通过（codex {current_round - 1}.0），请修复后生成 codex {current_round}.0：
 
 {bug_info}
 
-请根据 BUG_REPORT.md 中的详细信息进行修复。
+{('修复建议（来自fix-ppt.md）：' + chr(10) + fix_advice) if fix_advice else '请阅读 fix-ppt.md 获取详细修复建议。'}
+
+修复优先级：1.检查shape策略 → 2.调整prompt → 3.改提取函数
 """
 
             # 执行 developer
@@ -2235,30 +2307,30 @@ class Orchestrator:
                     self._save_final_state(state, all_results, time.time() - start_time)
                     return False
 
-            # 检查是否有未解决的 bug
+            # 检查PPT差异测试结果
             has_bugs, bug_summaries = self._check_bug_report()
 
             if not has_bugs:
-                # 保底检测：如果是第1轮且没有 BUG_REPORT.md，tester 可能没正确生成
-                bug_file = self.project_root / "BUG_REPORT.md"
-                if current_round == 1 and not bug_file.exists() and self.max_rounds > 1:
-                    print(f"\n⚠️ Round {current_round}: BUG_REPORT.md 不存在")
-                    print(f"   Tester 可能没有生成 bug 报告，将继续下一轮确认...")
+                # 保底检测：如果是第1轮且没有 diff_result.json，tester 可能没正确生成
+                diff_file = self.project_root / "diff_result.json"
+                if current_round == 1 and not diff_file.exists() and self.max_rounds > 1:
+                    print(f"\n⚠️ Round {current_round}: diff_result.json 不存在")
+                    print(f"   Tester 可能没有生成测试报告，将继续下一轮确认...")
                     current_round += 1
                     state["current_round"] = current_round
                     self.state_manager.save_state(state)
                     continue  # 继续下一轮循环
 
-                print(f"\n✅ Round {current_round}: 没有发现未解决的 bug，继续执行后续阶段")
+                print(f"\n✅ Round {current_round}: PPT差异测试全部通过，继续执行后续阶段")
                 break
 
             if current_round < self.max_rounds:
-                print(f"\n⚠️ Round {current_round}: 发现 {len(bug_summaries)} 个未解决的 bug")
+                print(f"\n⚠️ Round {current_round}: PPT差异测试有 {len(bug_summaries)} 项未通过")
                 print(f"   将进入 Round {current_round + 1} 进行修复...")
                 self._archive_bug_report(current_round)
             else:
                 print(f"\n⚠️ 已达到最大循环次数 ({self.max_rounds})")
-                print(f"   仍有 {len(bug_summaries)} 个未解决的 bug，请手动检查 BUG_REPORT.md")
+                print(f"   仍有 {len(bug_summaries)} 项未通过，请手动检查 fix-ppt.md 和 diff_result.json")
 
             current_round += 1
             state["current_round"] = current_round
@@ -2317,107 +2389,81 @@ class Orchestrator:
 
     def _check_bug_report(self) -> Tuple[bool, List[str]]:
         """
-        检查 BUG_REPORT.md 是否存在未解决的 bug
+        检查PPT差异测试结果（读取 diff_result.json）
+
+        通过标准：Visual >= 98, Readability >= 95, Semantic == 100
+        若 diff_result.json 不存在，视为测试未执行，返回 has_failures=True
 
         Returns:
-            (has_bugs, bug_summaries): 是否有bug，以及bug摘要列表
+            (has_failures, failure_summaries): 是否有未通过项，以及失败摘要列表
         """
-        bug_file = self.project_root / "BUG_REPORT.md"
+        diff_file = self.project_root / "diff_result.json"
 
-        if not bug_file.exists():
-            print(f"   📋 BUG_REPORT.md 不存在，视为无 bug")
-            return False, []
+        if not diff_file.exists():
+            print(f"   📋 diff_result.json 不存在，视为测试未执行")
+            return True, ["diff_result.json 不存在，测试未执行"]
 
         try:
-            content = bug_file.read_text(encoding='utf-8')
-        except (IOError, OSError) as e:
-            print(f"   ⚠️ 无法读取 BUG_REPORT.md: {e}")
-            return False, []
+            content = diff_file.read_text(encoding='utf-8')
+            diff_data = json.loads(content)
+        except (IOError, OSError, json.JSONDecodeError) as e:
+            print(f"   ⚠️ 无法读取/解析 diff_result.json: {e}")
+            return True, [f"diff_result.json 读取失败: {e}"]
 
-        if not content.strip():
-            print(f"   📋 BUG_REPORT.md 为空，视为无 bug")
-            return False, []
+        # 提取三层评分
+        visual = diff_data.get("visual_score", 0)
+        readability = diff_data.get("readability_score", 0)
+        semantic = diff_data.get("semantic_coverage", 0)
+        overall_pass = diff_data.get("overall_pass", False)
 
-        # 解析 bug 列表（支持多种格式）
-        bug_summaries = []
-        lines = content.split('\n')
+        failure_summaries = []
 
-        # 关键词列表（用于检测未解决的问题）
-        bug_keywords = ['bug', 'fail', 'error', 'issue', 'problem', 'broken', 'fix', '错误', '失败', '问题']
-        resolved_keywords = ['fixed', 'resolved', 'done', 'completed', '已修复', '已解决', '完成']
+        # 检查三层阈值
+        if visual < 98:
+            failure_summaries.append(f"Visual Score {visual:.1f} < 98（差距 {98-visual:.1f}）")
+        if readability < 95:
+            failure_summaries.append(f"Readability Score {readability:.1f} < 95（差距 {95-readability:.1f}）")
+        if semantic < 100:
+            failure_summaries.append(f"Semantic Coverage {semantic:.0f} < 100")
 
-        for line in lines:
-            line_stripped = line.strip()
-            line_lower = line_stripped.lower()
+        # 检查per-shape失败项
+        per_shape = diff_data.get("per_shape", [])
+        failed_shapes = [s for s in per_shape if s.get("visual_score", 100) < 90 or not s.get("semantic_pass", True)]
+        if failed_shapes:
+            for s in failed_shapes[:5]:
+                name = s.get("name", "unknown")
+                issues = s.get("issues", [])
+                issue_text = "; ".join(issues[:2]) if issues else "分数过低"
+                failure_summaries.append(f"Shape [{name}]: {issue_text}")
 
-            # 跳过空行和已解决的标记
-            if not line_stripped:
-                continue
-            if any(kw in line_lower for kw in resolved_keywords):
-                # "partially resolved" / "not resolved" 等不应跳过
-                partial_qualifiers = ['partial', 'not ', 'un', '未', '部分']
-                if not any(q in line_lower for q in partial_qualifiers):
-                    continue
-            if line_stripped.startswith('- [x]') or line_stripped.startswith('* [x]'):
-                continue  # 已勾选的复选框，跳过
-
-            # 匹配未勾选的复选框（最高优先级）
-            if line_stripped.startswith('- [ ]') or line_stripped.startswith('* [ ]'):
-                bug_text = line_stripped[5:].strip()
-                if bug_text:
-                    bug_summaries.append(bug_text[:100])
-                continue
-
-            # 匹配带 ❌ 标记的行
-            if '❌' in line_stripped:
-                bug_summaries.append(line_stripped[:100])
-                continue
-
-            # 匹配 "Status: FAILED" 或类似标记
-            if 'status:' in line_lower and 'fail' in line_lower:
-                bug_summaries.append(line_stripped[:100])
-                continue
-
-            # 匹配以 "## Bug" 或 "### Error" 等开头的标题
-            if line_stripped.startswith('#') and any(kw in line_lower for kw in ['bug', 'error', 'fail', 'issue']):
-                bug_summaries.append(line_stripped[:100])
-                continue
-
-            # 匹配包含 "Error:" 或 "Bug:" 前缀的行
-            if any(line_lower.startswith(prefix) for prefix in ['error:', 'bug:', 'issue:', 'problem:']):
-                bug_summaries.append(line_stripped[:100])
-                continue
-
-            # 匹配测试失败格式（如 "FAILED test_xxx" 或 "test_xxx FAILED"）
-            if 'failed' in line_lower and ('test' in line_lower or 'assert' in line_lower):
-                bug_summaries.append(line_stripped[:100])
-                continue
-
-        has_bugs = len(bug_summaries) > 0
+        has_failures = len(failure_summaries) > 0
 
         # 调试输出
-        if has_bugs:
-            print(f"   🐛 检测到 {len(bug_summaries)} 个未解决的 bug:")
-            for i, bug in enumerate(bug_summaries[:3], 1):
-                print(f"      {i}. {bug[:60]}{'...' if len(bug) > 60 else ''}")
-            if len(bug_summaries) > 3:
-                print(f"      ... 还有 {len(bug_summaries) - 3} 个")
+        if has_failures:
+            print(f"   ❌ PPT差异测试未通过（Visual={visual:.1f}, Read={readability:.1f}, Sem={semantic:.0f}）:")
+            for i, summary in enumerate(failure_summaries[:5], 1):
+                print(f"      {i}. {summary[:80]}{'...' if len(summary) > 80 else ''}")
+            if len(failure_summaries) > 5:
+                print(f"      ... 还有 {len(failure_summaries) - 5} 项")
         else:
-            print(f"   ✅ BUG_REPORT.md 中没有检测到未解决的 bug")
+            print(f"   ✅ PPT差异测试通过（Visual={visual:.1f}, Read={readability:.1f}, Sem={semantic:.0f}）")
 
-        return has_bugs, bug_summaries
+        return has_failures, failure_summaries
 
     def _archive_bug_report(self, round_num: int) -> None:
-        """归档当前轮次的 BUG_REPORT.md"""
-        bug_file = self.project_root / "BUG_REPORT.md"
-        if bug_file.exists():
-            archive_file = self.project_root / f"BUG_REPORT_round{round_num}.md"
-            try:
-                import shutil
-                shutil.copy2(bug_file, archive_file)
-                print(f"📁 已归档 BUG_REPORT.md → BUG_REPORT_round{round_num}.md")
-            except (IOError, OSError) as e:
-                print(f"⚠️ 归档失败: {e}")
+        """归档当前轮次的 fix-ppt.md 和 diff_result.json"""
+        for filename in ["fix-ppt.md", "diff_result.json"]:
+            src_file = self.project_root / filename
+            if src_file.exists():
+                stem = Path(filename).stem
+                suffix = Path(filename).suffix
+                archive_file = self.project_root / f"{stem}-round{round_num}{suffix}"
+                try:
+                    import shutil
+                    shutil.copy2(src_file, archive_file)
+                    print(f"📁 已归档 {filename} -> {archive_file.name}")
+                except (IOError, OSError) as e:
+                    print(f"⚠️ 归档 {filename} 失败: {e}")
 
     async def execute_with_loop(
         self,
@@ -2577,19 +2623,29 @@ class Orchestrator:
             # 准备本轮的任务提示
             round_prompt = user_request + progress_suffix
             if current_round > 1:
-                # 如果是第2轮+，附加上一轮的 bug 信息
+                # 如果是第2轮+，附加上一轮的差异测试结果
                 has_bugs, bug_summaries = self._check_bug_report()
                 if bug_summaries:
                     bug_info = "\n".join(f"  - {b}" for b in bug_summaries[:10])
+                    # 读取 fix-ppt.md 的修复建议
+                    fix_advice = ""
+                    fix_file = self.project_root / "fix-ppt.md"
+                    if fix_file.exists():
+                        try:
+                            fix_advice = fix_file.read_text(encoding='utf-8')[:2000]
+                        except (IOError, OSError):
+                            pass
                     round_prompt = f"""{user_request}
 
 ---
 
-⚠️ 上一轮测试发现以下问题，请优先修复：
+⚠️ 上一轮PPT差异测试未通过（codex {current_round - 1}.0），请修复后生成 codex {current_round}.0：
 
 {bug_info}
 
-请根据 BUG_REPORT.md 中的详细信息进行修复。
+{('修复建议（来自fix-ppt.md）：' + chr(10) + fix_advice) if fix_advice else '请阅读 fix-ppt.md 获取详细修复建议。'}
+
+修复优先级：1.检查shape策略 → 2.调整prompt → 3.改提取函数
 """
 
             # 执行 developer
@@ -2650,31 +2706,31 @@ class Orchestrator:
                     self._save_final_state(state, all_results, time.time() - start_time)
                     return False
 
-            # 检查是否有未解决的 bug
+            # 检查PPT差异测试结果
             has_bugs, bug_summaries = self._check_bug_report()
 
             if not has_bugs:
-                # 保底检测：如果是第1轮且没有 BUG_REPORT.md，tester 可能没正确生成
-                bug_file = self.project_root / "BUG_REPORT.md"
-                if current_round == 1 and not bug_file.exists() and self.max_rounds > 1:
-                    print(f"\n⚠️ Round {current_round}: BUG_REPORT.md 不存在")
-                    print(f"   Tester 可能没有生成 bug 报告，将继续下一轮确认...")
+                # 保底检测：如果是第1轮且没有 diff_result.json，tester 可能没正确生成
+                diff_file = self.project_root / "diff_result.json"
+                if current_round == 1 and not diff_file.exists() and self.max_rounds > 1:
+                    print(f"\n⚠️ Round {current_round}: diff_result.json 不存在")
+                    print(f"   Tester 可能没有生成测试报告，将继续下一轮确认...")
                     current_round += 1
                     state["current_round"] = current_round
                     self.state_manager.save_state(state)
                     continue  # 继续下一轮循环
 
-                print(f"\n✅ Round {current_round}: 没有发现未解决的 bug，继续执行后续阶段")
+                print(f"\n✅ Round {current_round}: PPT差异测试全部通过，继续执行后续阶段")
                 break
 
             if current_round < self.max_rounds:
-                print(f"\n⚠️ Round {current_round}: 发现 {len(bug_summaries)} 个未解决的 bug")
+                print(f"\n⚠️ Round {current_round}: PPT差异测试有 {len(bug_summaries)} 项未通过")
                 print(f"   将进入 Round {current_round + 1} 进行修复...")
-                # 归档本轮 bug 报告
+                # 归档本轮测试报告
                 self._archive_bug_report(current_round)
             else:
                 print(f"\n⚠️ 已达到最大循环次数 ({self.max_rounds})")
-                print(f"   仍有 {len(bug_summaries)} 个未解决的 bug，请手动检查 BUG_REPORT.md")
+                print(f"   仍有 {len(bug_summaries)} 项未通过，请手动检查 fix-ppt.md 和 diff_result.json")
 
             current_round += 1
             state["current_round"] = current_round

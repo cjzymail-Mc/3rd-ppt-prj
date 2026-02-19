@@ -74,6 +74,23 @@ Claude Code 启动时缓存配置，中途修改不生效。
 
 ---
 
+## PPT Pipeline（pipeline/）
+
+与 orchestrator 独立的确定性脚本，直接运行生成 PPT：
+
+```bash
+python pipeline/02_shape_analysis.py   # 读取 shape_detail.md 批注
+python pipeline/03_build_shape.py      # GPT 生成内容（需 openai httpx 包）
+python pipeline/03_build_ppt_com.py --version 1.x
+python pipeline/04_shape_diff_test.py --target "codex 1.x.pptx"
+```
+
+- GPT 模型：`openai/gpt-5.2`（OpenRouter）
+- 不修改 `src/Function_030.py`，直接 `from src.Function_030 import GPT_5`
+- 新模板：改 `pipeline/ppt_pipeline_common.py` 中 TEMPLATE_PATH/EXCEL_PATH → 跑 Step 1 → 填 shape_detail.md 批注
+
+---
+
 ## 其他注意事项
 
 - Python 代码中不要用中文全角符号（`（）` → `()`）
