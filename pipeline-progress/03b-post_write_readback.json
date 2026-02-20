@@ -1,0 +1,74 @@
+{
+  "generated_at": "2026-02-19T17:22:38",
+  "target": "codex 1.0.pptx",
+  "results": [
+    {
+      "shape_name": "矩形 11",
+      "updated": true,
+      "mode": "text",
+      "written_len": 7,
+      "readback_len": 7,
+      "match_method": "name"
+    },
+    {
+      "shape_name": "矩形 12",
+      "updated": true,
+      "mode": "text",
+      "written_len": 2,
+      "readback_len": 2,
+      "match_method": "name"
+    },
+    {
+      "shape_name": "矩形 17",
+      "updated": true,
+      "mode": "text",
+      "written_len": 40,
+      "readback_len": 40,
+      "match_method": "name"
+    },
+    {
+      "shape_name": "矩形 19",
+      "updated": false,
+      "reason": "strategy_skip",
+      "match_method": "n/a"
+    },
+    {
+      "shape_name": "图片 39",
+      "updated": false,
+      "reason": "extract_image: no IMAGE: path in content",
+      "match_method": "name"
+    },
+    {
+      "shape_name": "文本框 16",
+      "updated": true,
+      "mode": "text",
+      "written_len": 4,
+      "readback_len": 4,
+      "match_method": "name"
+    },
+    {
+      "shape_name": "矩形 68",
+      "updated": true,
+      "mode": "text",
+      "written_len": 270,
+      "readback_len": 270,
+      "match_method": "name"
+    },
+    {
+      "shape_name": "矩形 77",
+      "updated": true,
+      "mode": "text",
+      "written_len": 155,
+      "readback_len": 155,
+      "match_method": "name"
+    },
+    {
+      "shape_name": "图表 44",
+      "updated": true,
+      "mode": "chart",
+      "chart_type": 60,
+      "data_rows": 7,
+      "match_method": "name"
+    }
+  ]
+}

@@ -44,8 +44,30 @@
 
 ## 📁 项目结构
 
-├── 030 PPT Robot...v3.0.py # 主入口：初始化 COM 应用 (Excel/PPT App)，调度主循环  ├── src/ │ ├── Class_030.py # PPT 组件库：封装 win32com 的 Shape/TextRange 对象 │ ├── Function_030.py # 核心逻辑：混合 xlwings 与 COM API 的图表/图片/GPT 处理 │ ├── Global_var_030.py # 配置：定义 PPT 模板页码映射 │ └── Template 2.1.pptx # 模板：包含预设背景和版式的 PPT 文件 
-+4
+```
+项目根目录/
+├── orchestrator.py              # Agent调度系统（6个PPT专业agent的协调器）
+├── main.py                      # PPT生成主入口（原始脚本，初始化COM应用，调度主循环）
+├── new-ppt-workflow.md          # PPT流水线执行规范（v4.0，最高优先级参考）
+├── repo-scan-result.md          # 本文件（代码库分析）
+├── 00-ppt.py                    # 统一执行入口（串联Step1~4 + 多轮迭代）
+├── 01-shape-detail.py           # Step1: shape识别与指纹
+├── 02-shape-analysis.py         # Step2: shape->源数据映射
+├── 03-build_shape.py            # Step3A: 按shape角色构建内容
+├── 03-build_ppt_com.py          # Step3B: 模板克隆+内容写入
+├── 04-shape_diff_test.py        # Step4: 严格差异测试（三层门禁）
+├── 2025 数据 v2.2.xlsx          # 数据源（问卷sheet）
+├── src/
+│   ├── Class_030.py             # PPT组件库：封装 win32com 的 Shape/TextRange 对象
+│   ├── Function_030.py          # 核心逻辑：混合 xlwings 与 COM API 的图表/图片/GPT 处理
+│   ├── Global_var_030.py        # 配置：定义 PPT 模板页码映射
+│   └── Template 2.1.pptx        # 模板（第14页=空白，第15页=标准）
+├── .claude/
+│   ├── agents/                  # 6个PPT专业agent配置（01-arch ~ 06-secu）
+│   ├── hooks/                   # Architect权限守卫
+│   └── CLAUDE.md                # 项目规范
+└── codex-legacy/                # 历史工作记录
+```
 
 
 ## 🧩 核心模块

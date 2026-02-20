@@ -59,7 +59,30 @@ yellow = 65535                #' 亮黄 '
 orange = 16727809             #' 橙色 '
 purple = 10498160             #' 紫色 '
 
+# 字体登记表：分析脚本识别出新字体后，请补充到此处，便于团队维护
+FONT_REGISTRY = {
+    "微软雅黑": {
+        "usage": "中文正文/标题",
+    },
+    "Arial": {
+        "usage": "英文/数字",
+    },
+}
 
+
+def font_exists_in_registry(font_name):
+    """检查字体是否已登记在 Class 字体表中。"""
+    if font_name is None:
+        return False
+    return str(font_name).strip() in FONT_REGISTRY
+
+
+def register_font(font_name, usage=""):
+    """动态登记字体（可选，用于调试）。"""
+    key = str(font_name).strip()
+    if not key:
+        return
+    FONT_REGISTRY[key] = {"usage": usage}
 
 
 # # 全局变量 模板页面，例如，篮球矩阵模板是Slide(5)....  ---------------------

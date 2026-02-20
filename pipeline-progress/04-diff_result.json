@@ -1,0 +1,51 @@
+{
+  "status": "fail",
+  "visual_score": 98.06,
+  "readability_score": 92.44,
+  "semantic_coverage": 33.33333333333333,
+  "fails": [
+    {
+      "template_name": "矩形 11",
+      "target_name": "矩形 11",
+      "visual": 100.0,
+      "readability": 82.86
+    },
+    {
+      "template_name": "矩形 12",
+      "target_name": "矩形 12",
+      "visual": 84.62,
+      "readability": 67.5
+    },
+    {
+      "template_name": "矩形 17",
+      "target_name": "矩形 17",
+      "visual": 100.0,
+      "readability": 84.9
+    },
+    {
+      "template_name": "矩形 19",
+      "target_name": "矩形 19",
+      "visual": 95.8,
+      "readability": 100.0
+    },
+    {
+      "template_name": "文本框 16",
+      "target_name": "文本框 16",
+      "visual": 100.0,
+      "readability": 91.15
+    },
+    {
+      "template_name": "矩形 68",
+      "target_name": "矩形 68",
+      "visual": 84.62,
+      "readability": 42.97
+    },
+    {
+      "template_name": "矩形 77",
+      "target_name": "矩形 77",
+      "visual": 84.62,
+      "readability": 34.16
+    }
+  ],
+  "generated_at": "2026-02-19T13:25:23"
+}

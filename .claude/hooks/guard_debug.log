@@ -1,0 +1,167 @@
+[15:30:18] HOOK CALLED: tool=Write
+[15:30:18] NOT architect. env=, cwd=C:\Video Games\Claude Code\2nd-repo
+[15:30:18] ALLOW (not architect): Write
+[15:30:23] HOOK CALLED: tool=ExitPlanMode
+[15:30:23] NOT architect. env=, cwd=C:\Video Games\Claude Code\2nd-repo
+[15:30:23] ALLOW (not architect): ExitPlanMode
+[15:30:48] HOOK CALLED: tool=Bash
+[15:30:48] NOT architect. env=, cwd=C:\Video Games\Claude Code\2nd-repo
+[15:30:48] ALLOW (not architect): Bash
+[15:34:42] HOOK CALLED: tool=Edit
+[15:34:42] NOT architect. env=, cwd=C:\Video Games\Claude Code\2nd-repo
+[15:34:42] ALLOW (not architect): Edit
+[15:34:50] HOOK CALLED: tool=Edit
+[15:34:50] BLOCKED: Edit -> C:\Video Games\Claude Code\2nd-repo\.claude\hooks\architect_guard.py
+[15:42:59] HOOK CALLED: tool=Write
+[15:42:59] BLOCKED: Write -> C:\Video Games\Claude Code\2nd-repo\.claude\hooks\architect_guard.py
+[17:05:47] HOOK CALLED: tool=Bash
+[17:05:47] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[17:05:47] ALLOW (not architect): Bash
+[17:07:46] HOOK CALLED: tool=Write
+[17:07:46] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[17:07:46] ALLOW (not architect): Write
+[17:07:50] HOOK CALLED: tool=ExitPlanMode
+[17:07:50] BLOCKED (unconditional): ExitPlanMode
+[17:39:11] HOOK CALLED: tool=Edit
+[17:39:11] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[17:39:11] ALLOW (not architect): Edit
+[17:39:44] HOOK CALLED: tool=Bash
+[17:39:44] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[17:39:44] ALLOW (not architect): Bash
+[17:43:18] HOOK CALLED: tool=Bash
+[17:43:18] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[17:43:18] ALLOW (not architect): Bash
+[17:48:19] HOOK CALLED: tool=Write
+[17:48:19] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[17:48:19] ALLOW (not architect): Write
+[17:52:25] HOOK CALLED: tool=Edit
+[17:52:25] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[17:52:25] ALLOW (not architect): Edit
+[17:52:54] HOOK CALLED: tool=Edit
+[17:52:54] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[17:52:54] ALLOW (not architect): Edit
+[17:53:01] HOOK CALLED: tool=Bash
+[17:53:01] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[17:53:01] ALLOW (not architect): Bash
+[17:53:08] HOOK CALLED: tool=Bash
+[17:53:08] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[17:53:08] ALLOW (not architect): Bash
+[18:00:31] HOOK CALLED: tool=Write
+[18:00:31] DETECTED architect via env var
+[18:00:31] ALLOW (.md): Write -> C:\Users\HQ\.claude-mc\plans\indexed-seeking-waffle.md
+[18:00:35] HOOK CALLED: tool=ExitPlanMode
+[18:00:35] BLOCKED (unconditional): ExitPlanMode
+[18:05:52] HOOK CALLED: tool=Write
+[18:05:52] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:05:52] ALLOW (not architect): Write
+[18:06:16] HOOK CALLED: tool=Edit
+[18:06:16] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:06:16] ALLOW (not architect): Edit
+[18:08:36] HOOK CALLED: tool=Bash
+[18:08:36] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:08:36] ALLOW (not architect): Bash
+[18:08:37] HOOK CALLED: tool=Bash
+[18:08:37] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:08:37] ALLOW (not architect): Bash
+[18:08:43] HOOK CALLED: tool=Bash
+[18:08:43] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:08:43] ALLOW (not architect): Bash
+[18:08:51] HOOK CALLED: tool=Bash
+[18:08:51] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:08:51] ALLOW (not architect): Bash
+[18:11:25] HOOK CALLED: tool=Edit
+[18:11:25] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:11:25] ALLOW (not architect): Edit
+[18:11:30] HOOK CALLED: tool=Bash
+[18:11:30] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:11:30] ALLOW (not architect): Bash
+[18:18:29] HOOK CALLED: tool=Edit
+[18:18:29] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:18:29] ALLOW (not architect): Edit
+[18:18:38] HOOK CALLED: tool=Edit
+[18:18:38] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:18:38] ALLOW (not architect): Edit
+[18:18:46] HOOK CALLED: tool=Edit
+[18:18:46] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:18:46] ALLOW (not architect): Edit
+[18:19:05] HOOK CALLED: tool=Edit
+[18:19:05] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:19:05] ALLOW (not architect): Edit
+[18:19:19] HOOK CALLED: tool=Edit
+[18:19:19] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:19:19] ALLOW (not architect): Edit
+[18:19:33] HOOK CALLED: tool=Edit
+[18:19:33] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:19:33] ALLOW (not architect): Edit
+[18:19:41] HOOK CALLED: tool=Edit
+[18:19:41] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:19:41] ALLOW (not architect): Edit
+[18:19:51] HOOK CALLED: tool=Edit
+[18:19:51] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:19:51] ALLOW (not architect): Edit
+[18:20:03] HOOK CALLED: tool=Edit
+[18:20:03] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:20:03] ALLOW (not architect): Edit
+[18:20:08] HOOK CALLED: tool=Edit
+[18:20:08] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:20:08] ALLOW (not architect): Edit
+[18:20:12] HOOK CALLED: tool=Edit
+[18:20:12] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:20:12] ALLOW (not architect): Edit
+[18:20:18] HOOK CALLED: tool=Bash
+[18:20:18] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:20:18] ALLOW (not architect): Bash
+[18:20:23] HOOK CALLED: tool=Bash
+[18:20:23] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:20:23] ALLOW (not architect): Bash
+[18:31:18] HOOK CALLED: tool=Edit
+[18:31:18] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:31:18] ALLOW (not architect): Edit
+[18:31:53] HOOK CALLED: tool=Edit
+[18:31:53] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:31:53] ALLOW (not architect): Edit
+[18:32:06] HOOK CALLED: tool=Edit
+[18:32:06] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:32:06] ALLOW (not architect): Edit
+[18:32:19] HOOK CALLED: tool=Edit
+[18:32:19] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:32:19] ALLOW (not architect): Edit
+[18:32:24] HOOK CALLED: tool=Bash
+[18:32:24] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:32:24] ALLOW (not architect): Bash
+[18:40:58] HOOK CALLED: tool=Edit
+[18:40:58] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:40:58] ALLOW (not architect): Edit
+[18:41:14] HOOK CALLED: tool=Edit
+[18:41:14] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:41:14] ALLOW (not architect): Edit
+[18:45:32] HOOK CALLED: tool=Edit
+[18:45:32] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:45:32] ALLOW (not architect): Edit
+[18:46:56] HOOK CALLED: tool=Edit
+[18:46:56] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:46:56] ALLOW (not architect): Edit
+[18:47:10] HOOK CALLED: tool=Edit
+[18:47:10] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:47:10] ALLOW (not architect): Edit
+[18:47:29] HOOK CALLED: tool=Edit
+[18:47:29] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:47:29] ALLOW (not architect): Edit
+[18:48:27] HOOK CALLED: tool=Edit
+[18:48:27] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:48:27] ALLOW (not architect): Edit
+[18:49:01] HOOK CALLED: tool=Edit
+[18:49:01] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:49:01] ALLOW (not architect): Edit
+[18:49:19] HOOK CALLED: tool=Edit
+[18:49:19] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:49:19] ALLOW (not architect): Edit
+[18:49:40] HOOK CALLED: tool=Edit
+[18:49:40] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:49:40] ALLOW (not architect): Edit
+[18:49:49] HOOK CALLED: tool=Bash
+[18:49:49] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:49:49] ALLOW (not architect): Bash
+[18:54:25] HOOK CALLED: tool=Edit
+[18:54:25] NOT architect. env='', cwd=C:\Video Games\Claude Code\2nd-repo
+[18:54:25] ALLOW (not architect): Edit
