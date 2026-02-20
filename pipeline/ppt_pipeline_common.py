@@ -48,6 +48,8 @@ ROOT = Path(__file__).resolve().parent.parent          # project root
 SRC_DIR = ROOT / "src"
 EXCEL_PATH = ROOT / "2025 数据 v2.2.xlsx"
 TEMPLATE_PATH = ROOT / "src" / "Template 2.1.pptx"
+PROGRESS_DIR = ROOT / "pipeline-progress"
+PROGRESS_DIR.mkdir(parents=True, exist_ok=True)        # create on first import
 
 
 # ---- tiny helpers ----
@@ -296,7 +298,12 @@ def extract_score_means(rows: List[List[Any]]) -> List[Tuple[str, float]]:
         elif in_score_range:
             backup_numeric.append((header, round(mean_val, 3)))
 
-    return score_like if score_like else backup_numeric
+    # BUG FIX: score_like and backup_numeric are mutually exclusive (elif branches),
+    # so returning only score_like when non-empty drops all unmatched score columns.
+    # E.g. "缓震性", "包裹性", "抗扭转性", "防侧翻性", "耐久性" have no keyword match
+    # and land in backup_numeric — their means must be included in the overall average.
+    # Return all in-range columns: keyword-matched first, then unmatched.
+    return score_like + backup_numeric
 
 
 # ---- text clamping ----
@@ -314,7 +321,7 @@ def clamp_text(text: str, max_chars: int, max_lines: int) -> str:
 
 # ---- human-in-the-loop: shape_detail.md annotation parser ----
 
-SHAPE_DETAIL_MD = ROOT / "shape_detail.md"
+SHAPE_DETAIL_MD = PROGRESS_DIR / "01-shape_detail.md"
 
 # Annotation field keys the user can fill in
 _ANNO_KEYS = {
@@ -341,12 +348,19 @@ STRATEGY_CODES = frozenset({
 })
 
 
-def generate_shape_detail_md(shapes: list) -> list[str]:
+def generate_shape_detail_md(shapes: list, existing_annos: dict = None) -> list[str]:
     """Generate shape_detail.md lines with per-shape annotation placeholders.
 
     Called by Step 1 after extracting shapes. The user can later edit the
     '用户批注' section under each shape to guide subsequent steps.
+
+    existing_annos: dict returned by parse_user_annotations() — if provided,
+    each shape's annotation fields are pre-filled from the old md instead of
+    left as empty placeholders. Shapes not found in existing_annos get blanks.
+    Pass None (or omit) for a fully fresh md (--force mode).
     """
+    existing_annos = existing_annos or {}
+
     lines = [
         "# Shape Detail Report",
         "",
@@ -360,9 +374,13 @@ def generate_shape_detail_md(shapes: list) -> list[str]:
     ]
 
     for i, s in enumerate(shapes, 1):
+        shape_name = s.get("name", f"shape_{i}")
         text_preview = (s.get("text") or "")[:120].replace("\n", "\\n")
+        # Restore existing annotations for this shape (empty string if not found)
+        anno = existing_annos.get(shape_name, {})
+
         lines += [
-            f"## {i}. {s.get('name', f'shape_{i}')}",
+            f"## {i}. {shape_name}",
             "",
             f"- shape_type: {s.get('shape_type', 0)}",
             f"- has_chart: {s.get('has_chart', False)}",
@@ -375,11 +393,13 @@ def generate_shape_detail_md(shapes: list) -> list[str]:
             "",
             "### 用户批注",
             "",
-            "- 内容来源: ",
-            "- 生成方式: ",
-            "- 修正说明: ",
-            "- strategy: ",
-            "- params: ",
+            f"- 内容来源: {anno.get('content_source', '')}",
+            f"- 生成方式: {anno.get('build_strategy', '')}",
+            f"- 修正说明: {anno.get('fix_notes', '')}",
+            f"- 角色覆盖: {anno.get('role_override', '')}",
+            f"- prompt覆盖: {anno.get('prompt_override', '')}",
+            f"- strategy: {anno.get('strategy_exact', '')}",
+            f"- params: {anno.get('params', '')}",
             "",
         ]
 

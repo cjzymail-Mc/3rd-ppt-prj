@@ -24,7 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.ppt_pipeline_common import (
-    ROOT,
+    PROGRESS_DIR,
     extract_metrics,
     load_excel_rows,
     now_ts,
@@ -36,10 +36,10 @@ from pipeline.ppt_pipeline_common import (
     write_md,
 )
 
-SHAPE_JSON = ROOT / "shape_detail_com.json"
-OUT_MAP = ROOT / "shape_analysis_map.json"
-OUT_PROMPTS = ROOT / "prompt_specs.json"
-OUT_BUDGET = ROOT / "readability_budget.json"
+SHAPE_JSON = PROGRESS_DIR / "01-shape_detail_com.json"
+OUT_MAP = PROGRESS_DIR / "02-shape_analysis_map.json"
+OUT_PROMPTS = PROGRESS_DIR / "02-prompt_specs.json"
+OUT_BUDGET = PROGRESS_DIR / "02-readability_budget.json"
 
 
 def infer_role(item: dict) -> str:
@@ -144,7 +144,7 @@ def main() -> int:
         # Build strategy hint (informational, used by Step 3A)
         strategy_hint = anno.get("build_strategy", "")
 
-        max_chars = max(18, min(240, int(len(template_text) * 1.2) if template_text else 100))
+        max_chars = max(18, min(400, int(len(template_text) * 1.2) if template_text else 100))
         # max_lines: derive from template text line count when available
         if template_text:
             natural = len([l for l in template_text.replace("\r", "\n").splitlines() if l.strip()])

@@ -27,7 +27,7 @@ from typing import Dict, List, Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.ppt_pipeline_common import (
-    ROOT,
+    PROGRESS_DIR,
     TEMPLATE_PATH,
     com_call,
     com_get,
@@ -39,9 +39,9 @@ from pipeline.ppt_pipeline_common import (
     write_md,
 )
 
-FIX_MD = ROOT / "fix-ppt.md"
-SEM_MD = ROOT / "diff_semantic_report.md"
-DIFF_JSON = ROOT / "diff_result.json"
+FIX_MD    = PROGRESS_DIR / "04-fix_ppt.md"
+SEM_MD    = PROGRESS_DIR / "04-diff_semantic_report.md"
+DIFF_JSON = PROGRESS_DIR / "04-diff_result.json"
 
 
 def sim(a: str, b: str) -> float:
@@ -156,21 +156,36 @@ def visual_score(a: Dict, b: Dict) -> float:
 
 
 def readability_score(a: Dict, b: Dict) -> float:
-    """Weighted readability score (0-100)."""
+    """Structural readability score (0-100).
+
+    Measures format/structure similarity only — NOT text content similarity.
+    Content legitimately changes with each questionnaire dataset, so comparing
+    text against the template's example text is not meaningful.
+
+    Scoring:
+      - Length score (70%): generated text >= 50% of template length -> full credit
+      - Line score  (30%): generated line count >= 50% of template lines -> full credit
+    """
     if not a["text"] and not b["text"]:
         return 100.0
-
-    text_sim = sim(a["text"], b["text"]) * 100
+    if not b["text"]:
+        # Template has text but generated is empty — penalize
+        return 0.0
+    if not a["text"]:
+        # Template empty, generated has content — acceptable
+        return 100.0
 
     len_a = max(1, len(a["text"]))
     len_b = max(1, len(b["text"]))
-    len_ratio = min(len_a, len_b) / max(len_a, len_b)
+    # Full credit if generated is >= 50% of template length
+    len_score = min(1.0, len_b / (len_a * 0.5))
 
     line_a = max(1, len(a["text"].splitlines()))
     line_b = max(1, len(b["text"].splitlines()))
-    line_ratio = min(line_a, line_b) / max(line_a, line_b)
+    # Full credit if generated has >= 50% as many lines as template
+    line_score = min(1.0, line_b / (line_a * 0.5))
 
-    return (text_sim * 0.6) + (len_ratio * 100 * 0.25) + (line_ratio * 100 * 0.15)
+    return (len_score * 100 * 0.7) + (line_score * 100 * 0.3)
 
 
 def semantic_report(target_slide) -> Dict:
@@ -305,7 +320,7 @@ def main() -> int:
                 lines.append(
                     f"- {f['template_name']} -> {f['target_name']}: "
                     f"visual={f['visual']}, readability={f['readability']} "
-                    f"-> 调整03_build_shape.py对应shape的prompt/预算"
+                    f"-> 调整03a_build_shape.py对应shape的prompt/预算"
                 )
 
         write_md(FIX_MD, lines)

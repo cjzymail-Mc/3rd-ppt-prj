@@ -9,8 +9,10 @@ Outputs:
   - shape_detail.md          (for user review + annotation)
 
 Human-in-the-loop:
-  If shape_detail.md already contains user annotations, Step 1 skips
-  re-extraction and preserves the user's edits. Use --force to override.
+  If shape_detail.md already contains user annotations, Step 1 re-extracts
+  shapes from the template and merges existing annotations into the new md.
+  Shapes with annotations have them restored; new shapes get empty placeholders.
+  Use --force to clear all annotations and start fresh.
 """
 
 from __future__ import annotations
@@ -22,13 +24,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.ppt_pipeline_common import (
-    ROOT,
+    PROGRESS_DIR,
     SHAPE_DETAIL_MD,
     TEMPLATE_PATH,
     com_get,
     com_call,
     generate_shape_detail_md,
-    has_user_annotations,
+    parse_user_annotations,
     is_in_group,
     now_ts,
     safe_print,
@@ -38,9 +40,9 @@ from pipeline.ppt_pipeline_common import (
     write_md,
 )
 
-OUT_JSON = ROOT / "shape_detail_com.json"
-OUT_FP = ROOT / "shape_fingerprint_map.json"
-OUT_MD = SHAPE_DETAIL_MD
+OUT_JSON = PROGRESS_DIR / "01-shape_detail_com.json"
+OUT_FP = PROGRESS_DIR / "01-shape_fingerprint_map.json"
+OUT_MD = SHAPE_DETAIL_MD  # pipeline-progress/01-shape_detail.md
 
 
 def _safe_has_chart(shp) -> bool:
@@ -114,11 +116,19 @@ def main() -> int:
                     help="Force re-extraction even if user annotations exist")
     args = ap.parse_args()
 
-    # --- Human-in-the-loop gate ---
-    if not args.force and has_user_annotations():
-        safe_print(f"[SKIP] {OUT_MD.name} contains user annotations. "
-              f"Preserving existing files. Use --force to override.")
-        return 0
+    # --- Read existing annotations before re-extraction (merge mode) ---
+    # --force: start fresh, clear all annotations
+    # default: re-extract shapes, restore existing annotations into new md
+    if args.force:
+        existing_annos: dict = {}
+        safe_print("[INFO] --force: re-extracting shapes, annotations will be cleared.")
+    else:
+        existing_annos = parse_user_annotations()
+        if existing_annos:
+            safe_print(f"[INFO] Found {len(existing_annos)} annotated shape(s) — "
+                       f"will merge into new md.")
+        else:
+            safe_print("[INFO] No existing annotations — generating fresh md.")
 
     if not TEMPLATE_PATH.exists():
         write_json(OUT_JSON, {"status": "blocked", "reason": "template missing", "new_shapes": []})
@@ -187,8 +197,8 @@ def main() -> int:
             "fingerprints": fp_items,
         })
 
-        # Write human-readable MD (for user review + annotation)
-        md_lines = generate_shape_detail_md(new_shapes)
+        # Write human-readable MD — merge existing annotations if present
+        md_lines = generate_shape_detail_md(new_shapes, existing_annos=existing_annos)
         write_md(OUT_MD, md_lines)
 
         safe_print(f"[OK] {len(new_shapes)} new shapes. "

@@ -114,6 +114,7 @@ sys.path.append(mc_path)     # 将我的mod路径，添加至 系统默认路径
 # 2025 更新了 package 的导入方式，多亏张老师的教材！！ 感谢张老师
 from src.Class_030 import *
 from src.Function_030 import *
+from src.codex_ppt import make_codex_slide
 
 
 
@@ -781,10 +782,21 @@ if mc_gpt == 'y' and mc_sht is not None:
     mc_slide = mc_work[1]
 
 
-# 【5.5】问卷汇总页：插入在【5】实战测评和【6】结论之间
-# 说明：无需再手工给模板 shape 命名，程序将优先复用模板现有文本框并自动覆盖标题内容。
+# 【5.5】问卷汇总页（旧版，已被 5.6 Codex 分析页取代，暂时注释保留）
+# if mc_sht is not None:
+#     mc_slide = questionnaire_summary_slide(
+#         mc_sht,
+#         mc_ppt,
+#         mc_slide,
+#         sample_name,
+#         mc_gpt=mc_gpt,
+#         mc_model=mc_model,
+#     )
+
+
+# 【5.6】Codex 分析页：高保真评测汇总
 if mc_sht is not None:
-    mc_slide = questionnaire_summary_slide(
+    mc_slide = make_codex_slide(
         mc_sht,
         mc_ppt,
         mc_slide,

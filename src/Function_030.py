@@ -393,8 +393,27 @@ def questionnaire_summary_slide(mc_sht, mc_ppt, mc_slide, sample_name, mc_gpt='n
         high_table = [('指标', '高分占比(%)')] + [(k, v) for k, v in high_rows]
         high_cell.value = high_table
 
-        make_chart_for_questionnaire(base_cell, mc_slide, Left=40, Top=90, Width=360, Height=170)
-        make_chart_for_questionnaire(high_cell, mc_slide, Left=500, Top=90, Width=360, Height=170)
+        _chart1 = make_chart_for_questionnaire(base_cell, mc_slide, Left=40, Top=90, Width=360, Height=170)
+        _chart2 = make_chart_for_questionnaire(high_cell, mc_slide, Left=500, Top=90, Width=360, Height=170)
+
+        # 清理临时数据：PPT 侧已在 make_chart_for_questionnaire 内断链。
+        # 从下往上删行，避免先删 base_cell 后 high_cell 行号错位。
+        try:
+            _chart2.delete()
+        except Exception:
+            pass
+        try:
+            high_cell.expand().rows.delete()
+        except Exception:
+            pass
+        try:
+            _chart1.delete()
+        except Exception:
+            pass
+        try:
+            base_cell.expand().rows.delete()
+        except Exception:
+            pass
 
         respondent_count = max(len(clean_data) - 1, 0)
         top_mean = '、'.join([f"{k}{v:.1f}分" for k, v in mean_rows[:3]])
@@ -1295,7 +1314,15 @@ def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_g
 
             # 直接基于数据，生成 问卷条形图，优雅！！！   执行完之后，ppt中应该已经摆放好了
             # 后面重点设置下位置参数，配合循环即可！！ ------------------------------------------------------------------------------------------------  ing.........
-            make_chart_for_questionnaire(mc_cell, mc_slide, Left=chart_Left, Top=chart_Top, Width=250, Height=150)
+            _tmp_chart = make_chart_for_questionnaire(mc_cell, mc_slide, Left=chart_Left, Top=chart_Top, Width=250, Height=150)
+
+            # 循环内只删 Excel chart 对象（每轮生成一个必须每轮清）。
+            # 2 行临时数据每轮被下一轮覆盖，不在此处删行——否则 mc_cell 引用
+            # 在 rows.delete() 后变为 #REF!，下一轮 mc_cell.value 会报错。
+            try:
+                _tmp_chart.delete()
+            except Exception:
+                pass
 
 
 
@@ -1349,6 +1376,20 @@ def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_g
             mc_cell = mc_cell.offset(row_offset=5,column_offset=0)
 
 
+        # 循环结束后整行删除所有临时数据（本轮 + 历史残留）。
+        # 策略：从 temp 起始行 一直删到 used_range 最后一行，
+        # 覆盖 questionnaire_Excel / questionnaire_summary_slide 等所有来源的残留。
+        # 图片是浮动对象，位于原始数据区，不受影响。
+        try:
+            mc_temp_start = mc_cell0.offset(row_offset=i0+i+5, column_offset=0)
+            last_row = mc_sht.used_range.last_cell.row
+            if last_row >= mc_temp_start.row:
+                mc_sht.range(
+                    (mc_temp_start.row, 1),
+                    (last_row, 1)
+                ).rows.delete()
+        except Exception:
+            pass
 
 
         return mc_sht, mc_slide     # 为了程序后续继续能够顺利运行   # for 运行完之后再return，否则for runner 提前终止了
@@ -2025,6 +2066,14 @@ def make_chart_for_questionnaire(mc_cell, mc_slide, Left=26, Top=168, Width=250,
 
     mc_shape = mc_slide.Shapes.Paste()
 
+    # PPT 侧断链：必须在删除 Excel 图表/数据之前完成，否则 PPT 图表数据会一并消失
+    try:
+        mc_shape.Chart.ChartData.Activate()
+        time.sleep(0.8)
+        mc_shape.Chart.ChartData.BreakLink()
+        time.sleep(0.3)
+    except Exception:
+        pass
 
     # 位置暂时先用这个，手工排版的
 
