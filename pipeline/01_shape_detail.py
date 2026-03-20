@@ -6,11 +6,11 @@ Extracts new shapes' attributes and fingerprints.
 Outputs:
   - shape_detail_com.json   (for agents / code)
   - shape_fingerprint_map.json
-  - shape_detail.md          (for user review + annotation)
+  - shape_detail.xlsx        (for user review + annotation in Excel)
 
 Human-in-the-loop:
-  If shape_detail.md already contains user annotations, Step 1 re-extracts
-  shapes from the template and merges existing annotations into the new md.
+  If shape_detail.xlsx already contains user annotations, Step 1 re-extracts
+  shapes from the template and merges existing annotations into the new xlsx.
   Shapes with annotations have them restored; new shapes get empty placeholders.
   Use --force to clear all annotations and start fresh.
 """
@@ -25,11 +25,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.ppt_pipeline_common import (
     PROGRESS_DIR,
-    SHAPE_DETAIL_MD,
+    SHAPE_DETAIL_XLSX,
     TEMPLATE_PATH,
     com_get,
     com_call,
-    generate_shape_detail_md,
+    generate_shape_detail_xlsx,
     parse_user_annotations,
     is_in_group,
     now_ts,
@@ -37,12 +37,11 @@ from pipeline.ppt_pipeline_common import (
     safe_text,
     setup_console_encoding,
     write_json,
-    write_md,
 )
 
 OUT_JSON = PROGRESS_DIR / "01-shape_detail_com.json"
 OUT_FP = PROGRESS_DIR / "01-shape_fingerprint_map.json"
-OUT_MD = SHAPE_DETAIL_MD  # pipeline-progress/01-shape_detail.md
+OUT_XLSX = SHAPE_DETAIL_XLSX  # pipeline-progress/01-shape_detail.xlsx
 
 
 def _safe_has_chart(shp) -> bool:
@@ -148,13 +147,13 @@ def main() -> int:
     pres = app.Presentations.Open(str(TEMPLATE_PATH))
 
     try:
-        blank = pres.Slides(14)
-        std = pres.Slides(15)
+        blank = pres.Slides(1)
+        std = pres.Slides(2)
 
         # Collect blank page shape keys for diffing
         blank_keys = set()
         for i in range(1, int(blank.Shapes.Count) + 1):
-            s = shape_obj(14, blank.Shapes(i), i)
+            s = shape_obj(1, blank.Shapes(i), i)
             key = (
                 s["shape_type"],
                 round(s["left"], 1),
@@ -165,10 +164,10 @@ def main() -> int:
             )
             blank_keys.add(key)
 
-        # Find shapes on page 15 that are NOT on page 14
+        # Find shapes on page 2 that are NOT on page 1
         new_shapes = []
         for i in range(1, int(std.Shapes.Count) + 1):
-            s = shape_obj(15, std.Shapes(i), i)
+            s = shape_obj(2, std.Shapes(i), i)
             key = (
                 s["shape_type"],
                 round(s["left"], 1),
@@ -186,8 +185,8 @@ def main() -> int:
         write_json(OUT_JSON, {
             "status": "ok",
             "generated_at": now_ts(),
-            "template_slide": 15,
-            "blank_slide": 14,
+            "template_slide": 2,
+            "blank_slide": 1,
             "blank_shape_count": int(blank.Shapes.Count),
             "std_shape_count": int(std.Shapes.Count),
             "new_shapes": new_shapes,
@@ -197,12 +196,11 @@ def main() -> int:
             "fingerprints": fp_items,
         })
 
-        # Write human-readable MD — merge existing annotations if present
-        md_lines = generate_shape_detail_md(new_shapes, existing_annos=existing_annos)
-        write_md(OUT_MD, md_lines)
+        # Write human-readable XLSX — merge existing annotations if present
+        generate_shape_detail_xlsx(new_shapes, existing_annos=existing_annos)
 
         safe_print(f"[OK] {len(new_shapes)} new shapes. "
-              f"Wrote {OUT_JSON.name}, {OUT_FP.name}, {OUT_MD.name}")
+              f"Wrote {OUT_JSON.name}, {OUT_FP.name}, {OUT_XLSX.name}")
         return 0
     finally:
         com_call(pres, "Close")

@@ -10,7 +10,7 @@ Flow:
   5. Text shapes: TextFrame.TextRange.Text = content (preserve formatting)
   6. Chart shapes: write to ChartData worksheet
   7. Post-write readback verification
-  8. Save as codex {version}.pptx
+  8. Save as claude-ppt {version}.pptx
 
 Fixed vs codex-legacy2:
   - Chart data: rsplit(":", 1) instead of split(":")
@@ -294,7 +294,7 @@ def main() -> int:
     ap.add_argument("--version", default="1.0")
     args = ap.parse_args()
 
-    out_ppt = ROOT / f"codex {args.version}.pptx"
+    out_ppt = ROOT / f"claude-ppt {args.version}.pptx"
 
     if not TEMPLATE_PATH.exists():
         write_md(OUT_REPORT, ["# Build PPT Report", "", "- 状态: blocked", "- 原因: 模板文件缺失"])
@@ -332,8 +332,8 @@ def main() -> int:
 
     results = []
     try:
-        # Clone slide 15 to new presentation
-        src.Slides(15).Copy()
+        # Clone slide 2 (standard page) to new presentation
+        src.Slides(2).Copy()
         time.sleep(COPY_PASTE_DELAY)  # COM clipboard buffer
         dst.Slides.Paste()
         time.sleep(COPY_PASTE_DELAY)

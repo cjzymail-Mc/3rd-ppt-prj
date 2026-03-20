@@ -15,6 +15,7 @@ import importlib
 import json
 import statistics
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -46,8 +47,8 @@ def safe_print(*args, **kwargs) -> None:
 # ---- paths ----
 ROOT = Path(__file__).resolve().parent.parent          # project root
 SRC_DIR = ROOT / "src"
-EXCEL_PATH = ROOT / "2025 数据 v2.2.xlsx"
-TEMPLATE_PATH = ROOT / "src" / "Template 2.1.pptx"
+EXCEL_PATH = ROOT / "pipeline" / "source data.xlsx"
+TEMPLATE_PATH = ROOT / "pipeline" / "standard and empty template.pptx"
 PROGRESS_DIR = ROOT / "pipeline-progress"
 PROGRESS_DIR.mkdir(parents=True, exist_ok=True)        # create on first import
 
@@ -121,6 +122,21 @@ def is_in_group(shp) -> bool:
         return False
 
 
+def _rgb(hex_color: str) -> int:
+    """Convert 'RRGGBB' hex string to COM RGB long integer."""
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+    return r + g * 256 + b * 65536
+
+
+def _set_thin_border(rng) -> None:
+    """Apply thin border to all edges of a COM Range."""
+    for edge in (7, 8, 9, 10):  # xlLeft, xlTop, xlBottom, xlRight
+        rng.Borders(edge).LineStyle = 1  # xlContinuous
+        rng.Borders(edge).Weight = 2     # xlThin
+
+
 # ---- I/O helpers ----
 
 def write_md(path: Path, lines: List[str]) -> None:
@@ -168,51 +184,70 @@ def load_legacy_functions() -> Dict[str, Any]:
 # ---- Excel loader ----
 
 def load_excel_rows(sheet_name: str = "问卷sheet") -> Tuple[List[List[Any]], str, List[str]]:
-    """Read Excel with pandas + openpyxl (no COM, no xlwings App lifecycle).
+    """Read Excel via COM (supports encrypted files).
 
-    Avoids the xlwings App()/quit() COM event loop that causes double-print
-    and exit-code-1 on Windows. pandas reads .xlsx directly via openpyxl.
-
-    Fuzzy sheet matching: exact → contains '问卷' → first sheet.
+    Fuzzy sheet matching: exact -> contains '问卷' -> first sheet.
     Returns all cell values as-is (including None for empty cells).
     """
+    import win32com.client
+
     notes: List[str] = []
+    excel = win32com.client.Dispatch("Excel.Application")
+    excel.Visible = False
+    excel.DisplayAlerts = False
+
     try:
-        import pandas as pd  # type: ignore
-    except ImportError as e:
-        raise RuntimeError(f"pandas unavailable: {e}")
+        wb = excel.Workbooks.Open(str(EXCEL_PATH.resolve()), 0, True)  # ReadOnly
 
-    # Read sheet names without loading data
-    xl = pd.ExcelFile(str(EXCEL_PATH), engine="openpyxl")
-    all_sheets = xl.sheet_names
-
-    # 1) exact match
-    matched = sheet_name if sheet_name in all_sheets else None
-    # 2) fuzzy: sheet name contains '问卷'
-    if matched is None:
-        for s in all_sheets:
-            if "问卷" in s:
-                matched = s
-                notes.append(f"exact '{sheet_name}' not found, fuzzy match '{s}'")
+        # 1) exact match
+        matched = None
+        matched_name = ""
+        for i in range(1, wb.Sheets.Count + 1):
+            if wb.Sheets(i).Name == sheet_name:
+                matched = wb.Sheets(i)
+                matched_name = sheet_name
                 break
-    # 3) fallback to first sheet
-    if matched is None:
-        matched = all_sheets[0]
-        notes.append(f"sheet '{sheet_name}' not found, fallback '{matched}'")
+        # 2) fuzzy: contains '问卷'
+        if matched is None:
+            for i in range(1, wb.Sheets.Count + 1):
+                sname = wb.Sheets(i).Name
+                if "问卷" in sname:
+                    matched = wb.Sheets(i)
+                    matched_name = sname
+                    notes.append(f"exact '{sheet_name}' not found, fuzzy match '{sname}'")
+                    break
+        # 3) fallback to first sheet
+        if matched is None:
+            matched = wb.Sheets(1)
+            matched_name = matched.Name
+            notes.append(f"sheet '{sheet_name}' not found, fallback '{matched_name}'")
 
-    # Read with header=None so row 0 = original headers
-    df = pd.read_excel(str(EXCEL_PATH), sheet_name=matched,
-                       header=None, engine="openpyxl")
+        raw = matched.UsedRange.Value
 
-    if df.empty:
-        raise RuntimeError("Excel sheet is empty")
+        if raw is None:
+            raise RuntimeError("Excel sheet is empty")
 
-    # Convert to List[List[Any]], preserving None for empty cells
-    rows = []
-    for _, row in df.iterrows():
-        rows.append([None if pd.isna(v) else v for v in row])
+        # COM returns: tuple of tuples (multi-row), tuple (single row), or scalar
+        rows: List[List[Any]] = []
+        if isinstance(raw, tuple):
+            for row_data in raw:
+                if isinstance(row_data, tuple):
+                    rows.append(list(row_data))
+                else:
+                    rows.append([row_data])
+        else:
+            rows.append([raw])
 
-    return rows, matched, notes
+        if not rows:
+            raise RuntimeError("Excel sheet is empty")
+
+        wb.Close(False)
+        return rows, matched_name, notes
+    finally:
+        try:
+            excel.Quit()
+        except Exception:
+            pass
 
 
 # ---- data extraction ----
@@ -319,20 +354,26 @@ def clamp_text(text: str, max_chars: int, max_lines: int) -> str:
     return t
 
 
-# ---- human-in-the-loop: shape_detail.md annotation parser ----
+# ---- human-in-the-loop: shape_detail.xlsx annotation parser ----
 
-SHAPE_DETAIL_MD = PROGRESS_DIR / "01-shape_detail.md"
+SHAPE_DETAIL_XLSX = PROGRESS_DIR / "01-shape_detail.xlsx"
 
 # Annotation field keys the user can fill in
+# Primary: "内容描述" (natural language); optional: strategy/params/备注
 _ANNO_KEYS = {
-    "内容来源": "content_source",      # where the content comes from
-    "生成方式": "build_strategy",       # free-text description (human-readable, preserved)
-    "修正说明": "fix_notes",            # other corrections / details
-    "角色覆盖": "role_override",        # override auto-inferred role
-    "prompt覆盖": "prompt_override",    # override default prompt instruction
-    # --- structured fields (machine-readable, added alongside natural language) ---
+    # --- primary field (shown in xlsx, pure yellow) ---
+    "内容描述": "description",           # natural language: what generates this shape
+    # --- optional fields (shown in xlsx, no fill) ---
     "strategy": "strategy_exact",       # exact strategy code: score_10pt / grade_letter / ...
     "params": "params",                 # key=value pairs: column=X, filter=Y, format=Z
+    "GPT-prompt Text": "gpt_prompt_text",  # assembled GPT prompt for review/edit
+    "备注": "fix_notes",                # legacy: merged into 内容描述, still parsed for old sheets
+    # --- legacy keys (still parsed if present, not generated in new xlsx) ---
+    "内容来源": "content_source",
+    "生成方式": "build_strategy",
+    "修正说明": "fix_notes",
+    "角色覆盖": "role_override",
+    "prompt覆盖": "prompt_override",
 }
 
 # Valid strategy codes (for documentation / validation)
@@ -348,122 +389,471 @@ STRATEGY_CODES = frozenset({
 })
 
 
-def generate_shape_detail_md(shapes: list, existing_annos: dict = None) -> list[str]:
-    """Generate shape_detail.md lines with per-shape annotation placeholders.
+def generate_shape_detail_xlsx(
+    shapes: list,
+    existing_annos: dict = None,
+    sheet_name: str = "Shape Detail",
+) -> None:
+    """Generate shape_detail.xlsx via COM (supports encrypted environments).
 
-    Called by Step 1 after extracting shapes. The user can later edit the
-    '用户批注' section under each shape to guide subsequent steps.
+    Writes directly to SHAPE_DETAIL_XLSX. Each shape block has:
+    - Header row (blue): "Shape #N" | shape_name
+    - Property rows with borders
+    - Annotation header (green): "用户批注"
+    - Primary field (yellow): "内容描述"
+    - Optional fields: strategy / params / 备注
+    - 4 blank rows gap between shapes
 
-    existing_annos: dict returned by parse_user_annotations() — if provided,
-    each shape's annotation fields are pre-filled from the old md instead of
-    left as empty placeholders. Shapes not found in existing_annos get blanks.
-    Pass None (or omit) for a fully fresh md (--force mode).
+    sheet_name: Name of the sheet to create (default "Shape Detail").
     """
+    import win32com.client
+
     existing_annos = existing_annos or {}
+    xlsx_path = str(SHAPE_DETAIL_XLSX.resolve())
 
-    lines = [
-        "# Shape Detail Report",
-        "",
-        "> 本文件由 Step 1 自动生成，供用户核验和批注。",
-        "> 如果 agents 生成的 PPT 不符合预期，您可以在每个 shape 下方的",
-        "> '用户批注' 区域填写修改意见，然后重新启动 agents 工作流。",
-        "> Step 2 会自动读取您的批注并作为优先指令。",
-        "",
-        "---",
-        "",
-    ]
+    excel = win32com.client.Dispatch("Excel.Application")
+    excel.Visible = False
+    excel.DisplayAlerts = False
 
-    for i, s in enumerate(shapes, 1):
-        shape_name = s.get("name", f"shape_{i}")
-        text_preview = (s.get("text") or "")[:120].replace("\n", "\\n")
-        # Restore existing annotations for this shape (empty string if not found)
-        anno = existing_annos.get(shape_name, {})
+    try:
+        wb = excel.Workbooks.Add()
+        ws = wb.Sheets(1)
+        ws.Name = sheet_name
+        ws.Columns(1).ColumnWidth = 18
+        ws.Columns(2).ColumnWidth = 75
 
-        lines += [
-            f"## {i}. {shape_name}",
-            "",
-            f"- shape_type: {s.get('shape_type', 0)}",
-            f"- has_chart: {s.get('has_chart', False)}",
-            f"- in_group: {s.get('in_group', False)}",
-            f"- left/top: {s.get('left', 0):.1f} / {s.get('top', 0):.1f}",
-            f"- width/height: {s.get('width', 0):.1f} / {s.get('height', 0):.1f}",
-            f"- font: {s.get('font_name', '')} {s.get('font_size', 0)}",
-            f"- z_order: {s.get('z_order', 0)}",
-            f"- text: {text_preview}",
-            "",
-            "### 用户批注",
-            "",
-            f"- 内容来源: {anno.get('content_source', '')}",
-            f"- 生成方式: {anno.get('build_strategy', '')}",
-            f"- 修正说明: {anno.get('fix_notes', '')}",
-            f"- 角色覆盖: {anno.get('role_override', '')}",
-            f"- prompt覆盖: {anno.get('prompt_override', '')}",
-            f"- strategy: {anno.get('strategy_exact', '')}",
-            f"- params: {anno.get('params', '')}",
-            "",
-        ]
+        # Colors
+        BLUE = _rgb("4472C4")
+        GREEN = _rgb("E2EFDA")
+        YELLOW = _rgb("FFFF00")
+        RED = _rgb("FF0000")
+        WHITE = _rgb("FFFFFF")
+        GREY = _rgb("999999")
+        DARK_GREY = _rgb("666666")
 
-    lines += [
-        "---",
-        "",
-        "> 填写完毕后，保存此文件，重新运行 agents 工作流即可。",
-        "> Step 1 检测到批注后会跳过重新提取，Step 2 会合并您的批注。",
-    ]
-    return lines
+        r = 1
+        # Row 1: title
+        c = ws.Cells(r, 1)
+        c.Value = "Shape Detail Report"
+        c.Font.Bold = True
+        c.Font.Size = 14
+        r += 1
+
+        # Row 2: subtitle
+        c = ws.Cells(r, 1)
+        c.Value = '编辑"用户批注"区域的B列，保存后运行 Step 2 即可生效'
+        c.Font.Size = 10
+        c.Font.Italic = True
+        r += 2  # skip blank row
+
+        # --- Instruction: 内容描述 (primary) ---
+        ws.Cells(r, 1).Value = "填写说明"
+        ws.Cells(r, 1).Font.Bold = True
+        ws.Cells(r, 1).Font.Size = 11
+        r += 1
+
+        ws.Cells(r, 1).Value = "内容描述"
+        ws.Cells(r, 1).Font.Bold = True
+        ws.Cells(r, 1).Font.Size = 10
+        ws.Cells(r, 2).Value = "必填。描述内容来源和生成方式，可追加详细的 GPT 约束（如关键词、字数、格式要求）。"
+        ws.Cells(r, 2).Font.Size = 10
+        r += 1
+
+        ws.Cells(r, 2).Value = "系统会自动识别关键词来确定生成策略，无需手动指定代码。"
+        ws.Cells(r, 2).Font.Size = 10
+        r += 1
+
+        ws.Cells(r, 2).Value = "示例:"
+        ws.Cells(r, 2).Font.Size = 10
+        r += 1
+
+        for example in [
+            "  \u00b7 评分均值10分制              \u2192 自动计算均值，输出 X.XX/10",
+            "  \u00b7 鞋款名称                    \u2192 自动从Excel提取鞋款名称",
+            "  \u00b7 从补充说明总结缺点           \u2192 GPT读取问卷原文，总结缺点",
+            "  \u00b7 不走GPT统计人数体重          \u2192 Python直接统计，不调用GPT",
+            "  \u00b7 (留空)                      \u2192 系统根据shape类型自动推断",
+        ]:
+            ws.Cells(r, 2).Value = example
+            ws.Cells(r, 2).Font.Size = 10
+            ws.Cells(r, 2).Font.Color = DARK_GREY
+            r += 1
+
+        r += 1  # blank row
+
+        # --- Instruction: optional params ---
+        ws.Cells(r, 1).Value = "可选参数"
+        ws.Cells(r, 1).Font.Bold = True
+        ws.Cells(r, 1).Font.Size = 11
+        ws.Cells(r, 1).Font.Color = GREY
+        ws.Cells(r, 2).Value = "高级选项，可不填。填写后优先级高于内容描述。"
+        ws.Cells(r, 2).Font.Size = 10
+        ws.Cells(r, 2).Font.Color = GREY
+        r += 1
+
+        ws.Cells(r, 1).Value = "strategy"
+        ws.Cells(r, 1).Font.Bold = True
+        ws.Cells(r, 1).Font.Size = 10
+        ws.Cells(r, 2).Value = "精确策略代码，优先级最高，覆盖内容描述的自动识别。"
+        ws.Cells(r, 2).Font.Size = 10
+        r += 1
+        ws.Cells(r, 2).Value = "可选值: score_10pt / grade_letter / sample_aggregation / extract_column"
+        ws.Cells(r, 2).Font.Size = 10
+        ws.Cells(r, 2).Font.Color = DARK_GREY
+        r += 1
+        ws.Cells(r, 2).Value = "        gpt_prompted / mean_extraction / template_direct / skip"
+        ws.Cells(r, 2).Font.Size = 10
+        ws.Cells(r, 2).Font.Color = DARK_GREY
+        r += 1
+
+        ws.Cells(r, 1).Value = "params"
+        ws.Cells(r, 1).Font.Bold = True
+        ws.Cells(r, 1).Font.Size = 10
+        ws.Cells(r, 2).Value = "策略参数，key=value 逗号分隔。"
+        ws.Cells(r, 2).Font.Size = 10
+        r += 1
+        ws.Cells(r, 2).Value = "示例: source=补充说明, filter=缺点, column=鞋款名称"
+        ws.Cells(r, 2).Font.Size = 10
+        ws.Cells(r, 2).Font.Color = DARK_GREY
+        r += 1
+
+        r += 1  # blank row before shapes
+
+        # --- Per-shape blocks ---
+        for i, s in enumerate(shapes, 1):
+            shape_name = s.get("name", f"shape_{i}")
+            text_preview = (s.get("text") or "")[:120].replace("\n", " ")
+            anno = existing_annos.get(shape_name, {})
+
+            # Shape header (blue)
+            for col in (1, 2):
+                c = ws.Cells(r, col)
+                c.Interior.Color = BLUE
+                c.Font.Bold = True
+                c.Font.Size = 11
+                c.Font.Color = WHITE
+                _set_thin_border(c)
+            ws.Cells(r, 1).Value = f"Shape #{i}"
+            ws.Cells(r, 2).Value = shape_name
+            r += 1
+
+            # Properties
+            props = [
+                ("shape_type", str(s.get("shape_type", 0))),
+                ("has_chart", str(s.get("has_chart", False))),
+                ("in_group", str(s.get("in_group", False))),
+                ("left/top", f"{s.get('left', 0):.1f} / {s.get('top', 0):.1f}"),
+                ("width/height", f"{s.get('width', 0):.1f} / {s.get('height', 0):.1f}"),
+                ("font", f"{s.get('font_name', '')} {s.get('font_size', 0)}"),
+                ("z_order", str(s.get("z_order", 0))),
+                ("text", text_preview),
+            ]
+            for key, val in props:
+                ca = ws.Cells(r, 1)
+                ca.Value = key
+                _set_thin_border(ca)
+                cb = ws.Cells(r, 2)
+                cb.Value = val
+                _set_thin_border(cb)
+                if key == "text":
+                    cb.Font.Bold = True
+                    cb.Font.Color = RED
+                r += 1
+
+            # Annotation header (green)
+            for col in (1, 2):
+                c = ws.Cells(r, col)
+                c.Interior.Color = GREEN
+                c.Font.Bold = True
+                c.Font.Size = 10
+                _set_thin_border(c)
+            ws.Cells(r, 1).Value = "用户批注"
+            ws.Cells(r, 2).Value = "← 该内容生成的原理是什么？请在下方填写说明"
+            r += 1
+
+            # Primary field: 内容描述 (yellow)
+            ca = ws.Cells(r, 1)
+            ca.Value = "内容描述"
+            _set_thin_border(ca)
+            cb = ws.Cells(r, 2)
+            cb.Value = anno.get("description", "")
+            cb.Interior.Color = YELLOW
+            _set_thin_border(cb)
+            r += 1
+
+            # Optional fields (border only, no fill, grey label)
+            for key, val in [
+                ("strategy", anno.get("strategy_exact", "")),
+                ("params", anno.get("params", "")),
+                ("GPT-prompt Text", anno.get("gpt_prompt_text", "")),
+            ]:
+                ca = ws.Cells(r, 1)
+                ca.Value = key
+                ca.Font.Color = GREY
+                ca.Font.Bold = True
+                _set_thin_border(ca)
+                cb = ws.Cells(r, 2)
+                cb.Value = val
+                cb.WrapText = True
+                _set_thin_border(cb)
+                r += 1
+
+            # 4 blank rows gap
+            r += 4
+
+        # 51 = xlOpenXMLWorkbook (.xlsx)
+        wb.SaveAs(xlsx_path, 51)
+        wb.Close(False)
+    finally:
+        try:
+            excel.Quit()
+        except Exception:
+            pass
 
 
-def parse_user_annotations() -> dict[str, dict[str, str]]:
-    """Parse user annotations from shape_detail.md.
+def parse_user_annotations(sheet_name: str = None) -> dict[str, dict[str, str]]:
+    """Parse user annotations from shape_detail.xlsx via COM (supports encrypted files).
+
+    sheet_name: If provided, read from the sheet with this name.
+                If None, read from the first sheet (default, backward-compatible).
 
     Returns: {shape_name: {content_source, build_strategy, fix_notes, ...}}
     Only includes shapes that have at least one non-empty annotation.
     """
-    if not SHAPE_DETAIL_MD.exists():
+    if not SHAPE_DETAIL_XLSX.exists():
         return {}
 
-    text = SHAPE_DETAIL_MD.read_text(encoding="utf-8")
+    import win32com.client
+    import time as _time
+
+    # Use DispatchEx to force a NEW Excel instance, avoiding conflict with
+    # any lingering COM process from previous pipeline steps.
+    excel = win32com.client.DispatchEx("Excel.Application")
+    excel.Visible = False
+    excel.DisplayAlerts = False
+    _time.sleep(0.5)  # let COM server stabilize
+
     result: dict[str, dict[str, str]] = {}
 
-    current_shape = None
-    in_annotation = False
-
-    for line in text.splitlines():
-        stripped = line.strip()
-
-        # Detect shape header: "## 1. 矩形 11" or "## 2. 图表 44"
-        if stripped.startswith("## ") and not stripped.startswith("### "):
-            # Extract shape name: everything after "## N. "
-            parts = stripped[3:].split(". ", 1)
-            if len(parts) == 2:
-                current_shape = parts[1].strip()
-            else:
-                current_shape = stripped[3:].strip()
-            in_annotation = False
-            continue
-
-        # Detect annotation section
-        if stripped == "### 用户批注":
-            in_annotation = True
-            continue
-
-        # Parse annotation fields
-        if in_annotation and current_shape and stripped.startswith("- "):
-            field_line = stripped[2:]
-            for cn_key, en_key in _ANNO_KEYS.items():
-                if field_line.startswith(cn_key + ":") or field_line.startswith(cn_key + ": "):
-                    value = field_line[len(cn_key) + 1:].strip()
-                    if value:
-                        if current_shape not in result:
-                            result[current_shape] = {}
-                        result[current_shape][en_key] = value
+    try:
+        wb = excel.Workbooks.Open(str(SHAPE_DETAIL_XLSX.resolve()), 0, True)
+        if sheet_name:
+            ws = None
+            for i in range(1, wb.Sheets.Count + 1):
+                if wb.Sheets(i).Name == sheet_name:
+                    ws = wb.Sheets(i)
                     break
+            if ws is None:
+                safe_print(f"[WARN] parse_user_annotations: sheet '{sheet_name}' not found, using first sheet")
+                ws = wb.Sheets(1)
+        else:
+            ws = wb.Sheets(1)
+        max_row = ws.UsedRange.Rows.Count
+
+        current_shape = None
+        in_annotation = False
+
+        for r in range(1, max_row + 1):
+            a_val = safe_text(ws.Cells(r, 1).Value)
+            b_val = safe_text(ws.Cells(r, 2).Value)
+
+            if a_val.startswith("Shape #"):
+                current_shape = b_val
+                in_annotation = False
+                continue
+
+            if a_val == "用户批注":
+                in_annotation = True
+                continue
+
+            if in_annotation and current_shape and a_val in _ANNO_KEYS:
+                en_key = _ANNO_KEYS[a_val]
+                if b_val:
+                    if current_shape not in result:
+                        result[current_shape] = {}
+                    result[current_shape][en_key] = b_val
+
+        wb.Close(False)
+    except Exception as e:
+        safe_print(f"[WARN] parse_user_annotations COM error: {e}")
+    finally:
+        try:
+            excel.Quit()
+        except Exception:
+            pass
 
     return result
 
 
-def has_user_annotations() -> bool:
-    """Check if shape_detail.md exists and contains at least one annotation."""
-    return bool(parse_user_annotations())
+def write_gpt_prompts_to_xlsx(
+    prompts: dict[str, str],
+    sheet_name: str = None,
+) -> None:
+    """Write assembled GPT prompts to 'GPT-prompt Text' cells in shape_detail.xlsx.
+
+    prompts: {shape_name: prompt_text}
+    """
+    if not prompts or not SHAPE_DETAIL_XLSX.exists():
+        return
+
+    import win32com.client
+    import time as _time
+
+    excel = win32com.client.DispatchEx("Excel.Application")
+    excel.Visible = False
+    excel.DisplayAlerts = False
+    _time.sleep(0.5)
+
+    try:
+        wb = excel.Workbooks.Open(str(SHAPE_DETAIL_XLSX.resolve()))
+        if sheet_name:
+            ws = None
+            for i in range(1, wb.Sheets.Count + 1):
+                if wb.Sheets(i).Name == sheet_name:
+                    ws = wb.Sheets(i)
+                    break
+            if ws is None:
+                ws = wb.Sheets(wb.Sheets.Count)
+        else:
+            ws = wb.Sheets(wb.Sheets.Count)
+
+        max_row = ws.UsedRange.Rows.Count
+        current_shape = None
+        written = 0
+
+        for r in range(1, max_row + 1):
+            a_val = safe_text(ws.Cells(r, 1).Value)
+            b_val_raw = ws.Cells(r, 2).Value
+
+            if a_val.startswith("Shape #"):
+                current_shape = safe_text(b_val_raw)
+                continue
+
+            if a_val == "GPT-prompt Text" and current_shape and current_shape in prompts:
+                cell = ws.Cells(r, 2)
+                cell.Value = prompts[current_shape]
+                cell.WrapText = True
+                written += 1
+
+        wb.Save()
+        wb.Close(False)
+        safe_print(f"[OK] 写入 {written} 个 GPT prompt 到 xlsx")
+    except Exception as e:
+        safe_print(f"[WARN] write_gpt_prompts_to_xlsx COM error: {e}")
+    finally:
+        try:
+            excel.Quit()
+        except Exception:
+            pass
+
+
+def read_gpt_prompts_from_xlsx(sheet_name: str = None) -> dict[str, str]:
+    """Read 'GPT-prompt Text' cell values from shape_detail.xlsx.
+
+    Returns: {shape_name: prompt_text} (only non-empty entries).
+    """
+    if not SHAPE_DETAIL_XLSX.exists():
+        return {}
+
+    import win32com.client
+    import time as _time
+
+    excel = win32com.client.DispatchEx("Excel.Application")
+    excel.Visible = False
+    excel.DisplayAlerts = False
+    _time.sleep(0.5)
+
+    result: dict[str, str] = {}
+    try:
+        wb = excel.Workbooks.Open(str(SHAPE_DETAIL_XLSX.resolve()), 0, True)
+        if sheet_name:
+            ws = None
+            for i in range(1, wb.Sheets.Count + 1):
+                if wb.Sheets(i).Name == sheet_name:
+                    ws = wb.Sheets(i)
+                    break
+            if ws is None:
+                ws = wb.Sheets(wb.Sheets.Count)
+        else:
+            ws = wb.Sheets(wb.Sheets.Count)
+
+        max_row = ws.UsedRange.Rows.Count
+        current_shape = None
+
+        for r in range(1, max_row + 1):
+            a_val = safe_text(ws.Cells(r, 1).Value)
+            b_val = safe_text(ws.Cells(r, 2).Value)
+
+            if a_val.startswith("Shape #"):
+                current_shape = b_val
+                continue
+
+            if a_val == "GPT-prompt Text" and current_shape and b_val:
+                result[current_shape] = b_val
+
+        wb.Close(False)
+    except Exception as e:
+        safe_print(f"[WARN] read_gpt_prompts_from_xlsx COM error: {e}")
+    finally:
+        try:
+            excel.Quit()
+        except Exception:
+            pass
+
+    return result
+
+
+def has_user_annotations(sheet_name: str = None) -> bool:
+    """Check if shape_detail.xlsx exists and contains at least one annotation."""
+    return bool(parse_user_annotations(sheet_name=sheet_name))
+
+
+def create_iteration_sheet(new_sheet_name: str) -> str:
+    """Copy the last sheet in shape_detail.xlsx to a new sheet with the given name.
+
+    Used for multi-round traceability: each iteration round gets its own sheet
+    (e.g. "claude-ppt 1.1", "claude-ppt 1.2") so Builder can update annotations
+    without overwriting previous rounds.
+
+    Returns the new sheet name on success, or "" on failure.
+    """
+    if not SHAPE_DETAIL_XLSX.exists():
+        safe_print("[WARN] create_iteration_sheet: xlsx not found")
+        return ""
+
+    import win32com.client
+
+    excel = win32com.client.Dispatch("Excel.Application")
+    excel.Visible = False
+    excel.DisplayAlerts = False
+
+    try:
+        wb = excel.Workbooks.Open(str(SHAPE_DETAIL_XLSX.resolve()))
+        # Check if sheet already exists
+        for i in range(1, wb.Sheets.Count + 1):
+            if wb.Sheets(i).Name == new_sheet_name:
+                safe_print(f"[INFO] create_iteration_sheet: sheet '{new_sheet_name}' already exists")
+                wb.Close(False)
+                return new_sheet_name
+
+        # Copy the last sheet (most recent iteration) to create a new one
+        last_sheet = wb.Sheets(wb.Sheets.Count)
+        last_sheet.Copy(After=last_sheet)
+        new_ws = wb.Sheets(wb.Sheets.Count)
+        new_ws.Name = new_sheet_name
+
+        wb.Save()
+        wb.Close(False)
+        safe_print(f"[OK] create_iteration_sheet: created sheet '{new_sheet_name}'")
+        return new_sheet_name
+    except Exception as e:
+        safe_print(f"[WARN] create_iteration_sheet COM error: {e}")
+        return ""
+    finally:
+        try:
+            excel.Quit()
+        except Exception:
+            pass
 
 
 def parse_params(params_str: str) -> dict:

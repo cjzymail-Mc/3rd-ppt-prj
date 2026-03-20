@@ -1,51 +1,22 @@
 {
   "status": "fail",
-  "visual_score": 98.06,
-  "readability_score": 92.44,
-  "semantic_coverage": 33.33333333333333,
-  "fails": [
+  "visual_score": 100.0,
+  "readability_score": 98.96,
+  "semantic_coverage": 66.66666666666666,
+  "fix_type": "budget_overflow",
+  "fixes": [
     {
-      "template_name": "矩形 11",
-      "target_name": "矩形 11",
-      "visual": 100.0,
-      "readability": 82.86
+      "shape": "TextBox 16",
+      "issue": "readability=73.08 < 95 (文本长度/行数偏差)",
+      "fix_type": "budget_overflow",
+      "suggestion": "调整 readability_budget 或 prompt 字数约束"
     },
     {
-      "template_name": "矩形 12",
-      "target_name": "矩形 12",
-      "visual": 84.62,
-      "readability": 67.5
-    },
-    {
-      "template_name": "矩形 17",
-      "target_name": "矩形 17",
-      "visual": 100.0,
-      "readability": 84.9
-    },
-    {
-      "template_name": "矩形 19",
-      "target_name": "矩形 19",
-      "visual": 95.8,
-      "readability": 100.0
-    },
-    {
-      "template_name": "文本框 16",
-      "target_name": "文本框 16",
-      "visual": 100.0,
-      "readability": 91.15
-    },
-    {
-      "template_name": "矩形 68",
-      "target_name": "矩形 68",
-      "visual": 84.62,
-      "readability": 42.97
-    },
-    {
-      "template_name": "矩形 77",
-      "target_name": "矩形 77",
-      "visual": 84.62,
-      "readability": 34.16
+      "shape": "(全局)",
+      "issue": "语义关键词缺失: 建议",
+      "fix_type": "keyword_missing",
+      "suggestion": "在 gpt_prompted 类 shape 的内容描述中追加：必须包含'建议'关键词"
     }
   ],
-  "generated_at": "2026-02-19T13:25:23"
+  "generated_at": "2026-03-20T17:17:38"
 }

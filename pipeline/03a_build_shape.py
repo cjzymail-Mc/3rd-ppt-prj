@@ -3,7 +3,7 @@
 """Step 3A: Build shape content per strategy matrix.
 
 Routes each shape to the correct builder based on user annotations
-(生成方式 field from shape_detail.md) and role.
+(生成方式 field from shape_detail.xlsx) and role.
 
 Strategy routing (priority order):
   annotation "10分" + "评分均值"  -> score_10pt   (Python, no GPT)
@@ -32,6 +32,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pipeline.ppt_pipeline_common import (
     EXCEL_PATH,
     PROGRESS_DIR,
+    SHAPE_DETAIL_XLSX,
     clamp_text,
     extract_metrics,
     extract_score_means,
@@ -39,9 +40,11 @@ from pipeline.ppt_pipeline_common import (
     now_ts,
     numeric,
     parse_params,
+    read_gpt_prompts_from_xlsx,
     safe_print,
     safe_text,
     setup_console_encoding,
+    write_gpt_prompts_to_xlsx,
     write_json,
     write_md,
 )
@@ -58,7 +61,7 @@ except Exception as _e:
     safe_print(f"[WARN] GPT_5 import failed: {_e}")
     safe_print("[WARN] GPT-dependent shapes will use fallback text.")
 
-MODEL = "openai/gpt-5.2"
+MODEL = "openai/gpt-5.4"
 
 # ---------------------------------------------------------------------------
 # File paths
@@ -67,10 +70,11 @@ MAP_JSON          = PROGRESS_DIR / "02-shape_analysis_map.json"
 PROMPT_JSON       = PROGRESS_DIR / "02-prompt_specs.json"
 BUDGET_JSON       = PROGRESS_DIR / "02-readability_budget.json"
 SHAPE_DETAIL_JSON = PROGRESS_DIR / "01-shape_detail_com.json"
-OUT_CONTENT       = PROGRESS_DIR / "03a-build_shape_content.json"
-OUT_VALID         = PROGRESS_DIR / "03a-content_validation_report.md"
-OUT_PROMPT_TRACE  = PROGRESS_DIR / "03a-prompt_trace.json"
-OUT_GAP           = PROGRESS_DIR / "03a-shape_data_gap_report.md"
+OUT_CONTENT         = PROGRESS_DIR / "03a-build_shape_content.json"
+OUT_VALID           = PROGRESS_DIR / "03a-content_validation_report.md"
+OUT_PROMPT_TRACE    = PROGRESS_DIR / "03a-prompt_trace.json"
+OUT_GAP             = PROGRESS_DIR / "03a-shape_data_gap_report.md"
+OUT_PENDING_PROMPTS = PROGRESS_DIR / "03a-pending_prompts.json"
 
 
 def _load_shape_types() -> dict:
@@ -91,36 +95,70 @@ def _load_shape_types() -> dict:
 # ---------------------------------------------------------------------------
 
 def _extract_excel_image(sheet_hint: str = "问卷") -> str:
-    """Extract the first embedded image from the Excel questionnaire sheet.
+    """Extract the first embedded image from the Excel questionnaire sheet via COM.
 
+    Supports encrypted files. Uses CopyPicture + temporary ChartObject to export.
     Returns the absolute path to the saved image file (in PROGRESS_DIR),
     or "" if no image is found.
     """
+    import win32com.client
+    import time as _time
+
+    excel = win32com.client.Dispatch("Excel.Application")
+    excel.Visible = False
+    excel.DisplayAlerts = False
+
     try:
-        from openpyxl import load_workbook as _lw
-        wb = _lw(str(EXCEL_PATH))
-        target = None
-        for sname in wb.sheetnames:
-            if sheet_hint in sname:
-                target = wb[sname]
+        wb = excel.Workbooks.Open(str(EXCEL_PATH.resolve()), 0, True)
+
+        # Find sheet
+        ws = None
+        for i in range(1, wb.Sheets.Count + 1):
+            if sheet_hint in wb.Sheets(i).Name:
+                ws = wb.Sheets(i)
                 break
-        if target is None:
+        if ws is None:
             safe_print("[WARN] extract_image: 未找到问卷sheet")
+            wb.Close(False)
             return ""
-        imgs = getattr(target, "_images", [])
-        if not imgs:
+
+        # Find first picture shape (Type 13 = msoPicture)
+        pic = None
+        for i in range(1, ws.Shapes.Count + 1):
+            try:
+                if ws.Shapes(i).Type == 13:
+                    pic = ws.Shapes(i)
+                    break
+            except Exception:
+                continue
+
+        if pic is None:
             safe_print("[WARN] extract_image: 问卷sheet中没有嵌入图片")
+            wb.Close(False)
             return ""
-        img = imgs[0]
-        img_data = img._data()
-        fmt = getattr(img, "format", "png").lower() or "png"
-        out_path = PROGRESS_DIR / f"03a-shoe_image.{fmt}"
-        out_path.write_bytes(img_data)
-        safe_print(f"[OK] extract_image: 已提取图片 → {out_path.name}")
-        return str(out_path)
+
+        out_path = str((PROGRESS_DIR / "03a-shoe_image.png").resolve())
+
+        # Export via temporary ChartObject
+        pic.CopyPicture(1, 2)  # xlScreen=1, xlBitmap=2
+        _time.sleep(0.3)
+        co = ws.ChartObjects().Add(0, 0, pic.Width + 10, pic.Height + 10)
+        co.Chart.Paste()
+        _time.sleep(0.3)
+        co.Chart.Export(out_path, "PNG")
+        co.Delete()
+
+        wb.Close(False)
+        safe_print("[OK] extract_image: 已提取图片 -> 03a-shoe_image.png")
+        return out_path
     except Exception as e:
-        safe_print(f"[WARN] extract_image failed: {e}")
+        safe_print(f"[WARN] extract_image COM error: {e}")
         return ""
+    finally:
+        try:
+            excel.Quit()
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------
@@ -307,6 +345,34 @@ def _build_respondent_block(rows: List[List[Any]]) -> Tuple[str, int]:
     return "\n\n".join(blocks), n
 
 
+_PROMPT_TEMPLATE_PATH = Path(__file__).resolve().parent / "prompt_templates" / "gpt_summary.md"
+
+
+def _load_prompt_template(mode: str) -> str | None:
+    """Load a prompt template section from gpt_summary.md by mode name.
+
+    Returns the template string (with {placeholders}), or None if file
+    is missing or the mode section is not found.
+    """
+    if not _PROMPT_TEMPLATE_PATH.exists():
+        return None
+    try:
+        raw = _PROMPT_TEMPLATE_PATH.read_text(encoding="utf-8")
+    except Exception:
+        return None
+
+    marker = f"<!-- MODE: {mode} -->"
+    start = raw.find(marker)
+    if start < 0:
+        return None
+    start += len(marker)
+
+    # Find the next MODE marker (or end of file)
+    next_marker = raw.find("<!-- MODE:", start)
+    section = raw[start:next_marker].strip() if next_marker >= 0 else raw[start:].strip()
+    return section if section else None
+
+
 def _build_rich_prompt(
     shape_name: str,
     role: str,
@@ -316,22 +382,63 @@ def _build_rich_prompt(
     budget: dict,
     rows: List[List[Any]],
     focus: str = "",
+    user_instruction: str = "",
+    output_contract: dict = None,
 ) -> str:
     """Build GPT prompt for body/long_summary shapes.
 
     focus (str): if set (e.g. '优点' or '缺点'), use free-form summarization mode —
         GPT decides the category structure. If empty, use the legacy categorized mode
         where content_source dictates what to summarize.
+
+    Reads prompt template from pipeline/prompt_templates/gpt_summary.md.
+    Falls back to hardcoded prompt if the template file is missing.
     """
     respondent_block, n = _build_respondent_block(rows)
     max_chars = budget.get("max_chars", 200)
     max_lines = budget.get("max_lines", 6)
-    # Use budget max_chars as authoritative char target (matches clamp_text limit)
     target_chars = max_chars
-    extra = fix_notes if fix_notes else "每个分类不超过3行"
 
+    # Build user instruction section (independent paragraph, high weight)
+    user_section = ""
+    if user_instruction:
+        user_section = f"\n【用户指令】\n{user_instruction}\n"
+
+    # Build output contract section
+    contract_section = ""
+    if output_contract:
+        lines = []
+        kw = output_contract.get("required_keywords")
+        if kw:
+            lines.append(f"- 必须包含关键词: {'、'.join(kw)}")
+        if output_contract.get("bracket_highlight"):
+            lines.append("- 关键性能词用【】括起（仅括词本身，不含标点）")
+        if output_contract.get("ratio_required"):
+            lines.append("- 每段结论后注明 (X/N) 比例")
+        if lines:
+            contract_section = "\n【输出合约 — 必须满足】\n" + "\n".join(lines) + "\n"
+
+    # Try loading external template
+    mode = "free_form" if focus else "categorized"
+    template = _load_prompt_template(mode)
+    if template is not None:
+        try:
+            return template.format(
+                style_anchor=style_anchor,
+                n=n,
+                focus=focus,
+                content_source=content_source,
+                target_chars=target_chars,
+                max_lines=max_lines,
+                user_instruction=user_section,
+                contract_section=contract_section,
+                respondent_block=respondent_block,
+            )
+        except (KeyError, IndexError) as e:
+            safe_print(f"[WARN] prompt template format error: {e}, using fallback")
+
+    # Fallback: hardcoded prompt (identical to original logic)
     if focus:
-        # Free-form mode: GPT determines its own categories based on real feedback
         task_line = (
             f"请从{n}名测试者的实际反馈中，自由归纳这款篮球鞋的【{focus}】。\n"
             f"根据实际反馈内容自行决定分段维度，不要按固定性能类别（如包裹性、止滑性等）分类。\n"
@@ -341,7 +448,6 @@ def _build_rich_prompt(
         )
         format_note = "- 参考文本仅作语调参考，不必复制其分类结构\n"
     else:
-        # Categorized mode: content_source specifies what to summarize
         task_line = (
             f"下面是{n}名测试者对这款篮球鞋的原始试穿反馈，"
             f"请帮我按分类汇总其中的【{content_source}】。\n"
@@ -351,14 +457,16 @@ def _build_rich_prompt(
 
     return (
         f"【参考文本（参考语调和信息密度）】\n{style_anchor}\n\n"
-        f"【你的任务】\n{task_line}\n\n"
+        f"【你的任务】\n{task_line}\n"
+        f"{user_section}"
+        f"{contract_section}\n"
         f"注意：\n"
         f"- 你只能分析已有数据，不能推测或编造\n"
         f"- 直接给出结论，不要展示分析过程\n"
         f"- {format_note}"
         f"- 总字数控制在{target_chars}字左右\n"
         f"- 不超过{max_lines}行\n"
-        f"- {extra}\n"
+        f"- 每个分类不超过3行\n"
         f"- 结论中请自然融入：'样本'（如'本次{n}名样本'）、'反馈'（如'样本反馈'）、'建议'（末尾给出改进建议）\n\n"
         f"【{n}名测试者原始反馈】\n{respondent_block}\n\n"
         f"直接输出结论，不需要任何前言。"
@@ -382,13 +490,17 @@ def build_content(
     shape_type: int = 1,
     strategy_exact: str = "",
     params: dict = None,
+    user_instruction: str = "",
+    dry_run: bool = False,
+    override_prompt: str = "",
+    output_contract: dict = None,
 ) -> Tuple[str, str, str, str]:
     """Build content for one shape.
 
     Returns: (text, prompt_or_reason, strategy_label, gap_reason)
 
     Routing priority:
-      1. strategy_exact (structured field from shape_detail.md) — exact dispatch
+      1. strategy_exact (structured field from shape_detail.xlsx) — exact dispatch
       2. strategy_hint keyword matching (legacy natural-language fallback)
       3. role-based defaults
     """
@@ -459,10 +571,12 @@ def build_content(
                 "body": "反馈集中，建议围绕关键指标继续优化。",
             }
             fallback = fallback_map.get(role, fallback_map["body"])
-            prompt = _build_rich_prompt(
+            prompt = override_prompt or _build_rich_prompt(
                 shape_name, role, style_anchor, effective_src, fix_notes, budget, rows,
-                focus=flt,
+                focus=flt, user_instruction=user_instruction, output_contract=output_contract,
             )
+            if dry_run:
+                return fallback, prompt, "gpt_rich", ""
             txt, used_fb = _call_gpt(prompt, fallback)
             gap = "GPT未返回有效结果，已使用兜底文本" if used_fb else ""
             return txt, prompt, "gpt_rich", gap
@@ -529,9 +643,12 @@ def build_content(
             "body": "反馈集中，建议围绕关键指标继续优化。",
         }
         fallback = fallback_map.get(role, fallback_map["body"])
-        prompt = _build_rich_prompt(
-            shape_name, role, style_anchor, content_source, fix_notes, budget, rows
+        prompt = override_prompt or _build_rich_prompt(
+            shape_name, role, style_anchor, content_source, fix_notes, budget, rows,
+            user_instruction=user_instruction, output_contract=output_contract,
         )
+        if dry_run:
+            return fallback, prompt, "gpt_rich", ""
         txt, used_fb = _call_gpt(prompt, fallback)
         gap = "GPT未返回有效结果，已使用兜底文本" if used_fb else ""
         return txt, prompt, "gpt_rich", gap
@@ -569,9 +686,32 @@ def build_content(
                "sample_stat_aggregation", "sample_aggregation", ""
 
     # -----------------------------------------------------------------------
-    # 9. body / long_summary / insight → GPT with basic prompt
+    # 9. body / long_summary / insight → rich prompt with respondent data
+    #    (matches codex_ppt.py behavior — always use full questionnaire data)
     # -----------------------------------------------------------------------
-    prompt = (
+    if role in ("long_summary", "body", "insight"):
+        fallback_map = {
+            "long_summary": "样本反馈总体稳定，核心指标表现均衡。",
+            "body": "反馈集中，建议围绕关键指标继续优化。",
+            "insight": "1) 优化关键场景体验\n2) 强化稳定性一致性",
+        }
+        fallback = fallback_map.get(role, fallback_map["body"])
+        prompt = override_prompt or _build_rich_prompt(
+            shape_name, role, style_anchor,
+            content_source or "补充说明",
+            fix_notes, budget, rows,
+            user_instruction=user_instruction, output_contract=output_contract,
+        )
+        if dry_run:
+            return fallback, prompt, "gpt_rich", ""
+        txt, used_fb = _call_gpt(prompt, fallback)
+        gap = "GPT未返回有效结果，已使用兜底文本" if used_fb else ""
+        return txt, prompt, "gpt_rich", gap
+
+    # -----------------------------------------------------------------------
+    # 10. Other roles → basic prompt (no questionnaire data needed)
+    # -----------------------------------------------------------------------
+    prompt = override_prompt or (
         "你是PPT内容工程师。依据源数据生成用于单个shape的最终文案。\n"
         "硬约束：不得编造、不得输出解释、不得使用markdown。\n"
         f"shape角色：{role}\n"
@@ -583,12 +723,9 @@ def build_content(
         f"keywords={metrics.get('keywords', [])}\n"
         "请直接输出最终文本。"
     )
-    fallbacks = {
-        "insight": "1) 优化关键场景体验\n2) 强化稳定性一致性",
-        "body": "反馈集中，建议围绕关键指标继续优化。",
-        "long_summary": "样本反馈总体稳定，核心指标表现均衡。",
-    }
-    fallback = fallbacks.get(role, fallbacks["body"])
+    fallback = "反馈集中，建议围绕关键指标继续优化。"
+    if dry_run:
+        return fallback, prompt, "gpt_prompted", ""
     txt, used_fb = _call_gpt(prompt, fallback)
     gap = "GPT未返回有效结果，已使用兜底文本" if used_fb else ""
     return txt, prompt, "gpt_prompted", gap
@@ -598,57 +735,47 @@ def build_content(
 # Main
 # ---------------------------------------------------------------------------
 
-def main() -> int:
-    setup_console_encoding()
-    if not (MAP_JSON.exists() and PROMPT_JSON.exists() and BUDGET_JSON.exists()):
-        safe_print("[BLOCKED] Analysis artifacts missing. Run 02_shape_analysis.py first.")
-        return 0
+def _build_all(mapping, prompts_spec, budgets, rows, metrics, shape_types,
+               dry_run=False, prompt_overrides=None):
+    """Core build loop. Returns (items, prompt_trace, gap_lines, val_lines, pending).
 
-    mapping = json.loads(MAP_JSON.read_text(encoding="utf-8")).get("mapping", [])
-    prompts = json.loads(PROMPT_JSON.read_text(encoding="utf-8")).get("prompts", [])
-    budgets = json.loads(BUDGET_JSON.read_text(encoding="utf-8")).get("budgets", [])
-
-    rows, sheet, notes = load_excel_rows("问卷sheet")
-    metrics = extract_metrics(rows)
-    shape_types = _load_shape_types()  # {name: shape_type}
-
-    safe_print(f"[INFO] GPT_5 available: {_GPT_AVAILABLE}  model: {MODEL}")
-    safe_print(f"[INFO] Excel sheet: {sheet}, rows: {len(rows)-1}")
-
+    dry_run=True: GPT shapes return fallback text + assembled prompt (no GPT call).
+    prompt_overrides: {shape_name: prompt_text} — use these instead of assembling.
+    pending: list of dicts for GPT shapes (only populated when dry_run=True).
+    """
+    prompt_overrides = prompt_overrides or {}
+    sheet = ""
     items = []
     prompt_trace = []
+    pending = []
     gap_lines = [
-        "# shape_data_gap_report",
-        "",
-        f"- 时间: {now_ts()}",
-        f"- sheet: {sheet}",
-        "",
-        "|shape|role|strategy|gap|",
-        "|---|---|---|---|",
+        "# shape_data_gap_report", "",
+        f"- 时间: {now_ts()}", "",
+        "|shape|role|strategy|gap|", "|---|---|---|---|",
     ]
     val_lines = [
-        "# content_validation_report",
-        "",
+        "# content_validation_report", "",
         f"- 时间: {now_ts()}",
-        f"- sheet: {sheet}",
-        f"- GPT_5_available: {_GPT_AVAILABLE}",
-        "",
+        f"- GPT_5_available: {_GPT_AVAILABLE}", "",
         "|shape|role|strategy|len|lines|max_chars|max_lines|valid|",
         "|---|---|---|---|---|---|---|---|",
     ]
 
     for m in mapping:
-        name        = m["shape_name"]
-        role        = m["role"]
-        tmpl_text   = safe_text(m.get("template_text", ""))
+        name           = m["shape_name"]
+        role           = m["role"]
+        tmpl_text      = safe_text(m.get("template_text", ""))
         strategy_hint  = safe_text(m.get("user_strategy_hint", ""))
         content_source = safe_text(m.get("user_content_source", ""))
         strategy_exact = safe_text(m.get("strategy_exact", ""))
         params         = parse_params(safe_text(m.get("params", "")))
-        budget      = _budget_for(name, budgets)
-        pconf       = _prompt_for(name, prompts)
+        ui             = safe_text(m.get("user_instruction", ""))
+        budget         = _budget_for(name, budgets)
+        pconf          = _prompt_for(name, prompts_spec)
+        shape_type     = shape_types.get(name, 1)
 
-        shape_type = shape_types.get(name, 1)
+        override = prompt_overrides.get(name, "")
+        oc = m.get("output_contract", {})
 
         raw, used_prompt_or_reason, strategy, gap = build_content(
             role, name, metrics, tmpl_text,
@@ -656,6 +783,10 @@ def main() -> int:
             shape_type=shape_type,
             strategy_exact=strategy_exact,
             params=params,
+            user_instruction=ui,
+            dry_run=dry_run,
+            override_prompt=override,
+            output_contract=oc,
         )
 
         # Chart data and image paths are structured — never clamp them.
@@ -702,6 +833,17 @@ def main() -> int:
             else str(used_prompt_or_reason)[:200] + "...",
         })
 
+        # Collect pending GPT prompts (dry_run only)
+        if dry_run and strategy in ("gpt_rich", "gpt_prompted"):
+            pending.append({
+                "shape_name": name,
+                "role": role,
+                "strategy": strategy,
+                "prompt": used_prompt_or_reason,  # full prompt text
+                "fallback": txt,
+                "budget": budget,
+            })
+
         gap_lines.append(f"|{name}|{role}|{strategy}|{gap}|")
         val_lines.append(
             f"|{name}|{role}|{strategy}|{len(txt)}|{line_count}"
@@ -710,20 +852,154 @@ def main() -> int:
 
         safe_print(f"  [{strategy:22s}] {name}: {txt[:60].replace(chr(10), ' ')}")
 
-    write_json(OUT_CONTENT, {
-        "generated_at": now_ts(),
-        "sheet": sheet,
-        "items": items,
-        "metrics": metrics,
-    })
-    write_json(OUT_PROMPT_TRACE, {
-        "generated_at": now_ts(),
-        "model": MODEL,
-        "prompts": prompt_trace,
-    })
-    write_md(OUT_VALID, val_lines)
-    write_md(OUT_GAP, gap_lines)
+    return items, prompt_trace, gap_lines, val_lines, pending
 
+
+def main() -> int:
+    import argparse
+    setup_console_encoding()
+
+    ap = argparse.ArgumentParser(description="Step 3A: Build shape content")
+    ap.add_argument("--assemble-only", action="store_true",
+                    help="Phase 1: assemble GPT prompts without calling GPT")
+    ap.add_argument("--execute-prompts", action="store_true",
+                    help="Phase 2: read reviewed prompts and call GPT")
+    ap.add_argument("--interactive", action="store_true",
+                    help="Standalone: Phase 1 + open Excel + pause + Phase 2")
+    args = ap.parse_args()
+
+    if not (MAP_JSON.exists() and PROMPT_JSON.exists() and BUDGET_JSON.exists()):
+        safe_print("[BLOCKED] Analysis artifacts missing. Run 02_shape_analysis.py first.")
+        return 0
+
+    mapping = json.loads(MAP_JSON.read_text(encoding="utf-8")).get("mapping", [])
+    prompts_spec = json.loads(PROMPT_JSON.read_text(encoding="utf-8")).get("prompts", [])
+    budgets = json.loads(BUDGET_JSON.read_text(encoding="utf-8")).get("budgets", [])
+
+    rows, sheet, notes = load_excel_rows("问卷sheet")
+    metrics = extract_metrics(rows)
+    shape_types = _load_shape_types()
+
+    safe_print(f"[INFO] GPT_5 available: {_GPT_AVAILABLE}  model: {MODEL}")
+    safe_print(f"[INFO] Excel sheet: {sheet}, rows: {len(rows)-1}")
+
+    # ------------------------------------------------------------------
+    # Mode: --assemble-only  (Phase 1)
+    # ------------------------------------------------------------------
+    if args.assemble_only:
+        items, pt, gl, vl, pending = _build_all(
+            mapping, prompts_spec, budgets, rows, metrics, shape_types,
+            dry_run=True,
+        )
+        # Save pending prompts (full text, no truncation)
+        write_json(OUT_PENDING_PROMPTS, {
+            "generated_at": now_ts(),
+            "pending": pending,
+        })
+        # Write prompts to Excel "GPT-prompt Text" cells
+        if pending:
+            xlsx_prompts = {p["shape_name"]: p["prompt"] for p in pending}
+            write_gpt_prompts_to_xlsx(xlsx_prompts)
+        # Write Phase 1 content (fallback for GPT shapes)
+        write_json(OUT_CONTENT, {"generated_at": now_ts(), "sheet": sheet,
+                                 "items": items, "metrics": metrics})
+        write_json(OUT_PROMPT_TRACE, {"generated_at": now_ts(), "model": MODEL, "prompts": pt})
+        write_md(OUT_VALID, vl)
+        write_md(OUT_GAP, gl)
+        safe_print(f"[OK] Phase 1: {len(items)} shapes built, {len(pending)} GPT prompts pending review.")
+        return 0
+
+    # ------------------------------------------------------------------
+    # Mode: --execute-prompts  (Phase 2)
+    # ------------------------------------------------------------------
+    if args.execute_prompts:
+        # Load original prompts from JSON
+        prompt_overrides: dict[str, str] = {}
+        if OUT_PENDING_PROMPTS.exists():
+            pd = json.loads(OUT_PENDING_PROMPTS.read_text(encoding="utf-8"))
+            for p in pd.get("pending", []):
+                prompt_overrides[p["shape_name"]] = p["prompt"]
+        # Read back from Excel (user may have edited)
+        xlsx_prompts = read_gpt_prompts_from_xlsx()
+        for name, edited in xlsx_prompts.items():
+            if edited.strip():
+                prompt_overrides[name] = edited  # user edit takes priority
+
+        if prompt_overrides:
+            safe_print(f"[INFO] Phase 2: {len(prompt_overrides)} GPT prompts loaded (Excel edits take priority)")
+
+        items, pt, gl, vl, _ = _build_all(
+            mapping, prompts_spec, budgets, rows, metrics, shape_types,
+            dry_run=False,
+            prompt_overrides=prompt_overrides,
+        )
+        write_json(OUT_CONTENT, {"generated_at": now_ts(), "sheet": sheet,
+                                 "items": items, "metrics": metrics})
+        write_json(OUT_PROMPT_TRACE, {"generated_at": now_ts(), "model": MODEL, "prompts": pt})
+        write_md(OUT_VALID, vl)
+        write_md(OUT_GAP, gl)
+        safe_print(f"[OK] Phase 2: {len(items)} shapes built. Wrote {OUT_CONTENT.name}")
+        return 0
+
+    # ------------------------------------------------------------------
+    # Mode: --interactive  (Phase 1 + pause + Phase 2, for manual pipeline)
+    # ------------------------------------------------------------------
+    if args.interactive:
+        import os
+        # Phase 1
+        items, pt, gl, vl, pending = _build_all(
+            mapping, prompts_spec, budgets, rows, metrics, shape_types,
+            dry_run=True,
+        )
+        write_json(OUT_PENDING_PROMPTS, {
+            "generated_at": now_ts(), "pending": pending,
+        })
+        if pending:
+            xlsx_prompts = {p["shape_name"]: p["prompt"] for p in pending}
+            write_gpt_prompts_to_xlsx(xlsx_prompts)
+            safe_print(f"\n[INFO] {len(pending)} 个 GPT prompt 已写入 Excel")
+            # Open Excel for user review
+            try:
+                os.startfile(str(SHAPE_DETAIL_XLSX))
+                safe_print("[已打开] Excel — 请编辑「GPT-prompt Text」单元格")
+            except Exception:
+                safe_print(f"[手动打开] {SHAPE_DETAIL_XLSX}")
+            safe_print("编辑完成后，保存并关闭 Excel，然后按 Enter 继续...")
+            input()
+            # Phase 2: read back and call GPT
+            prompt_overrides: dict[str, str] = {}
+            for p in pending:
+                prompt_overrides[p["shape_name"]] = p["prompt"]
+            edited = read_gpt_prompts_from_xlsx()
+            for name, text in edited.items():
+                if text.strip():
+                    prompt_overrides[name] = text
+            items, pt, gl, vl, _ = _build_all(
+                mapping, prompts_spec, budgets, rows, metrics, shape_types,
+                dry_run=False,
+                prompt_overrides=prompt_overrides,
+            )
+        # Write final outputs
+        write_json(OUT_CONTENT, {"generated_at": now_ts(), "sheet": sheet,
+                                 "items": items, "metrics": metrics})
+        write_json(OUT_PROMPT_TRACE, {"generated_at": now_ts(), "model": MODEL, "prompts": pt})
+        write_md(OUT_VALID, vl)
+        write_md(OUT_GAP, gl)
+        safe_print(f"[OK] {len(items)} shapes built. Wrote {OUT_CONTENT.name}")
+        return 0
+
+    # ------------------------------------------------------------------
+    # Default mode: single-pass (backward compatible, no pause)
+    # ------------------------------------------------------------------
+    items, pt, gl, vl, _ = _build_all(
+        mapping, prompts_spec, budgets, rows, metrics, shape_types,
+        dry_run=False,
+    )
+    write_json(OUT_CONTENT, {"generated_at": now_ts(), "sheet": sheet,
+                             "items": items, "metrics": metrics})
+    write_json(OUT_PROMPT_TRACE, {"generated_at": now_ts(), "model": MODEL, "prompts": pt})
+    write_md(OUT_VALID, vl)
+    write_md(OUT_GAP, gl)
     safe_print(f"[OK] {len(items)} shapes built. Wrote {OUT_CONTENT.name}")
     return 0
 

@@ -18,7 +18,7 @@
 - 识别层：`01-shape-detail.md`、`shape_detail_com.json`、`shape_fingerprint_map.json`
 - 分析层：`02-shape-analysis.md`、`shape_analysis_map.json`、`prompt_specs.json`、`readability_budget.json`
 - 构建层：`build_shape_content.json`、`content_validation_report.md`、`prompt_trace.json`、`shape_data_gap_report.md`
-- 写入层：`codex <version>.pptx`、`build-ppt-report.md`、`post_write_readback.json`
+- 写入层：`claude-ppt <version>.pptx`、`build-ppt-report.md`、`post_write_readback.json`
 - 测试层：`fix-ppt.md`、`diff_semantic_report.md`、`diff_result.json`
 - 迭代层：`iteration_history.md`
 
@@ -130,7 +130,7 @@ python 00-ppt.py --from-step 3 --to-step 3 --start-version 1.2 --max-rounds 1
 - chart 类型保留情况
 
 ### 5.4 验收
-- `codex <version>.pptx` 产出
+- `claude-ppt <version>.pptx` 产出
 - `build-ppt-report.md` + `post_write_readback.json` 产出
 
 ---
@@ -139,7 +139,7 @@ python 00-ppt.py --from-step 3 --to-step 3 --start-version 1.2 --max-rounds 1
 
 ### 6.1 对比对象
 - 模板：`Template 2.1.pptx` 第15页
-- 目标：`codex <version>.pptx` 第1页
+- 目标：`claude-ppt <version>.pptx` 第1页
 
 ### 6.2 三层门禁
 1. **Visual**：几何、shape type、字体、颜色、chart type

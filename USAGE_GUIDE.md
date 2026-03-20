@@ -124,7 +124,7 @@ python orchestrator.py --auto-architect --max-rounds 3
 | 1 | `01-shape-detail.py` | shape_detail_com.json, shape_fingerprint_map.json |
 | 2 | `02-shape-analysis.py` | shape_analysis_map.json, prompt_specs.json, readability_budget.json |
 | 3A | `03-build_shape.py` | build_shape_content.json, content_validation_report.md, prompt_trace.json |
-| 3B | `03-build_ppt_com.py` | **codex X.Y.pptx**, build-ppt-report.md, post_write_readback.json |
+| 3B | `03-build_ppt_com.py` | **claude-ppt X.Y.pptx**, build-ppt-report.md, post_write_readback.json |
 | 4 | `04-shape_diff_test.py` | fix-ppt.md, **diff_result.json**, diff_semantic_report.md |
 
 **Tester** 运行Step4差异测试，检查三层门禁：
@@ -135,7 +135,7 @@ python orchestrator.py --auto-architect --max-rounds 3
 | Readability | >= 95 | 文本长度比、行数比、字符相似度 |
 | Semantic | = 100 | 关键语义词全覆盖 |
 
-**不通过** → 归档本轮报告 → Developer读取fix-ppt.md修复 → 下一轮（codex 1.0 → 1.1 → 1.2）
+**不通过** → 归档本轮报告 → Developer读取fix-ppt.md修复 → 下一轮（claude-ppt 1.0 → 1.1 → 1.2）
 
 **通过** → 进入Phase 3
 
@@ -177,7 +177,7 @@ python orchestrator.py --auto-architect --max-rounds 3
 | `build_shape_content.json` | Step3A | 生成的shape内容 |
 | `prompt_trace.json` | Step3A | prompt追踪记录 |
 | `shape_data_gap_report.md` | Step3A | 数据缺口报告 |
-| `codex X.Y.pptx` | Step3B | **最终PPT产物** |
+| `claude-ppt X.Y.pptx` | Step3B | **最终PPT产物** |
 | `build-ppt-report.md` | Step3B | 构建日志 |
 | `post_write_readback.json` | Step3B | 写后回读确认 |
 | `diff_result.json` | Step4 | 三层评分（JSON） |
@@ -191,11 +191,11 @@ python orchestrator.py --auto-architect --max-rounds 3
 当diff测试不通过时，orchestrator自动进入下一轮：
 
 ```
-Round 1: Developer生成 codex 1.0.pptx → Tester测试 → 不通过
+Round 1: Developer生成 claude-ppt 1.0.pptx → Tester测试 → 不通过
          ↓ 归档 fix-ppt.md → fix-ppt-round1.md
-Round 2: Developer读取fix-ppt.md修复建议 → 生成 codex 2.0.pptx → Tester测试 → 不通过
+Round 2: Developer读取fix-ppt.md修复建议 → 生成 claude-ppt 2.0.pptx → Tester测试 → 不通过
          ↓ 归档
-Round 3: Developer继续修复 → 生成 codex 3.0.pptx → Tester测试 → 通过!
+Round 3: Developer继续修复 → 生成 claude-ppt 3.0.pptx → Tester测试 → 通过!
          ↓
 Phase 3: Optimizer + Security
 ```
@@ -219,7 +219,7 @@ Phase 3: Optimizer + Security
 > @dev 按PLAN.md实现所有步骤脚本
 
 # 只让Tester测试
-> @test 运行04-shape_diff_test.py测试codex 1.0.pptx
+> @test 运行04-shape_diff_test.py测试claude-ppt 1.0.pptx
 ```
 
 ### 从失败中恢复

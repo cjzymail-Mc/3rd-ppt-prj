@@ -1,49 +1,47 @@
 # PPT Diff & Fix Report
 
 - 状态: fail
-- visual_score: 98.06%
-- readability_score: 92.44%
-- semantic_coverage: 33.33%
+- visual_score: 100.00%
+- readability_score: 98.96%
+- semantic_coverage: 66.67%
 - template_shapes: 26
 - target_shapes: 26
 - paired: 26
-- 时间: 2026-02-19T13:25:23
+- 时间: 2026-03-20T17:17:38
 
 ## Shape对比
 |template|target|visual|readability|text_len|match|
 |---|---|---|---|---|---|
-|直接连接符 1|直接连接符 1|100.00|100.00|0/0|name|
-|直接连接符 2|直接连接符 2|100.00|100.00|0/0|name|
-|直接连接符 3|直接连接符 3|100.00|100.00|0/0|name|
-|矩形 4|矩形 4|100.00|100.00|0/0|name|
-|直接连接符 5|直接连接符 5|100.00|100.00|0/0|name|
-|直接连接符 6|直接连接符 6|100.00|100.00|0/0|name|
-|直接连接符 7|直接连接符 7|100.00|100.00|0/0|name|
-|直接连接符 8|直接连接符 8|100.00|100.00|0/0|name|
-|直接连接符 9|直接连接符 9|100.00|100.00|0/0|name|
-|直接连接符 10|直接连接符 10|100.00|100.00|0/0|name|
-|矩形 11|矩形 11|100.00|82.86|7/7|name|
-|矩形 12|矩形 12|84.62|67.50|1/2|name|
-|直接连接符 15|直接连接符 15|100.00|100.00|0/0|name|
-|矩形 17|矩形 17|100.00|84.90|34/40|name|
-|矩形 19|矩形 19|95.80|100.00|0/0|name|
-|直接连接符 32|直接连接符 32|100.00|100.00|0/0|name|
-|图片 39|图片 39|100.00|100.00|0/0|name|
-|矩形 40|矩形 40|100.00|100.00|0/0|name|
-|文本框 16|文本框 16|100.00|91.15|13/11|name|
-|直接连接符 41|直接连接符 41|100.00|100.00|0/0|name|
+|Straight Connector 1|Straight Connector 1|100.00|100.00|0/0|name|
+|Straight Connector 2|Straight Connector 2|100.00|100.00|0/0|name|
+|Straight Connector 3|Straight Connector 3|100.00|100.00|0/0|name|
+|Rectangle 4|Rectangle 4|100.00|100.00|0/0|name|
+|Straight Connector 5|Straight Connector 5|100.00|100.00|0/0|name|
+|Straight Connector 6|Straight Connector 6|100.00|100.00|0/0|name|
+|Straight Connector 7|Straight Connector 7|100.00|100.00|0/0|name|
+|Straight Connector 8|Straight Connector 8|100.00|100.00|0/0|name|
+|Straight Connector 9|Straight Connector 9|100.00|100.00|0/0|name|
+|Straight Connector 10|Straight Connector 10|100.00|100.00|0/0|name|
+|Rectangle 11|Rectangle 11|100.00|100.00|7/7|name|
+|Rectangle 12|Rectangle 12|100.00|100.00|1/2|name|
+|Straight Connector 15|Straight Connector 15|100.00|100.00|0/0|name|
+|Rectangle 17|Rectangle 17|100.00|100.00|34/40|name|
+|Rectangle 19|Rectangle 19|100.00|100.00|0/0|name|
+|Straight Connector 32|Straight Connector 32|100.00|100.00|0/0|name|
+|Picture 39|Picture 39|100.00|100.00|0/0|name|
+|Rectangle 40|Rectangle 40|100.00|100.00|0/0|name|
+|TextBox 16|TextBox 16|100.00|73.08|13/4|name|
+|Straight Connector 41|Straight Connector 41|100.00|100.00|0/0|name|
+|Rectangle 68|Rectangle 68|100.00|100.00|225/254|name|
+|Picture 74|Picture 74|100.00|100.00|0/0|name|
+|Picture 75|Picture 75|100.00|100.00|0/0|name|
+|Rectangle 77|Rectangle 77|100.00|100.00|168/187|name|
+|Rectangle 14|Rectangle 14|100.00|100.00|11/11|name|
 |图表 44|图表 44|100.00|100.00|0/0|name|
-|矩形 68|矩形 68|84.62|42.97|225/130|name|
-|图片 74|图片 74|100.00|100.00|0/0|name|
-|图片 75|图片 75|100.00|100.00|0/0|name|
-|矩形 77|矩形 77|84.62|34.16|168/80|name|
-|矩形 14|矩形 14|100.00|100.00|11/11|name|
 
-## 差异与修复建议
-- 矩形 11 -> 矩形 11: visual=100.0, readability=82.86 -> 调整03a_build_shape.py对应shape的prompt/预算
-- 矩形 12 -> 矩形 12: visual=84.62, readability=67.5 -> 调整03a_build_shape.py对应shape的prompt/预算
-- 矩形 17 -> 矩形 17: visual=100.0, readability=84.9 -> 调整03a_build_shape.py对应shape的prompt/预算
-- 矩形 19 -> 矩形 19: visual=95.8, readability=100.0 -> 调整03a_build_shape.py对应shape的prompt/预算
-- 文本框 16 -> 文本框 16: visual=100.0, readability=91.15 -> 调整03a_build_shape.py对应shape的prompt/预算
-- 矩形 68 -> 矩形 68: visual=84.62, readability=42.97 -> 调整03a_build_shape.py对应shape的prompt/预算
-- 矩形 77 -> 矩形 77: visual=84.62, readability=34.16 -> 调整03a_build_shape.py对应shape的prompt/预算
+## 修正建议
+
+| shape | 问题 | fix_type | 建议 |
+|-------|------|----------|------|
+| TextBox 16 | readability=73.08 < 95 (文本长度/行数偏差) | budget_overflow | 调整 readability_budget 或 prompt 字数约束 |
+| (全局) | 语义关键词缺失: 建议 | keyword_missing | 在 gpt_prompted 类 shape 的内容描述中追加：必须包含'建议'关键词 |

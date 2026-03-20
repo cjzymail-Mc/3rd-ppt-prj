@@ -6,7 +6,7 @@ Reads shape_detail_com.json + Excel data.
 Assigns each shape a role, generates prompt specs and readability budgets.
 
 Human-in-the-loop:
-  If shape_detail.md contains user annotations, they override the auto-inferred
+  If shape_detail.xlsx contains user annotations, they override the auto-inferred
   values. Supported annotation fields:
     - 内容来源   -> injected into prompt as explicit data source
     - 生成方式   -> overrides build strategy (template_direct / gpt_prompted / ...)
@@ -18,6 +18,7 @@ Human-in-the-loop:
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -87,8 +88,40 @@ def prompt_rule(role: str) -> str:
     return rules.get(role, rules["body"])
 
 
+def _parse_output_contract(desc: str) -> dict:
+    """Extract structured output constraints from free-text 内容描述."""
+    if not desc:
+        return {}
+    contract = {}
+    # Required keywords (quoted with '' or '')
+    kw_match = re.findall(r"['\u2018\u2019]([^'\u2018\u2019]+)['\u2018\u2019]", desc)
+    if kw_match:
+        contract["required_keywords"] = kw_match
+    # 【】bracket highlight requirement
+    if "【】" in desc:
+        contract["bracket_highlight"] = True
+    # (X/N) ratio requirement
+    if "X/N" in desc or "(X/" in desc or "比例" in desc:
+        contract["ratio_required"] = True
+    # Sentiment direction
+    if "缺点" in desc and "优点" not in desc:
+        contract["sentiment"] = "negative"
+    elif "优点" in desc and "缺点" not in desc:
+        contract["sentiment"] = "positive"
+    elif "优缺点" in desc:
+        contract["sentiment"] = "mixed"
+    return contract
+
+
 def main() -> int:
+    import argparse
     setup_console_encoding()
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--sheet", default=None,
+                    help="Read annotations from a specific xlsx sheet (e.g. 'claude-ppt 1.1')")
+    args = ap.parse_args()
+
     if not SHAPE_JSON.exists():
         safe_print(f"[BLOCKED] Missing {SHAPE_JSON.name}")
         return 0
@@ -109,9 +142,19 @@ def main() -> int:
     headers = metrics["headers"]
 
     # --- Load user annotations (human-in-the-loop) ---
-    annotations = parse_user_annotations()
+    safe_print(f"[INFO] Reading annotations from sheet: {args.sheet or '(default/first)'}")
+    annotations = parse_user_annotations(sheet_name=args.sheet)
     if annotations:
-        safe_print(f"[INFO] Found user annotations for {len(annotations)} shapes")
+        safe_print(f"✅ Found user annotations for {len(annotations)} shapes")
+    else:
+        safe_print(f"⚠️ No user annotations found in sheet '{args.sheet or 'Sheet 1'}'")
+
+    # GUARDRAIL: if --sheet was specified (continuation run),
+    # 0 annotations is a fatal error — the annotation chain is broken.
+    if args.sheet and not annotations:
+        safe_print(f"❌ ABORT: --sheet '{args.sheet}' 指定但批注为空。"
+                   f"可能是 COM 连接不稳定，请重试。")
+        return 1
 
     mapping = []
     prompts = []
@@ -134,15 +177,18 @@ def main() -> int:
         else:
             instruction = prompt_rule(role)
 
-        # Append fix_notes as additional constraint
-        if anno.get("fix_notes"):
-            instruction += f"\n[用户修正] {anno['fix_notes']}"
+        # Read primary description field (natural language annotation)
+        desc = anno.get("description", "")
+        fix_notes = anno.get("fix_notes", "")
+        # Merge: 备注 appended to description (backward compat for old sheets)
+        if fix_notes and fix_notes not in desc:
+            desc = f"{desc}；{fix_notes}" if desc else fix_notes
 
-        # Inject content_source into prompt context
-        content_source_note = anno.get("content_source", "")
+        # Inject content_source into prompt context (description as fallback)
+        content_source_note = anno.get("content_source", "") or desc
 
-        # Build strategy hint (informational, used by Step 3A)
-        strategy_hint = anno.get("build_strategy", "")
+        # Build strategy hint (informational, used by Step 3A; description as fallback)
+        strategy_hint = anno.get("build_strategy", "") or desc
 
         max_chars = max(18, min(400, int(len(template_text) * 1.2) if template_text else 100))
         # max_lines: derive from template text line count when available
@@ -174,6 +220,21 @@ def main() -> int:
             m["strategy_exact"] = strategy_exact      # exact code, preferred over hint
         if params_raw:
             m["params"] = params_raw                  # raw string, parsed by Step 3A
+        if desc:
+            m["user_instruction"] = desc        # full user instruction for GPT prompt injection
+            oc = _parse_output_contract(desc)
+        else:
+            oc = {}
+        # Inject default contract for gpt_prompted shapes (ensure semantic check coverage)
+        if strategy_exact == "gpt_prompted" or "gpt_prompted" in (strategy_hint or "").lower():
+            if not oc.get("required_keywords"):
+                oc["required_keywords"] = ["样本", "建议", "反馈"]
+            if "bracket_highlight" not in oc:
+                oc["bracket_highlight"] = True
+            if "ratio_required" not in oc:
+                oc["ratio_required"] = True
+        if oc:
+            m["output_contract"] = oc       # structured constraints parsed from desc
         if anno:
             m["has_user_annotation"] = True
         mapping.append(m)
@@ -195,6 +256,20 @@ def main() -> int:
         }
         if content_source_note:
             p["user_content_source"] = content_source_note
+        if desc:
+            p["user_instruction"] = desc
+            p_oc = _parse_output_contract(desc)
+        else:
+            p_oc = {}
+        if strategy_exact == "gpt_prompted" or "gpt_prompted" in (strategy_hint or "").lower():
+            if not p_oc.get("required_keywords"):
+                p_oc["required_keywords"] = ["样本", "建议", "反馈"]
+            if "bracket_highlight" not in p_oc:
+                p_oc["bracket_highlight"] = True
+            if "ratio_required" not in p_oc:
+                p_oc["ratio_required"] = True
+        if p_oc:
+            p["output_contract"] = p_oc
         prompts.append(p)
 
         budgets.append({
