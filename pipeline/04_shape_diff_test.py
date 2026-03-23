@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Step 4: Three-layer diff test (Visual + Readability + Semantic).
 
-Compares Template page 15 vs codex.pptx page 1.
+Compares Template page 15 vs claude-ppt.pptx page 1.
 
 Three layers:
   Visual >= 98:   geometry + shape_type + chart_type + font
@@ -28,6 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.ppt_pipeline_common import (
     PROGRESS_DIR,
+    ROOT,
     TEMPLATE_PATH,
     com_call,
     com_get,
@@ -208,7 +209,7 @@ def semantic_report(target_slide) -> Dict:
 def main() -> int:
     setup_console_encoding()
     ap = argparse.ArgumentParser()
-    ap.add_argument("--target", default="codex 1.0.pptx")
+    ap.add_argument("--target", default="claude-ppt 1.0.pptx")
     args = ap.parse_args()
     target = ROOT / args.target
 
@@ -234,7 +235,7 @@ def main() -> int:
     p2 = app.Presentations.Open(str(target))
 
     try:
-        s1 = p1.Slides(15)  # template standard page
+        s1 = p1.Slides(2)   # template standard page
         s2 = p2.Slides(1)   # generated page
 
         # BUG FIX: match by name instead of index
@@ -314,13 +315,74 @@ def main() -> int:
             "|---|---|---|---|---|---|",
         ] + rows
 
-        if fails:
-            lines += ["", "## 差异与修复建议"]
-            for f in fails[:40]:
+        # Semantic fails
+        sem_fails = []
+        if sem["coverage"] < 100:
+            missing_kw = [k for k, v in sem["hits"].items() if not v]
+            kw_str = "、".join(missing_kw)
+            sem_fails.append({
+                "shape": "(全局)",
+                "issue": f"语义关键词缺失: {', '.join(missing_kw)}",
+                "fix_type": "keyword_missing",
+                "suggestion": f"在 gpt_prompted 类 shape 的内容描述中追加：必须包含'{kw_str}'关键词",
+            })
+
+        # Classify fix_type for each fail (5-type system)
+        #   code            — pipeline 代码缺陷 (shape 缺失, COM 错误)
+        #   style_mismatch  — 几何/字体/颜色偏差 (visual < 98)
+        #   budget_overflow  — 文本过长 (readability < 95, len > budget)
+        #   budget_underflow — 文本过短/空白 (readability < 95, len << budget)
+        #   keyword_missing  — 语义关键词缺失 (semantic < 100)
+        fix_items = []
+        for f in fails[:40]:
+            vs = f["visual"]
+            rs = f["readability"]
+            tname = f["template_name"]
+
+            if f["target_name"] == "(missing)":
+                fix_items.append({
+                    "shape": tname, "issue": "shape 缺失",
+                    "fix_type": "code", "suggestion": "03b COM 写入逻辑未覆盖该 shape",
+                })
+            elif vs < 98:
+                fix_items.append({
+                    "shape": tname, "issue": f"visual={vs} < 98 (几何/字体/颜色偏差)",
+                    "fix_type": "style_mismatch", "suggestion": "检查 03b COM 写入是否破坏了 shape 格式属性，或调整 style_anchor",
+                })
+            elif rs < 95:
+                # Determine overflow vs underflow
+                t_len = len(template_shapes.get(tname, {}).get("text", ""))
+                g_len = len(target_shapes.get(f.get("target_name", ""), {}).get("text", ""))
+                if t_len > 0 and g_len > t_len * 1.2:
+                    fix_items.append({
+                        "shape": tname, "issue": f"readability={rs} < 95 (文本过长: {g_len}/{t_len}字)",
+                        "fix_type": "budget_overflow",
+                        "suggestion": "缩减 prompt 字数约束或在内容描述中追加'宁短勿长'",
+                    })
+                elif t_len > 0 and g_len < t_len * 0.3:
+                    fix_items.append({
+                        "shape": tname, "issue": f"readability={rs} < 95 (文本过短: {g_len}/{t_len}字)",
+                        "fix_type": "budget_underflow",
+                        "suggestion": "内容描述中要求更充实的内容，涵盖更多测试者反馈",
+                    })
+                else:
+                    fix_items.append({
+                        "shape": tname, "issue": f"readability={rs} < 95 (文本长度/行数偏差)",
+                        "fix_type": "budget_overflow",
+                        "suggestion": "调整 readability_budget 或 prompt 字数约束",
+                    })
+
+        all_fixes = fix_items + sem_fails
+
+        if all_fixes:
+            lines += [
+                "", "## 修正建议",
+                "", "| shape | 问题 | fix_type | 建议 |",
+                "|-------|------|----------|------|",
+            ]
+            for fx in all_fixes:
                 lines.append(
-                    f"- {f['template_name']} -> {f['target_name']}: "
-                    f"visual={f['visual']}, readability={f['readability']} "
-                    f"-> 调整03a_build_shape.py对应shape的prompt/预算"
+                    f"| {fx['shape']} | {fx['issue']} | {fx['fix_type']} | {fx['suggestion']} |"
                 )
 
         write_md(FIX_MD, lines)
@@ -333,20 +395,30 @@ def main() -> int:
             f"- hits: {sem['hits']}",
         ])
 
+        # Determine overall fix_type (code takes priority; otherwise first non-code type)
+        has_code_fix = any(fx["fix_type"] == "code" for fx in all_fixes)
+        if has_code_fix:
+            overall_fix_type = "code"
+        elif all_fixes:
+            overall_fix_type = all_fixes[0]["fix_type"]
+        else:
+            overall_fix_type = ""
+
         # Write diff_result.json (the key file for agent iteration)
         write_json(DIFF_JSON, {
             "status": status,
             "visual_score": round(visual_avg, 2),
             "readability_score": round(read_avg, 2),
             "semantic_coverage": sem["coverage"],
-            "fails": [
+            "fix_type": overall_fix_type,
+            "fixes": [
                 {
-                    "template_name": f["template_name"],
-                    "target_name": f["target_name"],
-                    "visual": f["visual"],
-                    "readability": f["readability"],
+                    "shape": fx["shape"],
+                    "issue": fx["issue"],
+                    "fix_type": fx["fix_type"],
+                    "suggestion": fx["suggestion"],
                 }
-                for f in fails
+                for fx in all_fixes
             ],
             "generated_at": now_ts(),
         })

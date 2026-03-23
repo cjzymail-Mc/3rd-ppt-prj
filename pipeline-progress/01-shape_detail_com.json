@@ -1,14 +1,14 @@
 {
   "status": "ok",
-  "generated_at": "2026-02-19T16:21:26",
-  "template_slide": 15,
-  "blank_slide": 14,
+  "generated_at": "2026-03-17T16:29:37",
+  "template_slide": 2,
+  "blank_slide": 1,
   "blank_shape_count": 18,
   "std_shape_count": 26,
   "new_shapes": [
     {
-      "slide_index": 15,
-      "name": "矩形 11",
+      "slide_index": 2,
+      "name": "Rectangle 11",
       "left": 726.8117065429688,
       "top": 149.11961364746094,
       "width": 155.4698486328125,
@@ -22,8 +22,8 @@
       "z_order": 11
     },
     {
-      "slide_index": 15,
-      "name": "矩形 12",
+      "slide_index": 2,
+      "name": "Rectangle 12",
       "left": 774.8358764648438,
       "top": 3.5137007236480713,
       "width": 60.936771392822266,
@@ -37,8 +37,8 @@
       "z_order": 12
     },
     {
-      "slide_index": 15,
-      "name": "矩形 17",
+      "slide_index": 2,
+      "name": "Rectangle 17",
       "left": 24.505353927612305,
       "top": 184.0923614501953,
       "width": 212.9624481201172,
@@ -52,8 +52,8 @@
       "z_order": 14
     },
     {
-      "slide_index": 15,
-      "name": "矩形 19",
+      "slide_index": 2,
+      "name": "Rectangle 19",
       "left": 724.1249389648438,
       "top": 190.1979522705078,
       "width": 219.29534912109375,
@@ -67,8 +67,8 @@
       "z_order": 15
     },
     {
-      "slide_index": 15,
-      "name": "图片 39",
+      "slide_index": 2,
+      "name": "Picture 39",
       "left": 21.951969146728516,
       "top": 77.75457000732422,
       "width": 205.86692810058594,
@@ -82,8 +82,8 @@
       "z_order": 17
     },
     {
-      "slide_index": 15,
-      "name": "文本框 16",
+      "slide_index": 2,
+      "name": "TextBox 16",
       "left": 14.833621978759766,
       "top": 19.022676467895508,
       "width": 252.0072479248047,
@@ -97,8 +97,8 @@
       "z_order": 19
     },
     {
-      "slide_index": 15,
-      "name": "矩形 68",
+      "slide_index": 2,
+      "name": "Rectangle 68",
       "left": 20.203542709350586,
       "top": 260.6502380371094,
       "width": 416.8829040527344,
@@ -112,8 +112,8 @@
       "z_order": 21
     },
     {
-      "slide_index": 15,
-      "name": "矩形 77",
+      "slide_index": 2,
+      "name": "Rectangle 77",
       "left": 450.7889709472656,
       "top": 260.6502380371094,
       "width": 274.3611145019531,
@@ -127,7 +127,7 @@
       "z_order": 24
     },
     {
-      "slide_index": 15,
+      "slide_index": 2,
       "name": "图表 44",
       "left": 241.86331176757812,
       "top": 22.835668563842773,

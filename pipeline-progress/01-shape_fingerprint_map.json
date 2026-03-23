@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-02-19T16:21:26",
+  "generated_at": "2026-03-17T16:29:37",
   "fingerprints": [
     {
-      "name": "矩形 11",
+      "name": "Rectangle 11",
       "shape_type": 1,
       "left": 726.8,
       "top": 149.1,
@@ -13,7 +13,7 @@
       "in_group": false
     },
     {
-      "name": "矩形 12",
+      "name": "Rectangle 12",
       "shape_type": 1,
       "left": 774.8,
       "top": 3.5,
@@ -24,7 +24,7 @@
       "in_group": false
     },
     {
-      "name": "矩形 17",
+      "name": "Rectangle 17",
       "shape_type": 1,
       "left": 24.5,
       "top": 184.1,
@@ -35,7 +35,7 @@
       "in_group": false
     },
     {
-      "name": "矩形 19",
+      "name": "Rectangle 19",
       "shape_type": 1,
       "left": 724.1,
       "top": 190.2,
@@ -46,7 +46,7 @@
       "in_group": false
     },
     {
-      "name": "图片 39",
+      "name": "Picture 39",
       "shape_type": 13,
       "left": 22.0,
       "top": 77.8,
@@ -57,7 +57,7 @@
       "in_group": false
     },
     {
-      "name": "文本框 16",
+      "name": "TextBox 16",
       "shape_type": 17,
       "left": 14.8,
       "top": 19.0,
@@ -68,7 +68,7 @@
       "in_group": false
     },
     {
-      "name": "矩形 68",
+      "name": "Rectangle 68",
       "shape_type": 1,
       "left": 20.2,
       "top": 260.7,
@@ -79,7 +79,7 @@
       "in_group": false
     },
     {
-      "name": "矩形 77",
+      "name": "Rectangle 77",
       "shape_type": 1,
       "left": 450.8,
       "top": 260.7,

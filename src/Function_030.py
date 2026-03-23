@@ -91,7 +91,7 @@ dic_matrix = get_value('dic_matrix')
 
 
 # global 参数统一修改
-main_model = "openai/gpt-5.2"
+main_model = "openai/gpt-5.4"    #2026-03-11 更新  https://openrouter.ai/openai
 mini_model = "openai/gpt-5-mini"
 
 
