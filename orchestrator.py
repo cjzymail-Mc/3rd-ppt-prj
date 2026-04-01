@@ -465,11 +465,13 @@ class PPTOrchestrator:
         max_budget: float = 10.0,
         skip_analyst_first_round: bool = False,
         auto_mode: bool = False,
+        init_mode: bool = False,
     ):
         self.project_root = project_root
         self.max_rounds = max_rounds
         self.skip_analyst_first_round = skip_analyst_first_round
         self.auto_mode = auto_mode
+        self.init_mode = init_mode
         self.executor = AgentExecutor(project_root, max_budget)
         self.error_handler = ErrorHandler(project_root)
         self.state_manager = StateManager(project_root)
@@ -650,6 +652,100 @@ class PPTOrchestrator:
         return True
 
     # ------------------------------------------------------------------
+    # Hot iteration helpers
+    # ------------------------------------------------------------------
+
+    def _prompts_exist(self) -> bool:
+        """Check if GPT-prompt Text cells are already populated in Excel."""
+        try:
+            from pipeline.ppt_pipeline_common import read_gpt_prompts_from_xlsx
+            prompts = read_gpt_prompts_from_xlsx()
+            return len(prompts) > 0
+        except Exception:
+            return False
+
+    def _run_prompt_only_pipeline(self, version: str) -> bool:
+        """Hot iteration: prompts already in Excel, skip 02 + 03a Phase 1."""
+        if not self._run_pipeline_step("pipeline/03a_build_shape.py", ["--execute-prompts"]):
+            return False
+        if not self._run_pipeline_step("pipeline/03b_build_ppt_com.py", ["--version", version]):
+            return False
+        return True
+
+    def _builder_prompt_optimizer_prompt(self, sheet_name: str, fix_data: list[dict]) -> str:
+        """Builder LLM: 根据 fix 报告全面重写 GPT-prompt Text。"""
+
+        # 1. 读取原始 prompt 模板（clean baseline）
+        tpl_path = self.project_root / "pipeline" / "prompt_templates" / "gpt_summary.md"
+        original_template = ""
+        if tpl_path.exists():
+            try:
+                original_template = tpl_path.read_text(encoding="utf-8")[:800]
+            except Exception:
+                pass
+
+        # 2. 读取当前生成内容（供 Builder 了解实际产出）
+        content_path = self.project_root / "pipeline-progress" / "03a-build_shape_content.json"
+        content_snippets = {}
+        if content_path.exists():
+            try:
+                data = json.loads(content_path.read_text(encoding="utf-8"))
+                for item in data.get("items", []):
+                    sn = item.get("shape_name", "")
+                    content_snippets[sn] = item.get("content", "")[:200]
+            except Exception:
+                pass
+
+        # 3. 构建 fix 清单（附带当前内容片段）
+        fix_lines = []
+        for fx in fix_data:
+            if fx.get("fix_type") == "code":
+                continue
+            shape = fx["shape"]
+            line = f"  - {shape}: [{fx.get('fix_type','')}] {fx.get('issue','')}"
+            line += f"\n    建议: {fx.get('suggestion','')}"
+            if shape in content_snippets:
+                line += f"\n    当前生成内容(前200字): {content_snippets[shape]}"
+            fix_lines.append(line)
+        fix_items = "\n".join(fix_lines)
+
+        tpl_section = ""
+        if original_template:
+            tpl_section = (
+                f"## 原始 prompt 模板（clean baseline）\n"
+                f"```\n{original_template}\n```\n\n"
+            )
+
+        return (
+            f"你是 PPT 内容优化师。根据验收报告，**全面重写** Excel 中的 GPT prompt。\n\n"
+            f"## 核心原则\n"
+            f"**不要在原 prompt 上打补丁！** 每次都基于原始模板 + fix 建议，重新编写一个干净、完整的 prompt。\n"
+            f"原因：反复追加约束会导致 prompt 冗余膨胀、指令矛盾，GPT 产出质量反而下降。\n\n"
+            f"{tpl_section}"
+            f"## 工作 sheet: 「{sheet_name}」\n\n"
+            f"## 验收失败清单\n{fix_items}\n\n"
+            f"## 重写策略\n"
+            f"1. 先读取当前 prompt 全文\n"
+            f"2. 对照原始模板，识别哪些是有效约束、哪些是冗余补丁\n"
+            f"3. 以原始模板为骨架，融入 fix 建议中的有效约束，生成一个干净的新 prompt\n"
+            f"4. 具体 fix_type 处理：\n"
+            f"   - keyword_missing: 在 prompt **前半段**明确要求包含缺失关键词（不要放在末尾）\n"
+            f"   - budget_overflow: 降低目标字数（当前 budget 的 85%），让 GPT 输出更紧凑\n"
+            f"   - budget_underflow: 提高字数下限，要求充实内容\n"
+            f"   - style_mismatch: 加入格式/语调约束\n\n"
+            f"## 任务\n"
+            f"1. 通过 Python COM 打开 `pipeline-progress/01-shape_detail.xlsx`「{sheet_name}」sheet\n"
+            f"2. 找到上述 shape 的「GPT-prompt Text」单元格\n"
+            f"3. **全面重写** prompt（不是追加！），保持干净、无冗余\n"
+            f"4. 保存并关闭 xlsx\n"
+            f"5. 打印修改摘要（列出每个 shape 的改动要点）\n\n"
+            f"## 规则\n"
+            f"- 只改有问题的 shape 的 prompt，其余不动\n"
+            f"- **不要修改「内容描述」「strategy」「params」等注释字段**\n"
+            f"- ⚠️ 不要运行任何 pipeline 脚本\n"
+        )
+
+    # ------------------------------------------------------------------
     # Prompt builders
     # ------------------------------------------------------------------
 
@@ -758,18 +854,21 @@ class PPTOrchestrator:
         )
 
     def _reviewer_llm_only_prompt(self, version: str) -> str:
-        """Reviewer LLM: 仅语义审核，不运行 pipeline 脚本。"""
+        """Reviewer LLM: 语义审核 + prompt 级别修复建议。"""
         return (
             f"你是 PPT 验收师。Pipeline 已运行 04_shape_diff_test.py，测试结果为 FAIL。\n\n"
-            f"你的任务：分析失败原因，补充精准修复建议。\n\n"
+            f"你的任务：分析失败原因，补充精准修复建议（面向 GPT-prompt Text）。\n\n"
             f"1. 读取 `pipeline-progress/04-fix_ppt.md` 和 `pipeline-progress/04-diff_result.json`\n"
             f"2. 对每个失败项做深入分析：\n"
-            f"   - 语义覆盖不达标：找出哪些 shape 的文案缺少关键词（样本/建议/反馈），"
-            f"建议在对应 shape 的「内容描述」中追加什么约束\n"
-            f"   - Readability 不达标：读取对应 shape 的实际文本，判断是过长/过短/偏题\n"
+            f"   - 语义覆盖不达标：找出哪些 shape 缺少关键词（样本/建议/反馈），"
+            f"建议如何修改对应 shape 的「GPT-prompt Text」\n"
+            f"   - Readability 不达标：判断是文本过长/过短/偏题，"
+            f"给出具体的 prompt 修改建议（如「在 prompt 中追加：控制在 180-220 字」）\n"
             f"   - Visual 不达标：判断是 COM 写入格式错误还是 shape 匹配错误\n"
             f"3. 将补充诊断追加到 `pipeline-progress/04-fix_ppt.md`\n"
-            f"4. 打印验收结论（FAIL + 三层分数 + 具体修复建议摘要）\n\n"
+            f"4. 每个 fix 建议必须说明如何修改 GPT-prompt Text\n"
+            f"5. 打印验收结论（FAIL + 三层分数 + 具体 prompt 修复建议摘要）\n\n"
+            f"⚠️ 修复建议面向 GPT-prompt Text（终端变量），不要建议修改「内容描述」等注释字段。\n"
             f"⚠️ 不要运行任何 pipeline 脚本，orchestrator 会处理。"
         )
 
@@ -879,49 +978,73 @@ class PPTOrchestrator:
         print(f"\n--- Phase 1: 模板分析 ---")
         phase1_start = time.time()
 
-        # Step 1: Extract template shapes (skip if JSON is fresh)
+        # Step 1: Extract template shapes
         json_path = self.project_root / "pipeline-progress" / "01-shape_detail_com.json"
         xlsx_path = self.project_root / "pipeline-progress" / "01-shape_detail.xlsx"
         template_path = self.project_root / "pipeline" / "standard and empty template.pptx"
 
-        skip_extract = (
-            json_path.exists() and xlsx_path.exists() and template_path.exists()
-            and json_path.stat().st_mtime > template_path.stat().st_mtime
+        # Hot iteration: NEVER overwrite existing xlsx (protects annotations + prompts)
+        _skip_pipeline_01 = (
+            not self.init_mode and xlsx_path.exists() and json_path.exists()
         )
 
-        if skip_extract:
-            print("  [Cache] JSON/xlsx 已是最新，跳过 PPT 提取")
+        if _skip_pipeline_01:
+            print("  [Hot] xlsx + JSON 已存在，跳过 01+01b（保护已有 prompt）")
         else:
-            print("  [Pipeline] 01_shape_detail.py — 提取模板 shape ...")
-            r1 = self._run_pipeline("pipeline/01_shape_detail.py")
-            if r1.returncode != 0:
-                print(f"\n❌ 01_shape_detail.py 失败:\n{r1.stderr[:500]}")
-                return False
-            print(f"  ✅ 01_shape_detail.py 完成 ({time.time() - phase1_start:.0f}s)")
+            # 01: Extract template shapes (skip if JSON is fresh)
+            skip_extract = (
+                json_path.exists() and xlsx_path.exists() and template_path.exists()
+                and json_path.stat().st_mtime > template_path.stat().st_mtime
+            )
 
-        step1b_start = time.time()
-        print("  [Pipeline] 01b_auto_annotate.py — 规则推断批注 ...")
-        r2 = self._run_pipeline("pipeline/01b_auto_annotate.py")
-        if r2.returncode != 0:
-            print(f"\n❌ 01b_auto_annotate.py 失败:\n{r2.stderr[:500]}")
-            return False
-        # Show annotation summary from 01b
-        for line in r2.stdout.splitlines():
-            if line.strip():
-                print(f"    {line}")
-        print(f"  ✅ 01b_auto_annotate.py 完成 ({time.time() - step1b_start:.0f}s)")
+            if skip_extract:
+                print("  [Cache] JSON/xlsx 已是最新，跳过 PPT 提取")
+            else:
+                print("  [Pipeline] 01_shape_detail.py — 提取模板 shape ...")
+                r1 = self._run_pipeline("pipeline/01_shape_detail.py")
+                if r1.returncode != 0:
+                    print(f"\n❌ 01_shape_detail.py 失败:\n{r1.stderr[:500]}")
+                    return False
+                print(f"  ✅ 01_shape_detail.py 完成 ({time.time() - phase1_start:.0f}s)")
+
+            # 01b: Auto-annotate
+            step1b_start = time.time()
+            print("  [Pipeline] 01b_auto_annotate.py — 规则推断批注 ...")
+            r2 = self._run_pipeline("pipeline/01b_auto_annotate.py")
+            if r2.returncode != 0:
+                print(f"\n❌ 01b_auto_annotate.py 失败:\n{r2.stderr[:500]}")
+                return False
+            for line in r2.stdout.splitlines():
+                if line.strip():
+                    print(f"    {line}")
+            print(f"  ✅ 01b_auto_annotate.py 完成 ({time.time() - step1b_start:.0f}s)")
 
         # Step 2: Detect continuation state + prepare target sheet
         ambiguous_count = 0
-        m = re.search(r"(\d+) 项待LLM审核", r2.stdout)
-        if m:
-            ambiguous_count = int(m.group(1))
-        if ambiguous_count > 0:
-            print(f"  [INFO] {ambiguous_count} 个模糊项需要 LLM 重点审核")
+        if not _skip_pipeline_01:
+            m = re.search(r"(\d+) 项待LLM审核", r2.stdout)
+            if m:
+                ambiguous_count = int(m.group(1))
+            if ambiguous_count > 0:
+                print(f"  [INFO] {ambiguous_count} 个模糊项需要 LLM 重点审核")
 
         base_idx = self._detect_next_version_index()
+
+        # Init mode: jump to next major version X.0
+        if self.init_mode:
+            base_idx = (base_idx + 9) // 10 * 10
+            # 10→10(1.0), 16→20(2.0), 20→20(2.0), 21→30(3.0)
+
         fix_report = self.project_root / "pipeline-progress" / "04-fix_ppt.md"
-        is_continuation = (base_idx > 10) and fix_report.exists()
+        is_continuation = (base_idx > 10) and fix_report.exists() and not self.init_mode
+
+        # Capture fix.md freshness BEFORE 02b modifies xlsx
+        fix_is_fresh = (
+            is_continuation
+            and fix_report.stat().st_mtime > xlsx_path.stat().st_mtime
+        )
+        if fix_is_fresh:
+            print("  [INFO] fix.md 比 xlsx 更新，Round 1 将自动优化 prompt")
 
         if is_continuation:
             # Continuation: create new sheet via 02b BEFORE Analyst
@@ -933,7 +1056,10 @@ class PPTOrchestrator:
 
                 print(f"\n  [续跑] 创建新 sheet「{target_sheet}」...")
                 t0 = time.time()
-                r = self._run_pipeline("pipeline/02b_iteration_setup.py", ["--version", next_version])
+                args_02b = ["--version", next_version]
+                if not self.init_mode:
+                    args_02b.append("--sheet-only")
+                r = self._run_pipeline("pipeline/02b_iteration_setup.py", args_02b)
                 dur = time.time() - t0
                 if r.returncode != 0:
                     print(f"\n❌ 02b_iteration_setup.py 失败 ({dur:.0f}s):\n{r.stderr[:500]}")
@@ -959,11 +1085,21 @@ class PPTOrchestrator:
             target_sheet = "Shape Detail"
 
         # Step 3: LLM enhances annotations
-        # Priority: user override > auto-detection > default (run)
+        # Priority: hot iteration > user override > auto-detection > default (run)
         skip_analyst_llm = False
 
-        # Highest priority: user chose to skip at startup
-        if self.skip_analyst_first_round:
+        # Highest priority: hot iteration always skips Analyst LLM
+        if not self.init_mode:
+            skip_analyst_llm = True
+            print(f"\n  [Hot] 跳过 Analyst LLM 增强（prompt 已存在）")
+            self.results["analyst"] = ExecutionResult(
+                agent_name="analyst", status=AgentStatus.COMPLETED,
+                session_id="skipped-hot-iteration", exit_code=0,
+                duration=0.0, cost=0.0, tokens=0, output_files=[],
+            )
+
+        # User chose to skip at startup
+        elif self.skip_analyst_first_round:
             skip_analyst_llm = True
             print(f"\n  [跳过 Agent] 用户选择跳过 Analyst LLM 增强")
             self.results["analyst"] = ExecutionResult(
@@ -1031,7 +1167,9 @@ class PPTOrchestrator:
         self.state_manager.save_state(state)
 
         # ---- PAUSE for human review ----
-        if self.skip_analyst_first_round:
+        if not self.init_mode:
+            pass  # Hot iteration: no annotation PAUSE (user reviews prompts later)
+        elif self.skip_analyst_first_round:
             print(f"\n  [跳过 PAUSE] 用户选择跳过，直接进入构建阶段")
         elif self.auto_mode:
             print(f"\n  [全自动] 跳过批注校准暂停")
@@ -1068,8 +1206,50 @@ class PPTOrchestrator:
                 self._record_version(version)
 
             # ---- Builder ----
-            if is_fresh_build:
-                # First ever build: pure pipeline, no --sheet
+            if not self.init_mode and round_num == 1:
+                # Hot iteration first round: prompt review + prompt-only pipeline
+                # Check prerequisites
+                mapping_json = self.project_root / "pipeline-progress" / "02-shape_analysis_map.json"
+                if not mapping_json.exists() or not self._prompts_exist():
+                    print(f"\n  ⚠️  前置产物不完整（02 artifacts 或 prompt 缺失）")
+                    print(f"      请先运行选项 [0-初始化] 构建完整结构")
+                    builder_failed = True
+                else:
+                    # Auto-optimize prompts if fix.md is fresh
+                    if fix_is_fresh:
+                        fix_data = []
+                        diff_path = self.project_root / "pipeline-progress" / "04-diff_result.json"
+                        if diff_path.exists():
+                            try:
+                                fix_data = json.loads(diff_path.read_text(encoding="utf-8")).get("fixes", [])
+                            except (json.JSONDecodeError, IOError):
+                                pass
+                        if fix_data:
+                            sheet_name = f"claude-ppt {version}"
+                            print(f"  [Agent] Builder LLM 根据 fix.md 优化 prompt ...")
+                            self.monitor.display_agent_start("builder")
+                            result = await self.error_handler.retry_with_backoff(
+                                self.executor.run_agent, AGENT_CONFIGS["builder"],
+                                self._builder_prompt_optimizer_prompt(sheet_name, fix_data)
+                            )
+                            self.monitor.display_agent_complete(result)
+                            if result.status == AgentStatus.FAILED:
+                                print(f"\n⚠️  Builder LLM prompt 优化失败，继续手动审核")
+
+                    if not self.auto_mode:
+                        xlsx_path = str((self.project_root / "pipeline-progress" / "01-shape_detail.xlsx").resolve())
+                        try:
+                            os.startfile(xlsx_path)
+                            print(f"  [已打开] Excel — 可在「GPT-prompt Text」中编辑 prompt")
+                        except Exception:
+                            print(f"  [手动打开] {xlsx_path}")
+                        print(f"\n⏸️  PROMPT REVIEW — 审核/编辑 prompt 后按 Enter 继续...")
+                        input()
+                    else:
+                        print(f"  [全自动] 跳过 prompt 审核")
+                    builder_failed = not self._run_prompt_only_pipeline(version)
+            elif is_fresh_build:
+                # Cold start first build: pure pipeline, no --sheet
                 builder_failed = not self._run_builder_pipeline(version)
             elif is_continuation_r1:
                 # Continuation round 1: 02b + Analyst already done, just run pipeline
@@ -1077,29 +1257,48 @@ class PPTOrchestrator:
                 builder_failed = not self._run_builder_pipeline(
                     version, sheet_arg=["--sheet", f"claude-ppt {version}"])
             else:
-                # Full correction round: 02b → LLM → pipeline
+                # Correction round: prompt-centric
+                sheet_name = f"claude-ppt {version}"
 
-                # Phase 1: create new sheet + basic fixes
-                if not self._run_pipeline_step("pipeline/02b_iteration_setup.py", ["--version", version]):
+                # Phase 1: create new sheet (inherit prompts, skip annotation fixes)
+                if not self._run_pipeline_step("pipeline/02b_iteration_setup.py",
+                                               ["--version", version, "--sheet-only"]):
                     builder_failed = True
 
-                # Phase 2: LLM agent — only xlsx COM modification
+                # Phase 2: Builder LLM edits prompts directly
                 if not builder_failed:
-                    print(f"  [Agent] Builder LLM 精调 xlsx 批注 ...")
+                    fix_data = []
+                    diff_path = self.project_root / "pipeline-progress" / "04-diff_result.json"
+                    if diff_path.exists():
+                        try:
+                            fix_data = json.loads(diff_path.read_text(encoding="utf-8")).get("fixes", [])
+                        except (json.JSONDecodeError, IOError):
+                            pass
+                    print(f"  [Agent] Builder LLM 优化 prompt ...")
                     self.monitor.display_agent_start("builder")
                     result = await self.error_handler.retry_with_backoff(
                         self.executor.run_agent, AGENT_CONFIGS["builder"],
-                        self._builder_llm_only_prompt(version)
+                        self._builder_prompt_optimizer_prompt(sheet_name, fix_data)
                     )
                     self.monitor.display_agent_complete(result)
                     if result.status == AgentStatus.FAILED:
-                        print(f"\n❌ Builder LLM 精调失败 (round {round_num})。")
+                        print(f"\n❌ Builder LLM prompt 优化失败 (round {round_num})。")
                         builder_failed = True
 
-                # Phase 3: pipeline regenerate (with prompt review)
+                # Phase 3: prompt review pause
+                if not builder_failed and not self.auto_mode:
+                    xlsx_path = str((self.project_root / "pipeline-progress" / "01-shape_detail.xlsx").resolve())
+                    try:
+                        os.startfile(xlsx_path)
+                        print(f"  [已打开] Excel — 请审核修改后的 GPT-prompt Text")
+                    except Exception:
+                        print(f"  [手动打开] {xlsx_path}")
+                    print(f"\n⏸️  PROMPT REVIEW — 审核 prompt 后按 Enter 继续...")
+                    input()
+
+                # Phase 4: prompt-only pipeline (03a Phase 2 + 03b)
                 if not builder_failed:
-                    builder_failed = not self._run_builder_pipeline(
-                        version, sheet_arg=["--sheet", f"claude-ppt {version}"])
+                    builder_failed = not self._run_prompt_only_pipeline(version)
 
             # Record builder result
             key = f"builder_round{round_num}"
@@ -1135,7 +1334,25 @@ class PPTOrchestrator:
 
             # ---- max_rounds=1: skip reviewer, end directly ----
             if self.max_rounds == 1:
-                print(f"\n✅ claude-ppt {version}.pptx 已生成，请人工审核。")
+                if self.init_mode:
+                    # Cold start: auto-verify (report only, no correction round)
+                    print(f"\n  [验收] 自动检查 claude-ppt {version}.pptx 质量...")
+                    r = self._run_pipeline(
+                        "pipeline/04_shape_diff_test.py",
+                        ["--target", f"claude-ppt {version}.pptx"]
+                    )
+                    for line in r.stdout.splitlines():
+                        stripped = line.strip()
+                        if stripped:
+                            print(f"    {stripped}")
+                    passed, fix_type = self._check_review_passed()
+                    if passed:
+                        print(f"\n✅ claude-ppt {version}.pptx 初始化完成，验收通过！")
+                    else:
+                        print(f"\n⚠️  claude-ppt {version}.pptx 初始化完成，验收未通过 (fix_type={fix_type})")
+                        print(f"   已生成 fix.md — 下次选1或选2时 Builder LLM 会自动优化 prompt")
+                else:
+                    print(f"\n✅ claude-ppt {version}.pptx 已生成，请人工审核。")
                 self.monitor.display_summary(self.results, time.time() - start_time)
                 self.state_manager.clear_state()
                 return True
@@ -1291,18 +1508,23 @@ def main():
     max_rounds = args.max_rounds
     auto_mode = False
     review_only = False
+    init_mode = False
+    xlsx_exists = (project_root / "pipeline-progress" / "01-shape_detail.xlsx").exists()
+
     if not any(a.startswith('--max-rounds') for a in sys.argv[1:]):
         print("\n🎯 请选择运行模式:\n")
-        print("  1️⃣  1轮 ── 直接生成ppt，不验收")
-        print("  2️⃣  2轮 ── 完整流程×2：生成 → 验收 → 修正")
-        print("  3️⃣  3轮 ── 完整流程×3：生成 → 验收 → 修正；反复打磨，追求极致")
-        print("  4️⃣  🤖 全自动2轮 ── 自动跳过所有Pause，泡杯咖啡等结果")
-        print("  5️⃣  🔍 单独验收 ── 只跑验收，检查最新 PPT 质量\n")
-        auto_mode = False
-        review_only = False
+        print("  0️⃣  <初始化> ── 全新 PPT 分析，从零构建结构和 prompt")
+        print("  1️⃣  1轮 ── 直接生成ppt，⚠️ 不自动优化 prompt / 不验收⚠️")
+        print("  2️⃣  2轮 ── 完整流程×2：自动优化 prompt → 暂停人工审核 → 生成ppt → 自动验收 → 下一轮")
+        print("  3️⃣  3轮 ── 完整流程×3：自动优化 prompt → 暂停人工审核 → 生成ppt → 自动验收 → 下一轮 × 2")
+        print("  4️⃣  🚗全自动×2轮🚗  ── 自动跳过所有Pause (选项2的增强版)")
+        print("  5️⃣  🔍单独验收ppt🔍 ── 仅验收，检查最新 PPT 质量\n")
         while True:
             choice = input("请选择 [直接回车=1]: ").strip()
             if not choice:
+                choice = '1'
+            if choice == '0':
+                init_mode = True
                 max_rounds = 1
                 break
             if choice in ('1', '2', '3'):
@@ -1316,9 +1538,18 @@ def main():
                 review_only = True
                 max_rounds = 1
                 break
-            print("❌ 请输入 1-5")
+            print("❌ 请输入 0-5")
+
+        # Force routing: Excel 不存在时强制初始化
+        if not init_mode and not review_only and not xlsx_exists:
+            print(f"  ⚠️  Excel 不存在，自动切换到 [0-初始化] 模式")
+            init_mode = True
+            max_rounds = 1
+
         if review_only:
             print(f"✓ 🔍 单独验收模式")
+        elif init_mode:
+            print(f"✓ 🆕 初始化模式：完整分析 + 构建结构 + 生成 prompt")
         elif auto_mode:
             print(f"✓ 🤖 挂机托管: 全自动 2 轮，跳过所有暂停")
         else:
@@ -1363,14 +1594,16 @@ def main():
             print(f"   数据: pipeline-progress/04-diff_result.json")
         sys.exit(0 if passed else 1)
 
-    # Analyst LLM: auto-decide by max_rounds
-    skip_analyst = (max_rounds == 1 and not auto_mode)
-    if skip_analyst:
-        print("✓ 单轮模式：跳过 Analyst LLM，直接进入构建阶段")
+    # Analyst LLM: auto-decide by mode
+    skip_analyst = (max_rounds == 1 and not auto_mode and not init_mode)
+    if init_mode:
+        print("✓ 初始化模式：Analyst LLM 将增强注释")
+    elif skip_analyst:
+        print("✓ 热迭代：跳过 Analyst LLM，直接操作 prompt")
     elif auto_mode:
-        print("✓ 🤖 全自动模式：Analyst LLM 正常运行，全程无暂停")
+        print("✓ 🤖 全自动模式：热迭代，全程无暂停")
     else:
-        print("✓ 多轮模式：将运行 Analyst LLM 增强注释")
+        print("✓ 热迭代模式：直接操作 prompt")
 
     orch = PPTOrchestrator(
         project_root=project_root,
@@ -1378,6 +1611,7 @@ def main():
         max_budget=args.max_budget,
         skip_analyst_first_round=skip_analyst,
         auto_mode=auto_mode,
+        init_mode=init_mode,
     )
 
     success = asyncio.run(orch.run())

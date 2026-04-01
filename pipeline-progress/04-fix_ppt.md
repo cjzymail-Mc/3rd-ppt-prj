@@ -2,12 +2,12 @@
 
 - 状态: fail
 - visual_score: 100.00%
-- readability_score: 98.96%
+- readability_score: 100.00%
 - semantic_coverage: 66.67%
 - template_shapes: 26
 - target_shapes: 26
 - paired: 26
-- 时间: 2026-03-20T17:17:38
+- 时间: 2026-03-23T16:36:39
 
 ## Shape对比
 |template|target|visual|readability|text_len|match|
@@ -30,12 +30,12 @@
 |Straight Connector 32|Straight Connector 32|100.00|100.00|0/0|name|
 |Picture 39|Picture 39|100.00|100.00|0/0|name|
 |Rectangle 40|Rectangle 40|100.00|100.00|0/0|name|
-|TextBox 16|TextBox 16|100.00|73.08|13/4|name|
+|TextBox 16|TextBox 16|100.00|100.00|13/13|name|
 |Straight Connector 41|Straight Connector 41|100.00|100.00|0/0|name|
-|Rectangle 68|Rectangle 68|100.00|100.00|225/254|name|
+|Rectangle 68|Rectangle 68|100.00|100.00|225/252|name|
 |Picture 74|Picture 74|100.00|100.00|0/0|name|
 |Picture 75|Picture 75|100.00|100.00|0/0|name|
-|Rectangle 77|Rectangle 77|100.00|100.00|168/187|name|
+|Rectangle 77|Rectangle 77|100.00|100.00|168/183|name|
 |Rectangle 14|Rectangle 14|100.00|100.00|11/11|name|
 |图表 44|图表 44|100.00|100.00|0/0|name|
 
@@ -43,5 +43,4 @@
 
 | shape | 问题 | fix_type | 建议 |
 |-------|------|----------|------|
-| TextBox 16 | readability=73.08 < 95 (文本长度/行数偏差) | budget_overflow | 调整 readability_budget 或 prompt 字数约束 |
 | (全局) | 语义关键词缺失: 建议 | keyword_missing | 在 gpt_prompted 类 shape 的内容描述中追加：必须包含'建议'关键词 |

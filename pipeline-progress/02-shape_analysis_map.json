@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-20T16:57:01",
+  "generated_at": "2026-03-23T11:27:34",
   "has_user_annotations": true,
   "annotated_shapes": [
     "Rectangle 11",
@@ -42,10 +42,10 @@
       "build_function": "build_shape_1",
       "template_text": "8.29/10",
       "template_text_len": 7,
-      "user_strategy_hint": "评分均值10分制（综合所有测试指标的均值，保留两位小数）；格式固定为X.XX/10，保留两位小数，值的范围0.00-10.00；从source data.xlsx计算所有维度评分综合均值后填入",
-      "user_content_source": "评分均值10分制（综合所有测试指标的均值，保留两位小数）；格式固定为X.XX/10，保留两位小数，值的范围0.00-10.00；从source data.xlsx计算所有维度评分综合均值后填入",
+      "user_strategy_hint": "评分均值10分制",
+      "user_content_source": "评分均值10分制",
       "strategy_exact": "score_10pt",
-      "user_instruction": "评分均值10分制（综合所有测试指标的均值，保留两位小数）；格式固定为X.XX/10，保留两位小数，值的范围0.00-10.00；从source data.xlsx计算所有维度评分综合均值后填入",
+      "user_instruction": "评分均值10分制",
       "has_user_annotation": true
     },
     {
@@ -77,10 +77,10 @@
       "build_function": "build_shape_2",
       "template_text": "A",
       "template_text_len": 1,
-      "user_strategy_hint": "综合评分等级A/B/C/D（基于综合均值10分制换算：A>=9.0, B>=7.0, C>=5.0, D<5.0）；输出格式为单个大写字母（A/B/C/D）；换算规则：>=9.0->A，>=7.0->B，>=5.0->C，<5.0->D；与score_10pt的均值保持一致",
-      "user_content_source": "综合评分等级A/B/C/D（基于综合均值10分制换算：A>=9.0, B>=7.0, C>=5.0, D<5.0）；输出格式为单个大写字母（A/B/C/D）；换算规则：>=9.0->A，>=7.0->B，>=5.0->C，<5.0->D；与score_10pt的均值保持一致",
+      "user_strategy_hint": "评分均值100分制档",
+      "user_content_source": "评分均值100分制档",
       "strategy_exact": "grade_letter",
-      "user_instruction": "综合评分等级A/B/C/D（基于综合均值10分制换算：A>=9.0, B>=7.0, C>=5.0, D<5.0）；输出格式为单个大写字母（A/B/C/D）；换算规则：>=9.0->A，>=7.0->B，>=5.0->C，<5.0->D；与score_10pt的均值保持一致",
+      "user_instruction": "评分均值100分制档",
       "has_user_annotation": true
     },
     {
@@ -112,11 +112,10 @@
       "build_function": "build_shape_3",
       "template_text": "试穿人数：3人\r测试者平均体重：84.3KG\r测试者球场定位：锋、卫",
       "template_text_len": 34,
-      "user_strategy_hint": "不走GPT直接统计试穿人数、测试者平均体重及球场定位（3行固定格式输出）；严格按格式输出：试穿人数：X人\n测试者平均体重：XX.XKG\n测试者球场定位：X、X（多个定位用顿号分隔）；体重保留一位小数；禁止走GPT",
-      "user_content_source": "不走GPT直接统计试穿人数、测试者平均体重及球场定位（3行固定格式输出）；严格按格式输出：试穿人数：X人\n测试者平均体重：XX.XKG\n测试者球场定位：X、X（多个定位用顿号分隔）；体重保留一位小数；禁止走GPT",
+      "user_strategy_hint": "不走GPT统计人数体重",
+      "user_content_source": "不走GPT统计人数体重",
       "strategy_exact": "sample_aggregation",
-      "params": "fields=试穿人数,平均体重,球场定位",
-      "user_instruction": "不走GPT直接统计试穿人数、测试者平均体重及球场定位（3行固定格式输出）；严格按格式输出：试穿人数：X人\n测试者平均体重：XX.XKG\n测试者球场定位：X、X（多个定位用顿号分隔）；体重保留一位小数；禁止走GPT",
+      "user_instruction": "不走GPT统计人数体重",
       "has_user_annotation": true
     },
     {
@@ -148,10 +147,10 @@
       "build_function": "build_shape_4",
       "template_text": "",
       "template_text_len": 0,
-      "user_strategy_hint": "空文本框（无内容），跳过处理",
-      "user_content_source": "空文本框（无内容），跳过处理",
+      "user_strategy_hint": "（自动跳过）",
+      "user_content_source": "（自动跳过）",
       "strategy_exact": "skip",
-      "user_instruction": "空文本框（无内容），跳过处理",
+      "user_instruction": "（自动跳过）",
       "has_user_annotation": true
     },
     {
@@ -183,11 +182,11 @@
       "build_function": "build_shape_5",
       "template_text": "",
       "template_text_len": 0,
-      "user_strategy_hint": "提取问卷中对应鞋款的产品图片（图片框尺寸约205.9x88.8 pt）；图片需等比缩放适应图片框（205.9x88.8 pt）；优先保持宽度适配，缩放后水平+垂直居中对齐；若图片宽高比与框架不符，以宽度为基准缩放",
-      "user_content_source": "提取问卷中对应鞋款的产品图片（图片框尺寸约205.9x88.8 pt）；图片需等比缩放适应图片框（205.9x88.8 pt）；优先保持宽度适配，缩放后水平+垂直居中对齐；若图片宽高比与框架不符，以宽度为基准缩放",
+      "user_strategy_hint": "（自动提取图片）",
+      "user_content_source": "（自动提取图片）",
       "strategy_exact": "extract_image",
       "params": "sheet=问卷",
-      "user_instruction": "提取问卷中对应鞋款的产品图片（图片框尺寸约205.9x88.8 pt）；图片需等比缩放适应图片框（205.9x88.8 pt）；优先保持宽度适配，缩放后水平+垂直居中对齐；若图片宽高比与框架不符，以宽度为基准缩放",
+      "user_instruction": "（自动提取图片）",
       "has_user_annotation": true
     },
     {
@@ -219,11 +218,10 @@
       "build_function": "build_shape_6",
       "template_text": "‘SUPER GRASS’",
       "template_text_len": 13,
-      "user_strategy_hint": "鞋款名称（从数据源列提取，替换模板占位名称，保持单引号包裹格式）；格式为单引号包裹的鞋款英文字符串，如SUPER GRASS；直接从数据列提取，不经GPT；若鞋款名称含小写，转为全大写",
-      "user_content_source": "鞋款名称（从数据源列提取，替换模板占位名称，保持单引号包裹格式）；格式为单引号包裹的鞋款英文字符串，如SUPER GRASS；直接从数据列提取，不经GPT；若鞋款名称含小写，转为全大写",
-      "strategy_exact": "extract_column",
-      "params": "column=鞋款名称",
-      "user_instruction": "鞋款名称（从数据源列提取，替换模板占位名称，保持单引号包裹格式）；格式为单引号包裹的鞋款英文字符串，如SUPER GRASS；直接从数据列提取，不经GPT；若鞋款名称含小写，转为全大写",
+      "user_strategy_hint": "鞋款名称，字数上限15字，直接使用模板文本不修改，不添加多余内容",
+      "user_content_source": "鞋款名称，字数上限15字，直接使用模板文本不修改，不添加多余内容",
+      "strategy_exact": "template_direct",
+      "user_instruction": "鞋款名称，字数上限15字，直接使用模板文本不修改，不添加多余内容",
       "has_user_annotation": true
     },
     {
@@ -255,11 +253,11 @@
       "build_function": "build_shape_7",
       "template_text": "【包裹性】\r前掌内/外侧弯折处均出现卡脚情况（3/3）\r鞋带孔生涩，在绑缚过程中较难对鞋带进行高效的收紧与放松（3/3）\r在进行内收步、剪刀步时，前掌外侧橡胶出现明显的挤压第五跖趾关节现象（1/3）\r【稳定性】\r在进行一些特定的动作时（行进间急停摆脱防守），出现轻微足外翻，具体位置在相比较前掌而言，后跟内侧支撑略低，但尚能接受（1/3）\r【止滑性】\r鞋底容易吸灰，导致打滑（3/3）\r鞋底在与地面摩擦时无“吱吱吱~”声响，对篮球爱好者来说安全感低。",
       "template_text_len": 225,
-      "user_strategy_hint": "从补充说明总结缺点。可参考【包裹性】【稳定性】【止滑性】【场地感】等维度，根据真实反馈动态调整维度类型；必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例；字数约250字；整体基调为负面反馈；末尾须有一段改善性建议；禁止输出正面评价; 调整 readability_budget 或 prompt 字数约束",
-      "user_content_source": "从补充说明总结缺点。可参考【包裹性】【稳定性】【止滑性】【场地感】等维度，根据真实反馈动态调整维度类型；必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例；字数约250字；整体基调为负面反馈；末尾须有一段改善性建议；禁止输出正面评价; 调整 readability_budget 或 prompt 字数约束",
+      "user_strategy_hint": "从补充说明总结缺点。必须包含'建议'、'反馈'、'样本'关键词（缺少任何一个关键词视为无效输出），用【】括起关键性能词，每段结论后注明(X/N)比例",
+      "user_content_source": "从补充说明总结缺点。必须包含'建议'、'反馈'、'样本'关键词（缺少任何一个关键词视为无效输出），用【】括起关键性能词，每段结论后注明(X/N)比例",
       "strategy_exact": "gpt_prompted",
       "params": "source=补充说明, filter=缺点",
-      "user_instruction": "从补充说明总结缺点。可参考【包裹性】【稳定性】【止滑性】【场地感】等维度，根据真实反馈动态调整维度类型；必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例；字数约250字；整体基调为负面反馈；末尾须有一段改善性建议；禁止输出正面评价; 调整 readability_budget 或 prompt 字数约束",
+      "user_instruction": "从补充说明总结缺点。必须包含'建议'、'反馈'、'样本'关键词（缺少任何一个关键词视为无效输出），用【】括起关键性能词，每段结论后注明(X/N)比例",
       "output_contract": {
         "required_keywords": [
           "建议",
@@ -301,11 +299,11 @@
       "build_function": "build_shape_8",
       "template_text": "【止滑性】\r在室内干净木地板、室外水泥地上均能牢牢地锁定在地面。但在灰尘较大的木地板或塑胶场地上，需要频繁的擦拭鞋底灰尘。\r【场地感】\r静态下，前掌填覆材料异物感不明显。在动态下，前掌有明显的马蹄形“气垫”回弹反馈，在无碳板的结构下能给到足够澎湃的触地反馈。\r注：三种不同硬度的填覆材料，测试结果为：30C硬度下，所给到的脚感反馈最佳！",
       "template_text_len": 168,
-      "user_strategy_hint": "从补充说明总结优点。可参考【包裹性】【稳定性】【止滑性】【场地感】等维度，根据真实反馈动态调整维度类型；必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例；字数约180字；整体基调为正面评价；重点突出场地感的马蹄形气垫回弹反馈及30C硬度最佳脚感；禁止输出负面内容",
-      "user_content_source": "从补充说明总结优点。可参考【包裹性】【稳定性】【止滑性】【场地感】等维度，根据真实反馈动态调整维度类型；必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例；字数约180字；整体基调为正面评价；重点突出场地感的马蹄形气垫回弹反馈及30C硬度最佳脚感；禁止输出负面内容",
+      "user_strategy_hint": "从补充说明总结优点。必须包含'建议'、'反馈'、'样本'关键词（缺少任何一个关键词视为无效输出），用【】括起关键性能词，每段结论后注明(X/N)比例",
+      "user_content_source": "从补充说明总结优点。必须包含'建议'、'反馈'、'样本'关键词（缺少任何一个关键词视为无效输出），用【】括起关键性能词，每段结论后注明(X/N)比例",
       "strategy_exact": "gpt_prompted",
       "params": "source=补充说明, filter=优点",
-      "user_instruction": "从补充说明总结优点。可参考【包裹性】【稳定性】【止滑性】【场地感】等维度，根据真实反馈动态调整维度类型；必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例；字数约180字；整体基调为正面评价；重点突出场地感的马蹄形气垫回弹反馈及30C硬度最佳脚感；禁止输出负面内容",
+      "user_instruction": "从补充说明总结优点。必须包含'建议'、'反馈'、'样本'关键词（缺少任何一个关键词视为无效输出），用【】括起关键性能词，每段结论后注明(X/N)比例",
       "output_contract": {
         "required_keywords": [
           "建议",
@@ -347,10 +345,10 @@
       "build_function": "build_shape_9",
       "template_text": "",
       "template_text_len": 0,
-      "user_strategy_hint": "雷达图展示各维度评分均值（10分制，含所有测试维度，数据来源source data.xlsx）；从source data.xlsx取出所有维度评分数据，计算各维度均值后写入图表Series；数值保留一位小数；确保图表轴标签与维度名称完全一致；禁止修改图表类型（保持原有图表类型）",
-      "user_content_source": "雷达图展示各维度评分均值（10分制，含所有测试维度，数据来源source data.xlsx）；从source data.xlsx取出所有维度评分数据，计算各维度均值后写入图表Series；数值保留一位小数；确保图表轴标签与维度名称完全一致；禁止修改图表类型（保持原有图表类型）",
+      "user_strategy_hint": "（自动计算均值）",
+      "user_content_source": "（自动计算均值）",
       "strategy_exact": "mean_extraction",
-      "user_instruction": "雷达图展示各维度评分均值（10分制，含所有测试维度，数据来源source data.xlsx）；从source data.xlsx取出所有维度评分数据，计算各维度均值后写入图表Series；数值保留一位小数；确保图表轴标签与维度名称完全一致；禁止修改图表类型（保持原有图表类型）",
+      "user_instruction": "（自动计算均值）",
       "has_user_annotation": true
     }
   ],

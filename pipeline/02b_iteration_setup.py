@@ -209,6 +209,8 @@ def main() -> int:
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--version", required=True, help="Version string, e.g. '1.1'")
+    ap.add_argument("--sheet-only", action="store_true",
+                    help="Only create new sheet (inherit prompts), skip annotation fixes")
     args = ap.parse_args()
 
     sheet_name = f"claude-ppt {args.version}"
@@ -220,6 +222,11 @@ def main() -> int:
     else:
         safe_print(f"[ERROR] 创建 sheet 失败: {sheet_name}")
         return 1
+
+    # Sheet-only mode: just create the sheet, skip annotation fixes
+    if args.sheet_only:
+        safe_print(f"[OK] Sheet-only 模式：{sheet_name} 已创建，跳过注释修正")
+        return 0
 
     # 2. Read diff result and apply fixes (optional — sheet is already usable without fixes)
     if not DIFF_JSON.exists():

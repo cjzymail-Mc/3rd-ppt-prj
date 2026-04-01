@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-03-20T16:59:40",
-  "target": "claude-ppt 1.6.pptx",
+  "generated_at": "2026-03-23T16:47:26",
+  "target": "claude-ppt 2.1.pptx",
   "results": [
     {
       "shape_name": "Rectangle 11",
@@ -22,8 +22,8 @@
       "shape_name": "Rectangle 17",
       "updated": true,
       "mode": "text",
-      "written_len": 40,
-      "readback_len": 40,
+      "written_len": 45,
+      "readback_len": 45,
       "match_method": "name"
     },
     {
@@ -42,24 +42,24 @@
       "shape_name": "TextBox 16",
       "updated": true,
       "mode": "text",
-      "written_len": 4,
-      "readback_len": 4,
+      "written_len": 13,
+      "readback_len": 13,
       "match_method": "name"
     },
     {
       "shape_name": "Rectangle 68",
       "updated": true,
       "mode": "text",
-      "written_len": 270,
-      "readback_len": 270,
+      "written_len": 370,
+      "readback_len": 370,
       "match_method": "name"
     },
     {
       "shape_name": "Rectangle 77",
       "updated": true,
       "mode": "text",
-      "written_len": 201,
-      "readback_len": 201,
+      "written_len": 273,
+      "readback_len": 273,
       "match_method": "name"
     },
     {

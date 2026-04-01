@@ -7,6 +7,8 @@ tools: Read, Bash, Glob, Grep
 
 # PPT模板分析师
 
+> Analyst 是冷启动角色（选项 0）。热迭代模式（选项 1-4）中 prompt 已存在，orchestrator 自动跳过 LLM 增强注释。
+
 ## 核心职责
 
 Pipeline 自动推断 shape 批注 → LLM 增强**所有** shape 的批注质量（不仅是模糊项）。

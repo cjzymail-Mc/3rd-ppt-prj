@@ -45,36 +45,54 @@
 ### 启动
 
 ```bash
-python orchestrator.py          # 交互选择轮次(1-3)
-python orchestrator.py --max-rounds 2   # 或直接指定
+python orchestrator.py          # 交互选择模式(0-5)
 ```
 
-### 流程
+### 两种模式：冷启动 vs 热迭代
+
+| 模式 | 菜单选项 | 说明 |
+|------|---------|------|
+| 冷启动 | 0️⃣ 初始化 | 全新 PPT 分析，从零构建结构和 prompt |
+| 热迭代 | 1️⃣-4️⃣ | prompt 已存在，直接编辑 prompt → 调 GPT → 出 PPT |
+| 验收 | 5️⃣ | 只跑验收，检查最新 PPT 质量 |
+
+> Excel 不存在时，无论选什么都强制路由到选项 0
+
+### 冷启动流程（选项 0）
 
 ```
-[Analyst] Pipeline(01+01b) → LLM增强所有批注 → 填写xlsx
+[Analyst] Pipeline(01+01b) + LLM 增强批注
     ↓
-  PAUSE — 用户校准xlsx → Enter继续
+  ⏸️ P1 — 用户校准批注
     ↓
-[Builder] 直接Pipeline(02→03a→03b) → claude-ppt 1.0.pptx    ← 首轮无LLM
+[Builder] 02 → 03a Phase1 → ⏸️ Prompt Review → 03a Phase2 → 03b → PPT
     ↓
-[Reviewer] 直接Pipeline(04验收) → PASS/FAIL
-    ↓ FAIL → LLM语义审核 → fix_type分流
-    ├─ annotation → 直接Pipeline(02b) → [Builder] LLM精调xlsx → 直接Pipeline(02→03a→03b)
-    └─ code → [Developer] LLM修代码 → Builder重跑
-    ↓
-[Reviewer] 重新验收 → 循环至 max_rounds
+  ✅ 初始化完成
 ```
 
-### 混合模式：Pipeline 由 orchestrator 直接执行，LLM 只做智能任务
+### 热迭代流程（选项 1-4）
 
-| Agent | orchestrator 直接执行 | LLM 负责 | 何时跳过LLM |
-|-------|---------------------|---------|------------|
-| Analyst | 01提取 + 01b规则推断 | 增强所有shape批注 | 从不跳过 |
-| Builder首轮 | 02→03a→03b全链路 | 无 | 始终 |
-| Builder修正轮 | 02b + 02→03a→03b | 仅精调xlsx批注 | — |
-| Reviewer | 04三层测试 | 语义审核,补充精准建议 | PASS时 |
-| Developer | 无 | 读报告+修代码 | 无code问题时 |
+```
+[跳过 Analyst LLM]
+    ↓
+⏸️ PROMPT REVIEW → 03a Phase2 → 03b → PPT          ← 首轮
+    ↓ (选项2-4)
+[Reviewer] 04验收 → PASS/FAIL
+    ↓ FAIL
+  02b(sheet-only) → Builder LLM(改prompt) → ⏸️ → 03a Phase2 → 03b
+    ↓
+  循环至 max_rounds
+```
+
+### 混合模式：冷启动 vs 热迭代
+
+| Agent | 冷启动（选项0） | 热迭代（选项1-4） |
+|-------|---------------|-----------------|
+| Analyst | 01+01b + LLM增强 | 跳过 LLM（仅确保JSON） |
+| Builder首轮 | 02→03a(full)→03b | prompt review → 03a Phase2 → 03b |
+| Builder修正轮 | — | 02b(sheet-only) → LLM改prompt → 03a Phase2 → 03b |
+| Reviewer | 不进入 | 04测试 + LLM prompt级建议 |
+| Developer | — | 读报告+修代码（code类问题时） |
 
 ### 版本追溯
 
@@ -96,13 +114,13 @@ python orchestrator.py --max-rounds 2   # 或直接指定
 
 | fix_type | 含义 | 后续动作 |
 |----------|------|---------|
-| `keyword_missing` | 语义关键词缺失 | 02b 追加关键词要求 → 重跑 pipeline |
-| `budget_overflow` | 文本过长 | 02b 追加字数约束 → 重跑 pipeline |
-| `budget_underflow` | 文本过短/空白 | 02b 要求充实内容 → 重跑 pipeline |
-| `style_mismatch` | 格式/语调偏离 | 02b 追加风格约束 → 重跑 pipeline |
+| `keyword_missing` | 语义关键词缺失 | Builder LLM 在 prompt 中追加关键词要求 |
+| `budget_overflow` | 文本过长 | Builder LLM 在 prompt 中追加字数上限 |
+| `budget_underflow` | 文本过短/空白 | Builder LLM 在 prompt 中要求充实内容 |
+| `style_mismatch` | 格式/语调偏离 | Builder LLM 在 prompt 中追加风格约束 |
 | `code` | pipeline代码缺陷 | Developer修代码 → Builder重跑 |
 
-> orchestrator 路由逻辑：`code` → Developer，其余全部 → Builder(02b→pipeline)
+> orchestrator 路由逻辑：`code` → Developer，其余全部 → Builder LLM(直接改prompt)
 
 ---
 

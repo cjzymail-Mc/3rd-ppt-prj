@@ -1,9 +1,9 @@
 # Build PPT Report
 
 - 状态: ok
-- 产物: claude-ppt 1.6.pptx
+- 产物: claude-ppt 2.1.pptx
 - 更新shape: 7/9
-- 时间: 2026-03-20T16:59:40
+- 时间: 2026-03-23T16:47:26
 
 ## Details
 

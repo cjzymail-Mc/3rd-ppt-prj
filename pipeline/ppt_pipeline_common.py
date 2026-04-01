@@ -344,10 +344,12 @@ def extract_score_means(rows: List[List[Any]]) -> List[Tuple[str, float]]:
 # ---- text clamping ----
 
 def clamp_text(text: str, max_chars: int, max_lines: int) -> str:
-    """Hard-truncate text to budget constraints."""
+    """Soft-clamp: 只限制行数（保护PPT版面），不截断字符（保护信息完整性）。
+
+    字符限制通过 prompt 引导 GPT 控制，不在后处理中强制执行。
+    """
     t = safe_text(text)
-    if max_chars > 0 and len(t) > max_chars:
-        t = t[:max_chars]
+    # 仅行数限制（防止 PPT 版面溢出）
     if max_lines > 0:
         lines = t.splitlines() or [t]
         t = "\n".join(lines[:max_lines])

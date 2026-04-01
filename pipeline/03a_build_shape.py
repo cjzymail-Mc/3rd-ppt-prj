@@ -402,7 +402,7 @@ def _build_rich_prompt(
     # Build user instruction section (independent paragraph, high weight)
     user_section = ""
     if user_instruction:
-        user_section = f"\n【用户指令】\n{user_instruction}\n"
+        user_section = f"\n用户指令：\n{user_instruction}\n"
 
     # Build output contract section
     contract_section = ""
@@ -416,7 +416,7 @@ def _build_rich_prompt(
         if output_contract.get("ratio_required"):
             lines.append("- 每段结论后注明 (X/N) 比例")
         if lines:
-            contract_section = "\n【输出合约 — 必须满足】\n" + "\n".join(lines) + "\n"
+            contract_section = "\n输出合约（必须满足）：\n" + "\n".join(lines) + "\n"
 
     # Try loading external template
     mode = "free_form" if focus else "categorized"
@@ -456,8 +456,8 @@ def _build_rich_prompt(
         format_note = "- 严格按照参考文本的格式、语调、陈述方式\n"
 
     return (
-        f"【参考文本（参考语调和信息密度）】\n{style_anchor}\n\n"
-        f"【你的任务】\n{task_line}\n"
+        f"1、参考文本（参考语调和信息密度）\n{style_anchor}\n\n"
+        f"2、你的任务\n{task_line}\n"
         f"{user_section}"
         f"{contract_section}\n"
         f"注意：\n"
@@ -467,8 +467,8 @@ def _build_rich_prompt(
         f"- 总字数控制在{target_chars}字左右\n"
         f"- 不超过{max_lines}行\n"
         f"- 每个分类不超过3行\n"
-        f"- 结论中请自然融入：'样本'（如'本次{n}名样本'）、'反馈'（如'样本反馈'）、'建议'（末尾给出改进建议）\n\n"
-        f"【{n}名测试者原始反馈】\n{respondent_block}\n\n"
+        f"- 关键词要求：开头第一句必须同时包含'样本'和'反馈'（如\"本次{n}名样本反馈显示\"），正文中自然融入'建议'（如\"建议关注...\"）\n\n"
+        f"3、{n}名测试者原始反馈\n{respondent_block}\n\n"
         f"直接输出结论，不需要任何前言。"
     )
 

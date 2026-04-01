@@ -1,16 +1,10 @@
 {
   "status": "fail",
   "visual_score": 100.0,
-  "readability_score": 98.96,
+  "readability_score": 100.0,
   "semantic_coverage": 66.66666666666666,
-  "fix_type": "budget_overflow",
+  "fix_type": "keyword_missing",
   "fixes": [
-    {
-      "shape": "TextBox 16",
-      "issue": "readability=73.08 < 95 (文本长度/行数偏差)",
-      "fix_type": "budget_overflow",
-      "suggestion": "调整 readability_budget 或 prompt 字数约束"
-    },
     {
       "shape": "(全局)",
       "issue": "语义关键词缺失: 建议",
@@ -18,5 +12,5 @@
       "suggestion": "在 gpt_prompted 类 shape 的内容描述中追加：必须包含'建议'关键词"
     }
   ],
-  "generated_at": "2026-03-20T17:17:38"
+  "generated_at": "2026-03-23T16:36:39"
 }
