@@ -27,6 +27,7 @@ from typing import Dict, List, Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.ppt_pipeline_common import (
+    OUTPUT_DIR,
     PROGRESS_DIR,
     ROOT,
     TEMPLATE_PATH,
@@ -211,7 +212,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", default="claude-ppt 1.0.pptx")
     args = ap.parse_args()
-    target = ROOT / args.target
+    target = OUTPUT_DIR / args.target
 
     if not TEMPLATE_PATH.exists() or not target.exists():
         msg = "模板缺失" if not TEMPLATE_PATH.exists() else f"目标PPT缺失: {args.target}"

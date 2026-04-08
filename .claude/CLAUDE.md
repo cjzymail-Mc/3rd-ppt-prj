@@ -1,14 +1,22 @@
 # CLAUDE.md - PPT Pipeline + Agent 项目规范
 
-> 本文件每次会话自动加载。保持精简。
+> 通用规范 + 入口索引。详情参见各 agent 与 memory 文件。
 
 ---
 
-## 项目结构
+## 0. 防卡顿规范
+
+- 同一方案连续失败 2 次 → 停下来向用户说明原因，提出替代方案
+- 预计超过 2 分钟的操作 → 用 Agent(run_in_background) 分流
+- 遇到不确定的技术选型 → 先问用户，不要默默试超过 3 分钟
+
+---
+
+## 1. 项目结构
 
 ```
 项目根目录/
-├── orchestrator.py                  # 4-Agent 调度（Pipeline先行 + LLM精调）
+├── orchestrator.py                  # 5-Agent 调度（Pipeline先行 + LLM精调）
 ├── pipeline/
 │   ├── ppt_pipeline_common.py       # 公共工具（路径、COM、Excel、批注解析）
 │   ├── 01_shape_detail.py           # Step 1: 提取模板shape
@@ -20,17 +28,18 @@
 │   ├── 04_shape_diff_test.py        # Step 4: 三层验收 + fix_type分类
 │   └── prompt_templates/gpt_summary.md  # GPT prompt 模板
 ├── pipeline-progress/               # 中间产物（01-/02-/03a-/03b-/04- 前缀）
-├── .claude/agents/                  # 4个Agent配置
+├── .claude/agents/                  # 5个Agent配置
 │   ├── 01-analyst.md                # 分析师：Pipeline推断 + LLM审核模糊项
 │   ├── 02-builder.md                # 构建师：Pipeline生成 + LLM精调批注(修正轮)
 │   ├── 03-reviewer.md               # 验收师：Pipeline测试 + LLM语义审核
-│   └── 04-developer.md              # 代码专家：LLM修复pipeline代码
+│   ├── 04-developer.md              # 代码专家：LLM修复pipeline代码
+│   └── 05-curator.md               # 知识固化师：经验积累 + 规则沉淀
 └── src/Function_030.py              # GPT_5 函数（不修改，直接import）
 ```
 
 ---
 
-## 关键规则
+## 2. 关键规则
 
 - **路径**: 始终用相对路径 + 正斜杠 `/`
 - **最小改动**: 只改必要的部分，先说明再动手
@@ -40,140 +49,56 @@
 
 ---
 
-## 混合工作流（Pipeline + Agent）
-
-### 启动
+## 3. 启动方式
 
 ```bash
 python orchestrator.py          # 交互选择模式(0-5)
 ```
 
-### 两种模式：冷启动 vs 热迭代
-
-| 模式 | 菜单选项 | 说明 |
-|------|---------|------|
-| 冷启动 | 0️⃣ 初始化 | 全新 PPT 分析，从零构建结构和 prompt |
-| 热迭代 | 1️⃣-4️⃣ | prompt 已存在，直接编辑 prompt → 调 GPT → 出 PPT |
-| 验收 | 5️⃣ | 只跑验收，检查最新 PPT 质量 |
+| 菜单选项 | 说明 |
+|---------|------|
+| 0 初始化 | 全新 PPT 分析，从零构建结构和 prompt |
+| 1-4 热迭代 | prompt 已存在，编辑 prompt → 调 GPT → 出 PPT（1-4 对应轮次） |
+| 5 验收 | 只跑验收，检查最新 PPT 质量 |
 
 > Excel 不存在时，无论选什么都强制路由到选项 0
 
-### 冷启动流程（选项 0）
-
-```
-[Analyst] Pipeline(01+01b) + LLM 增强批注
-    ↓
-  ⏸️ P1 — 用户校准批注
-    ↓
-[Builder] 02 → 03a Phase1 → ⏸️ Prompt Review → 03a Phase2 → 03b → PPT
-    ↓
-  ✅ 初始化完成
-```
-
-### 热迭代流程（选项 1-4）
-
-```
-[跳过 Analyst LLM]
-    ↓
-⏸️ PROMPT REVIEW → 03a Phase2 → 03b → PPT          ← 首轮
-    ↓ (选项2-4)
-[Reviewer] 04验收 → PASS/FAIL
-    ↓ FAIL
-  02b(sheet-only) → Builder LLM(改prompt) → ⏸️ → 03a Phase2 → 03b
-    ↓
-  循环至 max_rounds
-```
-
-### 混合模式：冷启动 vs 热迭代
-
-| Agent | 冷启动（选项0） | 热迭代（选项1-4） |
-|-------|---------------|-----------------|
-| Analyst | 01+01b + LLM增强 | 跳过 LLM（仅确保JSON） |
-| Builder首轮 | 02→03a(full)→03b | prompt review → 03a Phase2 → 03b |
-| Builder修正轮 | — | 02b(sheet-only) → LLM改prompt → 03a Phase2 → 03b |
-| Reviewer | 不进入 | 04测试 + LLM prompt级建议 |
-| Developer | — | 读报告+修代码（code类问题时） |
-
-### 版本追溯
-
-| 轮次 | xlsx Sheet | PPT 文件 |
-|------|-----------|----------|
-| 首轮 | Shape Detail | claude-ppt 1.0.pptx |
-| 第2轮 | claude-ppt 1.1 | claude-ppt 1.1.pptx |
-| 第3轮 | claude-ppt 1.2 | claude-ppt 1.2.pptx |
-
-### 三层门禁（全部达标=PASS）
-
-| 层级 | 阈值 | 检查内容 |
-|------|------|---------|
-| Visual | >= 98 | 几何位置、字体、颜色、ChartType |
-| Readability | >= 95 | 文本长度比、行数比 |
-| Semantic | = 100 | 关键词覆盖：样本、建议、反馈 |
-
-### fix_type 分流（5 类）
-
-| fix_type | 含义 | 后续动作 |
-|----------|------|---------|
-| `keyword_missing` | 语义关键词缺失 | Builder LLM 在 prompt 中追加关键词要求 |
-| `budget_overflow` | 文本过长 | Builder LLM 在 prompt 中追加字数上限 |
-| `budget_underflow` | 文本过短/空白 | Builder LLM 在 prompt 中要求充实内容 |
-| `style_mismatch` | 格式/语调偏离 | Builder LLM 在 prompt 中追加风格约束 |
-| `code` | pipeline代码缺陷 | Developer修代码 → Builder重跑 |
-
-> orchestrator 路由逻辑：`code` → Developer，其余全部 → Builder LLM(直接改prompt)
+Curator Agent 独立于 orchestrator，通过 `/role-curator` 手动调用。
 
 ---
 
-## 手动 Pipeline（不走 Orchestrator）
+## 4. 关键配置
 
-```bash
-python pipeline/01_shape_detail.py                                # → xlsx + JSON
-python pipeline/01b_auto_annotate.py                              # → 自动填写xlsx批注
-# 用户编辑 01-shape_detail.xlsx 黄色单元格
-python pipeline/02_shape_analysis.py                              # → 02-*.json
-python pipeline/03a_build_shape.py                                # → 03a-*.json
-python pipeline/03b_build_ppt_com.py --version 1.0                # → claude-ppt 1.0.pptx
-python pipeline/04_shape_diff_test.py --target "claude-ppt 1.0.pptx"  # → 04-* reports
-```
-
-### 用户批注字段（01-shape_detail.xlsx）
-
-| 字段 | 必填 | 说明 |
-|------|------|------|
-| **内容描述** | 是(黄色) | 映射知识入口：来源+方向+关键词要求+格式约束（见下方 golden reference） |
-| strategy | 否 | 精确策略代码，覆盖自动识别 |
-| params | 否 | `source=补充说明, filter=缺点` |
-
-> **备注字段已废弃**，所有指令统一写入「内容描述」。02 会自动解析 output_contract 子字段。
-
-#### 内容描述 golden reference（gpt_prompted 类）
-
-```
-缺点: 从补充说明总结缺点。必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例
-优点: 从补充说明总结优点。必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例
-```
-
-### 关键配置
-
-- 模板: `pipeline/standard and empty template.pptx`（Slide1=空白, Slide2=标准）
-- 数据: `pipeline/source data.xlsx`
+- 模板目录: `template/`（支持多套 pptx + xlsx，orchestrator 启动时选择）
+- 默认模板: `template/standard and empty template.pptx`
+- 默认数据: `template/source data.xlsx`
 - GPT: `openai/gpt-5.4`（OpenRouter），`from src.Function_030 import GPT_5`
 
 ---
 
-## COM 开发规范
+## 5. 详情索引
 
-| 场景 | 错误做法 | 正确做法 |
-|------|---------|---------|
-| 读COM属性 | `getattr(shp,"X",None)` | `try: shp.X except: None` |
-| 多步骤开Excel | `Dispatch` 复用实例 | `DispatchEx` + `sleep(0.5)` 强制新进程 |
-| 写图表数据 | `ChartData.Workbook` | `SeriesCollection(1).Values/XValues` |
-| 插入图片 | `AddPicture(W=w,H=h)` | 先`-1/-1`取原始尺寸,再等比缩放 |
-| Clone幻灯片 | 不加sleep | `Copy→sleep(1.5)→Paste(X)→sleep(1.0)` |
+| 主题 | 位置 |
+|------|------|
+| Agent 角色定义（Analyst/Builder/Reviewer/Developer） | `.claude/agents/01~04-*.md` |
+| 知识固化师（Curator） | `.claude/agents/05-curator.md` |
+| 三层门禁 + fix_type 分类 | `.claude/agents/03-reviewer.md` |
+| 用户批注字段 + golden reference | `.claude/agents/01-analyst.md` |
+| 冷启动/热迭代流程图 + 版本追溯 | `.claude/memory/project_workflow_modes.md` |
+| COM 开发规范 | `.claude/memory/feedback_com_constraints.md` |
+| 混合工作流 Pipeline→LLM | `.claude/memory/feedback_hybrid_workflow.md` |
+| GPT 数据稀疏时截断问题 | `.claude/memory/feedback_gpt_sparse_data.md` |
+| 手动 Pipeline 命令 + 批注字段 | `.claude/memory/reference_manual_pipeline.md` |
+| 架构决策记录 | `.claude/memory/project_4agent_architecture.md` |
+| `src/` 目录 | 历史遗留 main.py 相关模块，与 Pipeline/Agent 工作流无关 |
 
 ---
 
-## 附：src/ 目录（非 Pipeline 核心）
+## 6. 变更记录
 
-- `src/Function_030.py` — GPT_5 函数，Pipeline 通过 `import` 调用
-- `src/` 下其他文件为历史遗留的 main.py 相关模块，与 Pipeline/Agent 工作流无关
+| 日期 | 变更 |
+|------|------|
+| 2026-04-08 | CLAUDE.md 瘦身：179行→索引式，详情迁移到 agents/memory |
+| 2026-04-08 | 新增 05-curator.md（知识固化师），独立于 orchestrator |
+| 2026-04-08 | 修复：STRATEGY_CODES 补 extract_image、gpt_rich→gpt_prompted 统一、contract_section 占位符 |
+| 2026-04-01 | 4-Agent 架构定型，弃用 6-Agent v6 |

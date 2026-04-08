@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import os
 import statistics
 import sys
 import time
@@ -47,10 +48,14 @@ def safe_print(*args, **kwargs) -> None:
 # ---- paths ----
 ROOT = Path(__file__).resolve().parent.parent          # project root
 SRC_DIR = ROOT / "src"
-EXCEL_PATH = ROOT / "pipeline" / "source data.xlsx"
-TEMPLATE_PATH = ROOT / "pipeline" / "standard and empty template.pptx"
+TEMPLATE_DIR = ROOT / "template"
+TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+EXCEL_PATH = Path(os.environ.get("PPT_EXCEL_PATH", str(TEMPLATE_DIR / "source data.xlsx")))
+TEMPLATE_PATH = Path(os.environ.get("PPT_TEMPLATE_PATH", str(TEMPLATE_DIR / "standard and empty template.pptx")))
 PROGRESS_DIR = ROOT / "pipeline-progress"
 PROGRESS_DIR.mkdir(parents=True, exist_ok=True)        # create on first import
+OUTPUT_DIR = ROOT / "output"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ---- tiny helpers ----
@@ -384,6 +389,7 @@ STRATEGY_CODES = frozenset({
     "grade_letter",     # compute mean → normalize to 100pt → letter grade
     "sample_aggregation",  # extract stats from Excel (no GPT)
     "extract_column",   # pull value from a specific Excel column
+    "extract_image",    # extract embedded image from Excel sheet
     "gpt_prompted",     # GPT with full questionnaire text in prompt
     "mean_extraction",  # bar chart means (chart shapes only)
     "template_direct",  # copy template text verbatim

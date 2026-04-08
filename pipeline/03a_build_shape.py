@@ -576,10 +576,10 @@ def build_content(
                 focus=flt, user_instruction=user_instruction, output_contract=output_contract,
             )
             if dry_run:
-                return fallback, prompt, "gpt_rich", ""
+                return fallback, prompt, "gpt_prompted", ""
             txt, used_fb = _call_gpt(prompt, fallback)
             gap = "GPT未返回有效结果，已使用兜底文本" if used_fb else ""
-            return txt, prompt, "gpt_rich", gap
+            return txt, prompt, "gpt_prompted", gap
 
         if s == "mean_extraction":
             means = extract_score_means(rows)
@@ -593,7 +593,7 @@ def build_content(
             img_path = _extract_excel_image(sheet_hint)
             if img_path:
                 return f"IMAGE:{img_path}", "extract_image_ok", "extract_image", ""
-            return "", "extract_image_failed", "extract_image", "未能从Excel问卷sheet提取图片"
+            return "IMAGE_MISSING:请手动插入产品图片", "extract_image_failed", "extract_image", "未能从Excel问卷sheet提取图片"
 
         # Unknown strategy_exact code — fall through to keyword matching below
         safe_print(f"[WARN] Unknown strategy_exact='{s}' for '{shape_name}', falling back to hint")
@@ -648,10 +648,10 @@ def build_content(
             user_instruction=user_instruction, output_contract=output_contract,
         )
         if dry_run:
-            return fallback, prompt, "gpt_rich", ""
+            return fallback, prompt, "gpt_prompted", ""
         txt, used_fb = _call_gpt(prompt, fallback)
         gap = "GPT未返回有效结果，已使用兜底文本" if used_fb else ""
-        return txt, prompt, "gpt_rich", gap
+        return txt, prompt, "gpt_prompted", gap
 
     # -----------------------------------------------------------------------
     # 6. chart role → deterministic mean extraction
@@ -703,10 +703,10 @@ def build_content(
             user_instruction=user_instruction, output_contract=output_contract,
         )
         if dry_run:
-            return fallback, prompt, "gpt_rich", ""
+            return fallback, prompt, "gpt_prompted", ""
         txt, used_fb = _call_gpt(prompt, fallback)
         gap = "GPT未返回有效结果，已使用兜底文本" if used_fb else ""
-        return txt, prompt, "gpt_rich", gap
+        return txt, prompt, "gpt_prompted", gap
 
     # -----------------------------------------------------------------------
     # 10. Other roles → basic prompt (no questionnaire data needed)
@@ -834,7 +834,7 @@ def _build_all(mapping, prompts_spec, budgets, rows, metrics, shape_types,
         })
 
         # Collect pending GPT prompts (dry_run only)
-        if dry_run and strategy in ("gpt_rich", "gpt_prompted"):
+        if dry_run and strategy == "gpt_prompted":
             pending.append({
                 "shape_name": name,
                 "role": role,

@@ -491,9 +491,10 @@ class PPTOrchestrator:
         max_idx = 9  # so first version = 10 = "1.0"
         ver_pattern = re.compile(r"(\d+)\.(\d+)")
 
-        # Source 1: existing pptx files
+        # Source 1: existing pptx files in output/
         pptx_pattern = re.compile(r"^claude-ppt (\d+)\.(\d+)\.pptx$")
-        for f in self.project_root.glob("claude-ppt *.pptx"):
+        output_dir = self.project_root / "output"
+        for f in output_dir.glob("claude-ppt *.pptx") if output_dir.exists() else []:
             m = pptx_pattern.match(f.name)
             if m:
                 idx = int(m.group(1)) * 10 + int(m.group(2))
@@ -937,7 +938,7 @@ class PPTOrchestrator:
 
     def _verify_pptx_exists(self, version: str) -> bool:
         """Check that the expected pptx file was actually created."""
-        pptx_path = self.project_root / f"claude-ppt {version}.pptx"
+        pptx_path = self.project_root / "output" / f"claude-ppt {version}.pptx"
         return pptx_path.exists()
 
     def _archive_round(self, round_num: int) -> None:
@@ -981,7 +982,8 @@ class PPTOrchestrator:
         # Step 1: Extract template shapes
         json_path = self.project_root / "pipeline-progress" / "01-shape_detail_com.json"
         xlsx_path = self.project_root / "pipeline-progress" / "01-shape_detail.xlsx"
-        template_path = self.project_root / "pipeline" / "standard and empty template.pptx"
+        template_path = Path(os.environ.get("PPT_TEMPLATE_PATH",
+                              str(self.project_root / "template" / "standard and empty template.pptx")))
 
         # Hot iteration: NEVER overwrite existing xlsx (protects annotations + prompts)
         _skip_pipeline_01 = (
@@ -1490,6 +1492,69 @@ def _select_account() -> str:
 
 
 # ============================================================
+# Template selection
+# ============================================================
+
+def _select_template(project_root: Path) -> None:
+    """When template/ has multiple files, let user pick 1 pptx + 1 xlsx.
+    Sets PPT_TEMPLATE_PATH and PPT_EXCEL_PATH env vars.
+    If only one of each exists, auto-selects without prompting."""
+    template_dir = project_root / "template"
+    if not template_dir.exists():
+        return  # fall back to defaults in ppt_pipeline_common
+
+    pptx_files = sorted(template_dir.glob("*.pptx"))
+    xlsx_files = sorted(template_dir.glob("*.xlsx"))
+
+    if not pptx_files or not xlsx_files:
+        print("⚠️ template/ 中缺少 .pptx 或 .xlsx 文件")
+        return
+
+    # Auto-select if only one of each
+    if len(pptx_files) == 1 and len(xlsx_files) == 1:
+        os.environ["PPT_TEMPLATE_PATH"] = str(pptx_files[0])
+        os.environ["PPT_EXCEL_PATH"] = str(xlsx_files[0])
+        print(f"  模板: {pptx_files[0].name}")
+        print(f"  数据: {xlsx_files[0].name}")
+        return
+
+    # Multiple files — unified numbered list, user picks 2 numbers
+    all_files = pptx_files + xlsx_files
+    print("\n📂 template/ 中发现多套文件，请选择 1个PPT + 1个Excel:\n")
+    for i, f in enumerate(all_files, 1):
+        tag = "[PPT]  " if f.suffix == ".pptx" else "[Excel]"
+        print(f"  {i}. {tag} {f.name}")
+
+    while True:
+        raw = input(f"\n请输入2个编号（用逗号或空格分隔，如 1,3）: ").strip()
+        parts = [s.strip() for s in raw.replace(",", " ").split() if s.strip()]
+        if len(parts) != 2:
+            print("❌ 请输入恰好2个编号")
+            continue
+        try:
+            idx_a, idx_b = int(parts[0]) - 1, int(parts[1]) - 1
+        except ValueError:
+            print("❌ 请输入数字编号")
+            continue
+        if not (0 <= idx_a < len(all_files)) or not (0 <= idx_b < len(all_files)):
+            print(f"❌ 编号范围 1-{len(all_files)}")
+            continue
+        fa, fb = all_files[idx_a], all_files[idx_b]
+        exts = {fa.suffix, fb.suffix}
+        if exts != {".pptx", ".xlsx"}:
+            print("❌ 请选择 1个PPT(.pptx) + 1个Excel(.xlsx)")
+            continue
+        selected_pptx = fa if fa.suffix == ".pptx" else fb
+        selected_xlsx = fa if fa.suffix == ".xlsx" else fb
+        break
+
+    os.environ["PPT_TEMPLATE_PATH"] = str(selected_pptx)
+    os.environ["PPT_EXCEL_PATH"] = str(selected_xlsx)
+    print(f"\n  ✓ 模板: {selected_pptx.name}")
+    print(f"  ✓ 数据: {selected_xlsx.name}")
+
+
+# ============================================================
 # CLI entry point
 # ============================================================
 
@@ -1503,6 +1568,9 @@ def main():
     _select_account()
     project_root = find_project_root()
     print(f"项目目录: {project_root}")
+
+    # Template selection (before mode selection)
+    _select_template(project_root)
 
     # Interactive round selection (overrides --max-rounds if user chooses)
     max_rounds = args.max_rounds
@@ -1569,7 +1637,7 @@ def main():
             sys.exit(1)
         version = orch._idx_to_version(latest_idx)
         pptx_name = f"claude-ppt {version}.pptx"
-        if not (project_root / pptx_name).exists():
+        if not (project_root / "output" / pptx_name).exists():
             print(f"❌ 文件不存在: {pptx_name}")
             sys.exit(1)
         print(f"\n🔍 验收目标: {pptx_name}")

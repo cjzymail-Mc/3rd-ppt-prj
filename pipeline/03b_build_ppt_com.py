@@ -31,8 +31,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pipeline.ppt_pipeline_common import (
-    ROOT,
+    OUTPUT_DIR,
     PROGRESS_DIR,
+    ROOT,
     TEMPLATE_PATH,
     com_call,
     com_get,
@@ -294,7 +295,7 @@ def main() -> int:
     ap.add_argument("--version", default="1.0")
     args = ap.parse_args()
 
-    out_ppt = ROOT / f"claude-ppt {args.version}.pptx"
+    out_ppt = OUTPUT_DIR / f"claude-ppt {args.version}.pptx"
 
     if not TEMPLATE_PATH.exists():
         write_md(OUT_REPORT, ["# Build PPT Report", "", "- 状态: blocked", "- 原因: 模板文件缺失"])
