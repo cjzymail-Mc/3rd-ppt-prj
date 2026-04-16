@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-orchestrator.py - PPT 专业制作团队调度系统 (v2)
+orchestrator.py - PPT 制作调度系统 (v3 — 3+1 Agent, 局部循环)
 
-4-agent 固定工作流:
-  Analyst → PAUSE → Builder → Reviewer → [Developer] → 循环
+按步骤切分 agent，每个 agent 内置自检循环（Python -> LLM 修复，最多 2 次）。
+Orchestrator 只做菜单 + agent 调度，不直接跑 pipeline。
 
 Agents:
-  analyst   - 运行 Step 1 + 自动填写 xlsx 批注
-  builder   - 运行 Steps 2-3B 生成 PPT
-  reviewer  - 运行 Step 4 验收 PPT + 根因诊断
-  developer - 条件触发：修复 pipeline 代码缺陷
+  step1-analyzer  - 分析 PPT 模板 + 自检
+  step2-architect - 构建 prompt + 调 GPT + 自检
+  step3-builder   - COM 写入 PPT + 诊断
+
+Menu:
+  0 全自动  1 步骤1  2 步骤2  3 步骤3
 """
 
 import asyncio
@@ -29,6 +31,7 @@ from datetime import datetime
 
 # Claude 账户配置目录
 CLAUDE_CONFIG_DIRS = {
+    'yk': os.path.expanduser('~/.claude'),
     'mc': os.path.expanduser('~/.claude-mc'),
     'xh': os.path.expanduser('~/.claude-xh'),
 }
@@ -71,39 +74,31 @@ class ExecutionResult:
 
 
 # ============================================================
-# 4 Agent configs (fixed)
+# 3+1 Agent configs (step-based architecture)
 # ============================================================
 
 AGENT_CONFIGS = {
-    "analyst": AgentConfig(
-        name="analyst",
-        role_file=".claude/agents/01-analyst.md",
+    "step1-analyzer": AgentConfig(
+        name="step1-analyzer",
+        role_file=".claude/agents/step1-analyzer.md",
         output_files=[
             "pipeline-progress/01-shape_detail_com.json",
             "pipeline-progress/01-shape_detail.xlsx",
-        ],
-    ),
-    "builder": AgentConfig(
-        name="builder",
-        role_file=".claude/agents/02-builder.md",
-        output_files=[
             "pipeline-progress/02-shape_analysis_map.json",
-            "pipeline-progress/03a-build_shape_content.json",
-            "pipeline-progress/03b-build_ppt_report.md",
         ],
     ),
-    "reviewer": AgentConfig(
-        name="reviewer",
-        role_file=".claude/agents/03-reviewer.md",
+    "step2-architect": AgentConfig(
+        name="step2-architect",
+        role_file=".claude/agents/step2-architect.md",
         output_files=[
-            "pipeline-progress/04-diff_result.json",
-            "pipeline-progress/04-fix_ppt.md",
+            "pipeline-progress/02-prompt_specs.json",
+            "pipeline-progress/03a-build_shape_content.json",
         ],
     ),
-    "developer": AgentConfig(
-        name="developer",
-        role_file=".claude/agents/04-developer.md",
-        output_files=[],
+    "step3-builder": AgentConfig(
+        name="step3-builder",
+        role_file=".claude/agents/step3-builder.md",
+        output_files=[],  # dynamic: pipeline-output/claude-ppt N.N.pptx
     ),
 }
 
@@ -308,17 +303,32 @@ class AgentExecutor:
                     pass
                 print()
 
-            cost, tokens = self._parse_stream_json(stdout.decode('utf-8', errors='replace'))
+            stdout_text = stdout.decode('utf-8', errors='replace')
+            stderr_text = stderr.decode('utf-8', errors='replace')
+            cost, tokens = self._parse_stream_json(stdout_text)
             duration = time.time() - start_time
             output_files = self._check_output_files(config.output_files)
             status = AgentStatus.COMPLETED if process.returncode == 0 else AgentStatus.FAILED
+
+            # Diagnostic log on failure
+            if status == AgentStatus.FAILED:
+                diag_path = self.project_root / "debug" / f"agent-{config.name}-{session_id[:8]}.log"
+                diag_path.parent.mkdir(parents=True, exist_ok=True)
+                diag_path.write_text(
+                    f"exit_code: {process.returncode}\n"
+                    f"duration: {duration:.0f}s\n\n"
+                    f"=== STDERR ===\n{stderr_text}\n\n"
+                    f"=== STDOUT (last 3000 chars) ===\n{stdout_text[-3000:]}\n",
+                    encoding='utf-8',
+                )
+                print(f"      诊断日志: {diag_path.name}")
 
             return ExecutionResult(
                 agent_name=config.name, status=status,
                 session_id=session_id, exit_code=process.returncode,
                 duration=duration, cost=cost, tokens=tokens,
                 output_files=output_files,
-                error_message=stderr.decode('utf-8', errors='replace') if process.returncode != 0 else None,
+                error_message=stderr_text if process.returncode != 0 else None,
             )
 
         except Exception as e:
@@ -368,7 +378,7 @@ class StateManager:
 # ============================================================
 
 class ErrorHandler:
-    def __init__(self, project_root: Path, max_retries: int = 3):
+    def __init__(self, project_root: Path, max_retries: int = 1):
         self.max_retries = max_retries
         self.backoff_seconds = [5, 10, 20]
         self.error_log_file = project_root / ".claude" / "error_log.json"
@@ -410,10 +420,9 @@ class ErrorHandler:
 # ============================================================
 
 AGENT_DISPLAY = {
-    "analyst":  "PPT模板分析师",
-    "builder":  "PPT构建师",
-    "reviewer": "PPT验收师",
-    "developer": "PPT代码专家",
+    "step1-analyzer":  "步骤1-分析师",
+    "step2-architect": "步骤2-架构师",
+    "step3-builder":   "步骤3-构建师",
 }
 
 
@@ -456,19 +465,15 @@ class ProgressMonitor:
 # ============================================================
 
 class PPTOrchestrator:
-    """Fixed 4-agent workflow: Analyst → PAUSE → Builder → Reviewer → loop."""
+    """Step-based 3+1 agent dispatcher: each step has its own agent with self-check loop."""
 
     def __init__(
         self,
         project_root: Path,
-        max_rounds: int = 3,
-        max_budget: float = 10.0,
-        skip_analyst_first_round: bool = False,
         auto_mode: bool = False,
+        max_budget: float = 10.0,
     ):
         self.project_root = project_root
-        self.max_rounds = max_rounds
-        self.skip_analyst_first_round = skip_analyst_first_round
         self.auto_mode = auto_mode
         self.executor = AgentExecutor(project_root, max_budget)
         self.error_handler = ErrorHandler(project_root)
@@ -477,7 +482,7 @@ class PPTOrchestrator:
         self.results: Dict[str, ExecutionResult] = {}
 
     # ------------------------------------------------------------------
-    # Version auto-detection
+    # Version helpers (used by step3-builder agent via env vars)
     # ------------------------------------------------------------------
 
     def _detect_next_version_index(self) -> int:
@@ -489,16 +494,17 @@ class PPTOrchestrator:
         max_idx = 9  # so first version = 10 = "1.0"
         ver_pattern = re.compile(r"(\d+)\.(\d+)")
 
-        # Source 1: existing pptx files
+        # Source 1: existing pptx files in pipeline-output/
         pptx_pattern = re.compile(r"^claude-ppt (\d+)\.(\d+)\.pptx$")
-        for f in self.project_root.glob("claude-ppt *.pptx"):
+        output_dir = self.project_root / "pipeline-output"
+        for f in output_dir.glob("claude-ppt *.pptx") if output_dir.exists() else []:
             m = pptx_pattern.match(f.name)
             if m:
                 idx = int(m.group(1)) * 10 + int(m.group(2))
                 if idx > max_idx:
                     max_idx = idx
 
-        # Source 2: version tracker (records xlsx sheets + past attempts)
+        # Source 2: version tracker
         tracker = self.project_root / "pipeline-progress" / ".version_tracker.json"
         if tracker.exists():
             try:
@@ -514,727 +520,733 @@ class PPTOrchestrator:
 
         return max_idx + 1
 
-    def _record_version(self, version: str) -> None:
-        """Append version to tracker so future runs skip it."""
-        tracker = self.project_root / "pipeline-progress" / ".version_tracker.json"
-        versions = []
-        if tracker.exists():
-            try:
-                versions = json.loads(tracker.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, IOError):
-                versions = []
-        if version not in versions:
-            versions.append(version)
-            tracker.write_text(json.dumps(versions, ensure_ascii=False), encoding="utf-8")
-
     @staticmethod
     def _idx_to_version(idx: int) -> str:
-        """Convert version index to string: 10→'1.0', 19→'1.9', 20→'2.0'."""
+        """Convert version index to string: 10->'1.0', 19->'1.9', 20->'2.0'."""
         return f"{idx // 10}.{idx % 10}"
 
     # ------------------------------------------------------------------
-    # Analyst enhanced marker
+    # Pipeline-first execution (plan4: fast path)
     # ------------------------------------------------------------------
 
-    ENHANCED_MARKER = "pipeline-progress/.analyst_enhanced.json"
+    def _run_pipeline(self, step: int) -> Tuple[bool, str]:
+        """Run deterministic pipeline scripts directly via subprocess.
 
-    def _load_enhanced_list(self) -> list[str]:
-        """Load list of LLM-enhanced sheet names."""
-        marker = self.project_root / self.ENHANCED_MARKER
-        if marker.exists():
-            try:
-                return json.loads(marker.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, IOError):
-                pass
-        return []
+        Returns (success, error_detail).
+        success=True means all scripts exited with code 0.
+        """
+        next_ver = self._idx_to_version(self._detect_next_version_index())
 
-    def _mark_enhanced(self, sheet_name: str) -> None:
-        """Record that a sheet has been LLM-enhanced."""
-        marker = self.project_root / self.ENHANCED_MARKER
-        enhanced = self._load_enhanced_list()
-        if sheet_name not in enhanced:
-            enhanced.append(sheet_name)
-            marker.write_text(json.dumps(enhanced, ensure_ascii=False), encoding="utf-8")
+        scripts_map = {
+            1: [
+                [sys.executable, "pipeline/01_shape_detail.py"],
+                [sys.executable, "pipeline/01b_auto_annotate.py"],
+                [sys.executable, "pipeline/02_shape_analysis.py"],
+            ],
+            2: [
+                [sys.executable, "pipeline/02_shape_analysis.py"],
+                [sys.executable, "pipeline/03a_build_shape.py", "--assemble-only"],
+                [sys.executable, "pipeline/03a_build_shape.py", "--execute-prompts"],
+            ],
+            3: [
+                [sys.executable, "pipeline/03b_build_ppt_com.py", "--version", next_ver],
+            ],
+        }
 
-    # ------------------------------------------------------------------
-    # Pipeline direct execution
-    # ------------------------------------------------------------------
-
-    def _run_pipeline(self, script: str, args: list[str] | None = None) -> subprocess.CompletedProcess:
-        """Run a pipeline script directly via subprocess (no agent overhead)."""
-        cmd = [sys.executable, script] + (args or [])
+        scripts = scripts_map.get(step, [])
         env = os.environ.copy()
-        env["PYTHONUTF8"] = "1"
-        return subprocess.run(
-            cmd, cwd=str(self.project_root),
-            capture_output=True, text=True, encoding="utf-8", env=env,
-        )
+        env['ORCHESTRATOR_RUNNING'] = 'true'
 
-    def _run_pipeline_step(self, script: str, args: list[str] | None = None) -> bool:
-        """Run a pipeline step, print filtered output, return True on success."""
-        script_name = Path(script).name
-        print(f"  [Pipeline] {script_name} ...")
-        t0 = time.time()
-        r = self._run_pipeline(script, args)
-        dur = time.time() - t0
-        if r.returncode != 0:
-            print(f"\n❌ {script_name} 失败 ({dur:.0f}s):\n{r.stderr[:500]}")
-            return False
-        for line in r.stdout.splitlines():
-            stripped = line.strip()
-            if stripped and ("✅" in stripped or "❌" in stripped or "⚠️" in stripped
-                            or "[WARN]" in stripped or "写入" in stripped
-                            or "生成" in stripped or "pending" in stripped
-                            or "Phase" in stripped or "[OK]" in stripped
-                            or "GPT prompt" in stripped):
-                print(f"    {stripped}")
-        print(f"  ✅ {script_name} ({dur:.0f}s)")
-        return True
-
-    def _run_03a_with_prompt_review(self) -> bool:
-        """Run 03a in two phases with prompt review pause between them."""
-        # Phase 1: assemble prompts (no GPT calls)
-        if not self._run_pipeline_step("pipeline/03a_build_shape.py", ["--assemble-only"]):
-            return False
-
-        # Check if there are pending GPT prompts
-        pending_path = self.project_root / "pipeline-progress" / "03a-pending_prompts.json"
-        has_pending = False
-        if pending_path.exists():
+        for i, cmd in enumerate(scripts):
+            label = " ".join(cmd[1:])
+            print(f"  [PIPELINE] {label} ...", flush=True)
+            start = time.time()
             try:
-                pd = json.loads(pending_path.read_text(encoding="utf-8"))
-                has_pending = bool(pd.get("pending"))
-            except Exception:
-                pass
+                proc = subprocess.run(
+                    cmd,
+                    cwd=str(self.project_root),
+                    capture_output=True,
+                    text=True,
+                    encoding='utf-8',
+                    errors='replace',
+                    env=env,
+                    timeout=300,
+                )
+            except subprocess.TimeoutExpired:
+                return False, f"Timeout (300s): {label}"
 
-        if has_pending:
-            if self.auto_mode:
-                print(f"  [全自动] 跳过 prompt 审核，直接执行 GPT")
-            else:
-                xlsx_path = str((self.project_root / "pipeline-progress" / "01-shape_detail.xlsx").resolve())
-                try:
-                    os.startfile(xlsx_path)
-                    print(f"  [已打开] Excel — 可在「GPT-prompt Text」单元格中编辑 prompt")
-                except Exception:
-                    print(f"  [手动打开] {xlsx_path}")
-                print(f"\n{'=' * 60}")
-                print(f"⏸️  GPT Prompt 审核")
-                print(f"   请检查 01-shape_detail.xlsx 中「GPT-prompt Text」列")
-                print(f"   编辑完成后保存并关闭 Excel，然后按 Enter 继续...")
-                print(f"{'=' * 60}")
-                input()
-        else:
-            print(f"  [INFO] 无 GPT 待审核 prompt，跳过审核暂停")
+            elapsed = time.time() - start
+            if proc.returncode != 0:
+                detail = (f"Script failed: {label} (exit={proc.returncode}, {elapsed:.1f}s)\n"
+                          f"stderr: {proc.stderr[:500]}\nstdout: {proc.stdout[-500:]}")
+                print(f"  [PIPELINE] FAIL {label} ({elapsed:.1f}s)")
+                return False, detail
 
-        # Phase 2: call GPT with (possibly edited) prompts
-        if not self._run_pipeline_step("pipeline/03a_build_shape.py", ["--execute-prompts"]):
-            return False
+            print(f"  [PIPELINE] OK   {label} ({elapsed:.1f}s)")
 
-        return True
+            # Step 2: after --assemble-only, re-apply saved structural constraints
+            if step == 2 and "--assemble-only" in cmd:
+                self._reapply_saved_constraints()
 
-    def _run_builder_pipeline(self, version: str, sheet_arg: list[str] | None = None) -> bool:
-        """Run 02 → 03a (two-phase with prompt review) → 03b. Returns True on success."""
-        # 02
-        args_02 = sheet_arg
-        if not self._run_pipeline_step("pipeline/02_shape_analysis.py", args_02):
-            return False
+        return True, ""
 
-        # 03a two-phase
-        if not self._run_03a_with_prompt_review():
-            return False
-
-        # 03b
-        if not self._run_pipeline_step("pipeline/03b_build_ppt_com.py", ["--version", version]):
-            return False
-
-        return True
-
-    # ------------------------------------------------------------------
-    # Prompt builders
-    # ------------------------------------------------------------------
-
-    def _get_latest_version(self) -> str | None:
-        """Return the latest existing version string, or None if fresh."""
-        idx = self._detect_next_version_index() - 1
-        if idx < 10:
-            return None
-        return self._idx_to_version(idx)
-
-    def _analyst_phase2_prompt(self, target_sheet: str, fix_shapes: list[dict] | None = None) -> str:
-        """Analyst LLM: 增强批注。
-
-        fix_shapes: 如果是续跑，传入失败 shape 列表 [{shape, issue, fix_type, suggestion}]。
-                    Analyst 仅聚焦这些 shape，其余跳过。
-                    如果为 None，则全量分析所有 shape。
-        """
-        golden_ref = (
-            "【golden reference 示例】\n"
-            "好的「内容描述」格式：\n"
-            "  缺点总结: 从补充说明总结缺点。必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例\n"
-            "  优点总结: 从补充说明总结优点。必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例\n"
-            "差的「内容描述」：\n"
-            "  ❌ 从补充说明总结缺点 (缺少关键词和格式约束)\n"
-            "  ❌ 总结一下缺点 (太模糊)"
-        )
-
-        # Targeted mode: only fix specific shapes
-        if fix_shapes:
-            fix_detail = "\n".join(
-                f"  - {fx['shape']}: [{fx.get('fix_type','')}] {fx.get('issue','')} → {fx.get('suggestion','')}"
-                for fx in fix_shapes
-            )
-            shape_names = [fx['shape'] for fx in fix_shapes if fx['shape'] != '(全局)']
-            global_fixes = [fx for fx in fix_shapes if fx['shape'] == '(全局)']
-
-            scope_note = ""
-            if shape_names:
-                scope_note += f"需要修改的 shape: {', '.join(shape_names)}\n"
-            if global_fixes:
-                scope_note += "另有全局修正（影响所有 gpt_prompted shape）\n"
-
-            return (
-                f"你是 PPT 模板分析师。上一轮验收发现以下问题，需要你精准修正批注。\n\n"
-                f"⚠️ 本次是【定向修正】，只改有问题的 shape，其余 shape 不要动！\n\n"
-                f"【验收反馈】\n{fix_detail}\n\n"
-                f"{scope_note}\n"
-                f"你的任务：\n"
-                f"1. 读取 `pipeline-progress/01-shape_detail_com.json` 了解 shape 属性\n"
-                f"2. 通过 COM 打开 `pipeline-progress/01-shape_detail.xlsx`「{target_sheet}」sheet\n"
-                f"   ⚠️ 必须操作「{target_sheet}」sheet\n"
-                f"3. 只修改上述 shape 的「内容描述」，根据验收反馈精准调整：\n"
-                f"   - keyword_missing → 在「内容描述」中追加缺失关键词要求\n"
-                f"   - budget_overflow → 追加具体字数上限约束\n"
-                f"   - budget_underflow → 追加内容充实要求 + 字数下限\n"
-                f"   - style_mismatch → 追加格式/语调约束\n"
-                f"   - 全局修正 → 所有 gpt_prompted shape 的「内容描述」都追加对应要求\n"
-                f"4. 保存并关闭 xlsx\n"
-                f"5. 打印修改摘要\n\n"
-                f"{golden_ref}"
-            )
-
-        # Full mode: enhance all shapes
-        return (
-            "你是 PPT 模板分析师。Pipeline 已完成自动推断。\n\n"
-            "你的任务：增强 xlsx 中所有 shape 的批注质量。\n\n"
-            f"1. 读取 `pipeline-progress/01-shape_detail_com.json` 了解每个 shape 的属性\n"
-            f"2. 通过 COM 读取 `pipeline-progress/01-shape_detail.xlsx`「{target_sheet}」sheet 的所有 shape 批注\n"
-            f"   ⚠️ 必须操作「{target_sheet}」sheet，不是其他 sheet\n"
-            "3. 对每个 shape 评估并改进：\n"
-            "   - 「内容描述」: 更具体化，将所有 GPT 约束（关键词、字数、格式）直接写入此字段\n"
-            "     例如：「从补充说明总结缺点。必须包含'建议'、'反馈'、'样本'关键词，每段不超过3行，总字数200字以内」\n"
-            "   - 「strategy」: 验证自动推断是否匹配 shape 的文本特征\n"
-            "   - 「params」: 补充缺失参数\n"
-            "   ⚠️ 不再使用「备注」字段，所有指令统一写入「内容描述」\n"
-            "4. 特别关注 gpt_prompted 类 shape：\n"
-            "   - 读取 shape 的原始 text 确认 filter 方向（缺点/优点）正确\n"
-            "   - 在「内容描述」中追加 GPT 输出必须包含的关键词（如「建议」「反馈」）\n"
-            "5. 对 strategy 为空或 description 为「（必填）」的 shape，根据原始 text 推断正确的 strategy\n"
-            f"6. 通过 Python COM 写入所有改进到 xlsx 的「{target_sheet}」sheet\n"
-            "7. 打印修改摘要（列出每个 shape 的改动内容）\n\n"
-            f"{golden_ref}"
-        )
-
-    def _builder_llm_only_prompt(self, version: str) -> str:
-        """Builder LLM: 仅修改 xlsx 批注，不运行 pipeline 脚本。"""
-        return (
-            f"你是 PPT 构建师。Orchestrator 已运行 02b_iteration_setup.py，"
-            f"在 xlsx 中创建了新 sheet「claude-ppt {version}」并应用了基础修正。\n\n"
-            f"你的唯一任务：通过 Python COM 精调该 sheet 的批注。\n\n"
-            f"1. 读取 `pipeline-progress/04-fix_ppt.md` 获取修正建议\n"
-            f"2. 对每个非 code 类 fix 条目（如 keyword_missing / budget_overflow / budget_underflow / style_mismatch），打开 xlsx 修改「claude-ppt {version}」sheet：\n"
-            f"   - 精化「内容描述」使 prompt 更精确（将关键词要求、字数约束等直接追加到内容描述中）\n"
-            f"   - 调整 strategy/params（如切换 filter=缺点 → filter=优点）\n"
-            f"   ⚠️ 不再使用「备注」字段，所有修正统一追加到「内容描述」\n"
-            f"3. 保存并关闭 xlsx\n"
-            f"4. 打印修改摘要（列出每个 shape 的改动）\n\n"
-            f"⚠️ 不要运行任何 pipeline 脚本，orchestrator 会处理。\n\n"
-            f"【golden reference 示例】\n"
-            f"好的「内容描述」格式：\n"
-            f"  缺点总结: 从补充说明总结缺点。必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例\n"
-            f"  优点总结: 从补充说明总结优点。必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例\n"
-            f"差的「内容描述」：\n"
-            f"  ❌ 从补充说明总结缺点 (缺少关键词和格式约束)\n"
-            f"  ❌ 总结一下缺点 (太模糊)"
-        )
-
-    def _reviewer_llm_only_prompt(self, version: str) -> str:
-        """Reviewer LLM: 仅语义审核，不运行 pipeline 脚本。"""
-        return (
-            f"你是 PPT 验收师。Pipeline 已运行 04_shape_diff_test.py，测试结果为 FAIL。\n\n"
-            f"你的任务：分析失败原因，补充精准修复建议。\n\n"
-            f"1. 读取 `pipeline-progress/04-fix_ppt.md` 和 `pipeline-progress/04-diff_result.json`\n"
-            f"2. 对每个失败项做深入分析：\n"
-            f"   - 语义覆盖不达标：找出哪些 shape 的文案缺少关键词（样本/建议/反馈），"
-            f"建议在对应 shape 的「内容描述」中追加什么约束\n"
-            f"   - Readability 不达标：读取对应 shape 的实际文本，判断是过长/过短/偏题\n"
-            f"   - Visual 不达标：判断是 COM 写入格式错误还是 shape 匹配错误\n"
-            f"3. 将补充诊断追加到 `pipeline-progress/04-fix_ppt.md`\n"
-            f"4. 打印验收结论（FAIL + 三层分数 + 具体修复建议摘要）\n\n"
-            f"⚠️ 不要运行任何 pipeline 脚本，orchestrator 会处理。"
-        )
-
-    def _developer_prompt(self) -> str:
-        fix_content = ""
-        fix_path = self.project_root / "pipeline-progress" / "04-fix_ppt.md"
-        if fix_path.exists():
-            try:
-                fix_content = fix_path.read_text(encoding='utf-8')[:3000]
-            except (IOError, OSError):
-                pass
-
-        return (
-            f"你是 PPT 代码专家。Reviewer 诊断出 pipeline 代码缺陷需要修复。\n\n"
-            f"修正报告：\n\n---\n{fix_content}\n---\n\n"
-            f"请：\n"
-            f"1. 找到报告中 `fix_type: code` 的条目\n"
-            f"2. 定位并修复对应的 pipeline 脚本\n"
-            f"3. 运行语法检查确认无误\n"
-            f"4. 简述修改内容"
-        )
-
-    # ------------------------------------------------------------------
-    # Result checking
-    # ------------------------------------------------------------------
-
-    def _check_review_passed(self) -> Tuple[bool, str]:
-        """Read diff_result.json, return (passed, fix_type).
-
-        fix_type: 'code' | 'keyword_missing' | 'budget_overflow' | 'budget_underflow' | 'style_mismatch' | 'annotation' | '' (empty if passed).
-        """
-        diff_path = self.project_root / "pipeline-progress" / "04-diff_result.json"
-        if not diff_path.exists():
-            return False, "annotation"
+    def _reapply_saved_constraints(self) -> None:
+        """Re-apply structural constraints from previous self_check to freshly generated prompt_specs."""
+        prev_check = self.project_root / "pipeline-progress" / "02-self_check_result.json"
+        if not prev_check.exists():
+            return
 
         try:
-            data = json.loads(diff_path.read_text(encoding='utf-8'))
+            saved = json.loads(prev_check.read_text(encoding='utf-8'))
         except (json.JSONDecodeError, IOError):
-            return False, "annotation"
+            return
 
-        # Check thresholds
-        status = data.get("status", "fail")
-        if status == "ok":
-            return True, ""
+        issues = saved.get("issues", [])
+        structural = [i for i in issues
+                      if "paragraph count mismatch" in i.get("problem", "")
+                      or "bullet count mismatch" in i.get("problem", "")]
+        if not structural:
+            return
 
-        visual = data.get("visual_score_avg", data.get("visual_score", 0))
-        readability = data.get("readability_score_avg", data.get("readability_score", 0))
-        semantic = data.get("semantic_coverage", 0)
+        specs_path = self.project_root / "pipeline-progress" / "02-prompt_specs.json"
+        if not specs_path.exists():
+            return
+        specs = json.loads(specs_path.read_text(encoding='utf-8'))
 
-        if visual >= 98 and readability >= 95 and semantic >= 100:
-            return True, ""
+        applied = 0
+        for issue in structural:
+            shape = issue["shape"]
+            problem = issue["problem"]
+            prompt = next((p for p in specs["prompts"] if p["shape_name"] == shape), None)
+            if not prompt:
+                continue
 
-        # Determine fix_type from diff_result.json (more reliable than MD text search)
-        overall_ft = data.get("fix_type", "")
-        if overall_ft == "code":
-            return False, "code"
-        if overall_ft:
-            return False, overall_ft
+            constraint = ""
+            m = re.search(r"paragraph count mismatch: generated (\d+) vs template (\d+)", problem)
+            if m:
+                constraint = f" 输出必须包含恰好 {int(m.group(2))} 个段落（用空行分隔）。"
+            m = re.search(r"bullet count mismatch: generated (\d+) vs template (\d+)", problem)
+            if m:
+                constraint = f" 输出必须包含恰好 {int(m.group(2))} 个列表项（每项单独一行，以序号或符号开头）。"
 
-        # Fallback: check individual fixes for any code type
-        for fx in data.get("fixes", []):
-            if fx.get("fix_type") == "code":
-                return False, "code"
+            if constraint and constraint not in prompt.get("instruction", ""):
+                prompt["instruction"] = prompt.get("instruction", "") + constraint
+                applied += 1
 
-        return False, "annotation"
+        if applied:
+            specs_path.write_text(json.dumps(specs, ensure_ascii=False, indent=2), encoding='utf-8')
+            print(f"  [INHERIT] 继承上轮 {applied} 条结构约束")
 
-    def _verify_pptx_exists(self, version: str) -> bool:
-        """Check that the expected pptx file was actually created."""
-        pptx_path = self.project_root / f"claude-ppt {version}.pptx"
-        return pptx_path.exists()
+        # Also apply step3 feedback (content overflow → tighter budget)
+        self._apply_step3_feedback(specs_path)
 
-    def _archive_round(self, round_num: int) -> None:
-        """Archive fix report and diff result for this round."""
-        progress = self.project_root / "pipeline-progress"
-        for fname in ["04-fix_ppt.md", "04-diff_result.json"]:
-            src = progress / fname
-            if src.exists():
-                stem, ext = fname.rsplit('.', 1)
-                dst = progress / f"{stem}-round{round_num}.{ext}"
+    def _apply_step3_feedback(self, specs_path: Path) -> None:
+        """Read step3 feedback and inject tighter char limits.
+
+        Three-pronged injection:
+        1. Reduce max_chars in budget JSON (hard clamp safety net)
+        2. Append constraint to user_instruction in mapping JSON (GPT sees it)
+        3. Append constraint to pending prompts JSON (override prompts also get it)
+        """
+        feedback_path = self.project_root / "pipeline-progress" / "03-feedback_to_step2.json"
+        if not feedback_path.exists():
+            return
+
+        try:
+            feedback = json.loads(feedback_path.read_text(encoding='utf-8'))
+        except (json.JSONDecodeError, IOError):
+            return
+
+        # Parse overflow issues → {shape_name: max_chars}
+        overflows = {}
+        for issue in feedback.get("issues", []):
+            problem = issue.get("problem", "")
+            m = re.search(r'\|\s*(\w[\w\s]*?)\s*\|\s*内容完整性\s*\|\s*内容超长\s*(\d+)字\s*\(上限(\d+)字', problem)
+            if m:
+                overflows[m.group(1).strip()] = int(m.group(3))
+
+        if not overflows:
+            # Clean up even if no parseable issues
+            try:
+                feedback_path.unlink()
+            except OSError:
+                pass
+            return
+
+        applied = 0
+
+        # --- Prong 1: Reduce max_chars in budget ---
+        budget_path = self.project_root / "pipeline-progress" / "02-readability_budget.json"
+        if budget_path.exists():
+            try:
+                bdata = json.loads(budget_path.read_text(encoding='utf-8'))
+                for b in bdata.get("budgets", []):
+                    if b["shape_name"] in overflows:
+                        old = b.get("max_chars", 999)
+                        new_limit = overflows[b["shape_name"]]
+                        if old > new_limit:
+                            b["max_chars"] = new_limit
+                            print(f"  [FEEDBACK] {b['shape_name']}: budget max_chars {old} → {new_limit}")
+                budget_path.write_text(json.dumps(bdata, ensure_ascii=False, indent=2), encoding='utf-8')
+            except (json.JSONDecodeError, IOError):
+                pass
+
+        # --- Prong 2: Append constraint to user_instruction in mapping ---
+        map_path = self.project_root / "pipeline-progress" / "02-shape_analysis_map.json"
+        if map_path.exists():
+            try:
+                mdata = json.loads(map_path.read_text(encoding='utf-8'))
+                for m in mdata.get("mapping", []):
+                    if m["shape_name"] in overflows:
+                        limit = overflows[m["shape_name"]]
+                        constraint = f"严格限制总字数不超过{limit}字（含标点），超长会导致排版溢出。"
+                        ui = m.get("user_instruction", "")
+                        if constraint not in ui:
+                            m["user_instruction"] = (ui + " " + constraint).strip()
+                            applied += 1
+                map_path.write_text(json.dumps(mdata, ensure_ascii=False, indent=2), encoding='utf-8')
+            except (json.JSONDecodeError, IOError):
+                pass
+
+        # --- Prong 3: Append constraint to pending prompts ---
+        pending_path = self.project_root / "pipeline-progress" / "03a-pending_prompts.json"
+        if pending_path.exists():
+            try:
+                pdata = json.loads(pending_path.read_text(encoding='utf-8'))
+                for p in pdata.get("pending", []):
+                    if p["shape_name"] in overflows:
+                        limit = overflows[p["shape_name"]]
+                        suffix = f"\n\n【硬约束】总字数不得超过{limit}字（含标点），超出部分会被截断。请精简表达。"
+                        if suffix not in p.get("prompt", ""):
+                            p["prompt"] = p.get("prompt", "") + suffix
+                pdata["feedback_applied"] = True
+                pending_path.write_text(json.dumps(pdata, ensure_ascii=False, indent=2), encoding='utf-8')
+            except (json.JSONDecodeError, IOError):
+                pass
+
+        if applied:
+            print(f"  [FEEDBACK] 注入 step3 反馈: {applied} 条字数约束")
+
+        # Clean up feedback file after consumption
+        try:
+            feedback_path.unlink()
+        except OSError:
+            pass
+
+    def _check_filler_content(self) -> List[Dict]:
+        """Detect filler/placeholder content in generated shape content."""
+        content_json = self.project_root / "pipeline-progress" / "03a-build_shape_content.json"
+        if not content_json.exists():
+            return []
+
+        filler_phrases = ["暂无", "无有效", "无法汇总", "不可用", "无可归纳", "无可供"]
+        issues = []
+        try:
+            cdata = json.loads(content_json.read_text(encoding='utf-8'))
+            for item in cdata.get("items", []):
+                if item.get("strategy") == "skip":
+                    continue
+                text = item.get("content", "")
+                for phrase in filler_phrases:
+                    if phrase in text:
+                        issues.append({
+                            "shape": item.get("shape_name", "?"),
+                            "problem": f"content contains filler: '{phrase}' — source data may be empty",
+                            "fix_hint": "check source xlsx data or re-run step 2 with real data",
+                        })
+                        break
+        except (json.JSONDecodeError, IOError):
+            pass
+        return issues
+
+    def _run_self_check(self, step: int) -> Tuple[bool, Dict]:
+        """Run self-check for given step.
+
+        Returns (passed, result_dict) where result_dict has 'passed', 'issues', 'summary'.
+        """
+        if step in (1, 2):
+            from pipeline.self_check import check_step1, check_step2
+            result = check_step1() if step == 1 else check_step2()
+
+            # Step 2: supplement with filler content detection
+            if step == 2:
+                filler_issues = self._check_filler_content()
+                if filler_issues:
+                    result["issues"].extend(filler_issues)
+                    result["passed"] = False
+                    result["summary"] = f"{len(result['issues'])} issue(s) found"
+
+            return result["passed"], result
+
+        if step == 3:
+            report_path = self.project_root / "pipeline-progress" / "03b-self_check_report.md"
+            if not report_path.exists():
+                return False, {"passed": False, "issues": [{"shape": "(all)", "problem": "03b-self_check_report.md not found"}],
+                               "summary": "Report file missing — pipeline may have crashed"}
+            content = report_path.read_text(encoding='utf-8')
+            passed = "结论：PASS" in content
+            issues = []
+            if not passed:
+                for line in content.split('\n'):
+                    if '|' in line and '严重' in line and '已修复' not in line:
+                        issues.append({"shape": "see report", "problem": line.strip()})
+
+            # Step 3: also check for filler content (catch what step 2 missed)
+            filler_issues = self._check_filler_content()
+            if filler_issues:
+                issues.extend(filler_issues)
+                passed = False
+
+            return passed, {"passed": passed, "issues": issues,
+                            "summary": "PASS" if passed else f"{len(issues)} issue(s) — check content quality"}
+
+        return False, {"passed": False, "issues": [], "summary": f"Unknown step {step}"}
+
+    def _auto_fix_prompts(self, check_result: Dict) -> bool:
+        """Fix structural issues by adding constraints to prompts and re-running GPT.
+
+        Handles paragraph count and bullet count mismatches.
+        Returns True if fixes were applied and GPT re-run succeeded.
+        """
+        issues = check_result.get("issues", [])
+        structural = [i for i in issues
+                      if "paragraph count mismatch" in i.get("problem", "")
+                      or "bullet count mismatch" in i.get("problem", "")]
+        if not structural:
+            return False
+
+        specs_path = self.project_root / "pipeline-progress" / "02-prompt_specs.json"
+        if not specs_path.exists():
+            return False
+        specs = json.loads(specs_path.read_text(encoding='utf-8'))
+
+        modified = False
+        for issue in structural:
+            shape = issue["shape"]
+            problem = issue["problem"]
+
+            prompt = next((p for p in specs["prompts"] if p["shape_name"] == shape), None)
+            if not prompt:
+                continue
+
+            constraint = ""
+            m = re.search(r"paragraph count mismatch: generated (\d+) vs template (\d+)", problem)
+            if m:
+                target = int(m.group(2))
+                constraint = f" 输出必须包含恰好 {target} 个段落（用空行分隔）。"
+
+            m = re.search(r"bullet count mismatch: generated (\d+) vs template (\d+)", problem)
+            if m:
+                target = int(m.group(2))
+                constraint = f" 输出必须包含恰好 {target} 个列表项（每项单独一行，以序号或符号开头）。"
+
+            if constraint and constraint not in prompt.get("instruction", ""):
+                prompt["instruction"] = prompt.get("instruction", "") + constraint
+                modified = True
+                print(f"  [AUTO-FIX] {shape}: 添加结构约束")
+
+        if not modified:
+            return False
+
+        specs_path.write_text(json.dumps(specs, ensure_ascii=False, indent=2), encoding='utf-8')
+
+        print(f"  [AUTO-FIX] 重新调用 GPT...")
+        try:
+            proc = subprocess.run(
+                [sys.executable, "pipeline/03a_build_shape.py", "--execute-prompts"],
+                cwd=str(self.project_root),
+                capture_output=True, text=True, encoding='utf-8', errors='replace',
+                env=os.environ.copy(), timeout=300,
+            )
+            if proc.returncode == 0:
+                print(f"  [AUTO-FIX] GPT 重跑完成")
+                return True
+            print(f"  [AUTO-FIX] GPT 重跑失败 (exit={proc.returncode})")
+            return False
+        except subprocess.TimeoutExpired:
+            print(f"  [AUTO-FIX] GPT 重跑超时")
+            return False
+
+    @staticmethod
+    def _classify_issue(issue: Dict) -> str:
+        """Classify a self-check issue as 'severe' or 'minor'.
+
+        Severe = would cause step 3 to fail or produce unusable output.
+        Minor  = structural/cosmetic (paragraph/bullet count mismatch).
+        """
+        problem = issue.get("problem", "")
+        # Step 1/2 severe keywords
+        severe_keywords = ["not found", "is empty", "strategy is empty",
+                           "unknown strategy", "no user description"]
+        # Step 3 report lines contain "| 严重 |" for severe issues
+        if "| 严重 |" in problem:
+            return "severe"
+        # Filler content is a data quality issue, not a pipeline blocker
+        if "filler" in problem:
+            return "minor"
+        for kw in severe_keywords:
+            if kw in problem:
+                return "severe"
+        return "minor"
+
+    @staticmethod
+    def _is_content_issue(issue: Dict) -> bool:
+        """Check if a step3 severe issue is content-level (needs step2 redo).
+
+        SSIM is NOT a content issue: template vs generated SSIM is always low
+        (different text), and step2 cannot improve it. SSIM issues are treated
+        as format issues for LLM agent repair.
+        """
+        problem = issue.get("problem", "")
+        content_markers = ["内容超长", "超出", "content too long", "关键词缺失"]
+        return any(m in problem for m in content_markers)
+
+    def _has_step3_feedback(self) -> bool:
+        """Check if step3 feedback file exists (indicates content-level loop needed)."""
+        return (self.project_root / "pipeline-progress" / "03-feedback_to_step2.json").exists()
+
+    def _save_step3_feedback(self, content_issues: list) -> None:
+        """Save step3 content issues as feedback for step2 to consume."""
+        feedback_path = self.project_root / "pipeline-progress" / "03-feedback_to_step2.json"
+        feedback = {
+            "generated_at": datetime.now().isoformat(),
+            "source": "step3_self_check",
+            "issues": content_issues,
+        }
+        feedback_path.write_text(json.dumps(feedback, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(f"  [SAVE] Step3 反馈 → {feedback_path.name}")
+
+    def _sync_excel_prompts(self) -> None:
+        """Compare Excel GPT prompts with JSON; re-run GPT if user edited Excel."""
+        pending_path = self.project_root / "pipeline-progress" / "03a-pending_prompts.json"
+        if not pending_path.exists():
+            return
+
+        try:
+            from pipeline.ppt_pipeline_common import read_gpt_prompts_from_xlsx
+            excel_prompts = read_gpt_prompts_from_xlsx()
+        except Exception as e:
+            print(f"  [WARN] 读取 Excel prompt 失败: {e}")
+            return
+
+        if not excel_prompts:
+            return
+
+        # Load JSON prompts for comparison
+        try:
+            pd_data = json.loads(pending_path.read_text(encoding='utf-8'))
+            json_prompts = {p["shape_name"]: p["prompt"] for p in pd_data.get("pending", [])}
+        except (json.JSONDecodeError, IOError):
+            return
+
+        # Compare: strip whitespace for robust matching
+        changed = []
+        for name, excel_text in excel_prompts.items():
+            json_text = json_prompts.get(name, "")
+            if excel_text.strip() != json_text.strip():
+                changed.append(name)
+
+        if not changed:
+            return
+
+        print(f"  [SYNC] 检测到 Excel prompt 被编辑 ({len(changed)} 个shape: {', '.join(changed)})")
+        print(f"  [SYNC] 自动补跑 GPT 生成新内容...")
+
+        # Re-run 03a --execute-prompts to pick up Excel edits
+        ok, err = self._run_pipeline_single("03a_build_shape.py", "--execute-prompts")
+        if ok:
+            print(f"  [SYNC] GPT 内容已更新")
+        else:
+            print(f"  [WARN] GPT 重跑失败: {err[:200]}")
+
+    def _run_pipeline_single(self, script: str, *args) -> Tuple[bool, str]:
+        """Run a single pipeline script with args. Returns (success, error_detail)."""
+        cmd = [sys.executable, f"pipeline/{script}"] + list(args)
+        label = f"pipeline/{script} {' '.join(args)}"
+        print(f"  [PIPELINE] {label} ...")
+        t0 = time.time()
+        proc = subprocess.run(cmd, capture_output=True, text=True,
+                              cwd=str(self.project_root), timeout=300)
+        elapsed = time.time() - t0
+        if proc.returncode != 0:
+            detail = f"exit={proc.returncode}, stderr: {proc.stderr[:500]}"
+            print(f"  [PIPELINE] FAIL {label} ({elapsed:.1f}s)")
+            return False, detail
+        print(f"  [PIPELINE] OK   {label} ({elapsed:.1f}s)")
+        return True, ""
+
+    def _save_self_check_result(self, step: int, check_result: Dict) -> None:
+        """Save self-check result to file for later use."""
+        save_path = self.project_root / "pipeline-progress" / f"0{step}-self_check_result.json"
+        check_result["saved_at"] = datetime.now().isoformat()
+        save_path.write_text(json.dumps(check_result, ensure_ascii=False, indent=2), encoding='utf-8')
+        print(f"  [SAVE] 自检结果 → {save_path.name}")
+
+    def _make_success_result(self, agent_name: str, duration: float, session_tag: str) -> ExecutionResult:
+        """Create a synthetic ExecutionResult for the fast path."""
+        return ExecutionResult(
+            agent_name=agent_name,
+            status=AgentStatus.COMPLETED,
+            session_id=session_tag,
+            exit_code=0,
+            duration=duration,
+            cost=0.0,
+            tokens=0,
+            output_files=[f for f in AGENT_CONFIGS[agent_name].output_files
+                          if (self.project_root / f).exists()],
+        )
+
+    async def _run_step(self, step: int) -> bool:
+        """Run a single step: pipeline -> self-check -> auto-fix -> severity gate.
+
+        Severe issues block the flow; minor issues are warnings (continue).
+        """
+        agent_names = {1: "step1-analyzer", 2: "step2-architect", 3: "step3-builder"}
+        agent_name = agent_names[step]
+        step_start = time.time()
+
+        print(f"\n  [FAST] 步骤{step} — 直接运行 Python Pipeline...")
+
+        # Phase 0: Step 3 pre-checks
+        if step == 3:
+            # 0a: Detect Excel prompt edits → auto re-run GPT if needed
+            self._sync_excel_prompts()
+
+            # 0b: Show previous step warnings
+            prev_check = self.project_root / "pipeline-progress" / "02-self_check_result.json"
+            if prev_check.exists():
                 try:
-                    dst.write_bytes(src.read_bytes())
-                except (IOError, OSError):
+                    prev = json.loads(prev_check.read_text(encoding='utf-8'))
+                    prev_issues = prev.get("issues", [])
+                    if prev_issues:
+                        print(f"  [INFO] Step2 遗留 {len(prev_issues)} 个问题:")
+                        for pi in prev_issues:
+                            print(f"         - {pi.get('shape','?')}: {pi.get('problem','?')}")
+                except (json.JSONDecodeError, IOError):
                     pass
+
+        # Phase 1: Run deterministic pipeline
+        pipeline_ok, pipeline_error = self._run_pipeline(step)
+
+        if not pipeline_ok:
+            print(f"  [CRASH] Pipeline 脚本异常，启动 LLM Agent 完整流程...")
+            return await self._call_agent(agent_name)
+
+        # Phase 2: Self-check
+        print(f"  [CHECK] 运行自检...")
+        check_passed, check_result = self._run_self_check(step)
+
+        if check_passed:
+            duration = time.time() - step_start
+            print(f"  [PASS] 步骤{step} 自检通过！({duration:.1f}s)")
+            self.results[agent_name] = self._make_success_result(agent_name, duration, "direct-pipeline")
+            return True
+
+        # Phase 3: Auto-fix structural issues (step 2 only)
+        issues = check_result.get("issues", [])
+        print(f"  [FAIL] 自检发现 {len(issues)} 个问题")
+
+        if step == 2 and self._auto_fix_prompts(check_result):
+            print(f"  [CHECK] 自动修复后重新自检...")
+            check_passed, check_result = self._run_self_check(step)
+            if check_passed:
+                duration = time.time() - step_start
+                print(f"  [PASS] 步骤{step} 自动修复后通过！({duration:.1f}s)")
+                self.results[agent_name] = self._make_success_result(agent_name, duration, "direct-autofix")
+                return True
+            issues = check_result.get("issues", [])
+            print(f"  [FAIL] 自动修复后仍有 {len(issues)} 个问题")
+
+        # Phase 4: Severity gate — save results, classify, decide
+        self._save_self_check_result(step, check_result)
+
+        severe = [i for i in issues if self._classify_issue(i) == "severe"]
+        minor  = [i for i in issues if self._classify_issue(i) == "minor"]
+
+        if minor:
+            print(f"  [WARN] {len(minor)} 个轻微问题（不阻断流程）:")
+            for m in minor:
+                print(f"         - {m['shape']}: {m['problem']}")
+
+        if not severe:
+            # Only minor issues — warn and continue
+            duration = time.time() - step_start
+            print(f"  [CONTINUE] 无严重问题，继续下一步 ({duration:.1f}s)")
+            self.results[agent_name] = self._make_success_result(agent_name, duration, "direct-warn")
+            return True
+
+        # Has severe issues
+        print(f"  [SEVERE] {len(severe)} 个严重问题:")
+        for s in severe:
+            print(f"           - {s['shape']}: {s['problem']}")
+
+        # Step 3: classify severe issues into content-level (needs step2) vs format-level
+        if step == 3:
+            content_issues = [s for s in severe if self._is_content_issue(s)]
+            format_issues = [s for s in severe if not self._is_content_issue(s)]
+
+            if content_issues:
+                # Save issues for step2 feedback, signal caller to loop back
+                self._save_step3_feedback(content_issues)
+                print(f"  [FEEDBACK] {len(content_issues)} 个内容问题需要 step2 重新生成")
+                duration = time.time() - step_start
+                self.results[agent_name] = self._make_success_result(agent_name, duration, "needs-step2")
+                return False  # signal run() to loop back to step2
+
+            if format_issues:
+                # Format issues — try LLM agent
+                issues_text = json.dumps(issues, ensure_ascii=False, indent=2)
+                failure_context = (f"Self-check result: {check_result.get('summary', '')}\n\n"
+                                   f"Issues:\n{issues_text}")
+                print(f"  [LLM] 启动 Agent 修复格式问题...")
+                return await self._call_agent(agent_name, failure_context=failure_context)
+
+        # Step 1/2: try LLM repair
+        issues_text = json.dumps(issues, ensure_ascii=False, indent=2)
+        failure_context = (f"Self-check result: {check_result.get('summary', '')}\n\n"
+                           f"Issues:\n{issues_text}")
+        print(f"  [LLM] 启动 Agent 修复...")
+        return await self._call_agent(agent_name, failure_context=failure_context)
+
+    # ------------------------------------------------------------------
+    # Agent caller (LLM repair path)
+    # ------------------------------------------------------------------
+
+    async def _call_agent(self, agent_name: str, failure_context: Optional[str] = None) -> bool:
+        """Call a step agent, return True on success."""
+        config = AGENT_CONFIGS.get(agent_name)
+        if not config:
+            print(f"\n  [ERROR] Unknown agent: {agent_name}")
+            return False
+
+        # Build task prompt with runtime context
+        template_path = os.environ.get("PPT_TEMPLATE_PATH", "")
+        xlsx_path = os.environ.get("PPT_EXCEL_PATH", "")
+        next_ver = self._idx_to_version(self._detect_next_version_index())
+
+        context_lines = [
+            f"## Runtime Context",
+            f"- template_path: {template_path}",
+            f"- xlsx_path: {xlsx_path}",
+            f"- auto_mode: {self.auto_mode}",
+            f"- next_version: {next_ver}",
+            f"- project_root: {self.project_root}",
+            "",
+        ]
+
+        if failure_context:
+            context_lines += [
+                "## !! REPAIR MODE !!",
+                "Attempt 1 (Python Pipeline) 已由 orchestrator 直接执行完毕。",
+                "Pipeline 脚本运行成功，但自检发现问题。请跳过 Attempt 1，直接执行 Attempt 2 (LLM 修复)。",
+                "",
+                "### 自检失败详情：",
+                failure_context,
+                "",
+                "请根据上述自检失败信息，直接执行 Attempt 2 (LLM 修复) 流程。不要重跑 Attempt 1 的 Python Pipeline。",
+            ]
+        else:
+            context_lines.append(
+                "请按照你的角色定义执行完整流程（包含 Attempt 1 Python Pipeline + Attempt 2 LLM 修复）。"
+            )
+        task_prompt = "\n".join(context_lines)
+
+        self.monitor.display_agent_start(agent_name)
+        result = await self.error_handler.retry_with_backoff(
+            self.executor.run_agent, config, task_prompt
+        )
+        self.results[agent_name] = result
+        self.monitor.display_agent_complete(result)
+
+        return result.status == AgentStatus.COMPLETED
+
+    # ------------------------------------------------------------------
+    # File openers
+    # ------------------------------------------------------------------
+
+    def _open_xlsx(self) -> None:
+        """Open shape_detail.xlsx for user review."""
+        xlsx = self.project_root / "pipeline-progress" / "01-shape_detail.xlsx"
+        if xlsx.exists():
+            try:
+                os.startfile(str(xlsx.resolve()))
+                print(f"  [已打开] Excel: 01-shape_detail.xlsx")
+            except Exception:
+                print(f"  [手动打开] {xlsx}")
+
+    def _open_latest_pptx(self) -> None:
+        """Open the latest claude-ppt *.pptx for user review."""
+        idx = self._detect_next_version_index() - 1
+        if idx < 10:
+            print("  [WARN] 未找到 claude-ppt *.pptx")
+            return
+        version = self._idx_to_version(idx)
+        pptx = self.project_root / "pipeline-output" / f"claude-ppt {version}.pptx"
+        if pptx.exists():
+            try:
+                os.startfile(str(pptx.resolve()))
+                print(f"  [已打开] PPT: claude-ppt {version}.pptx")
+            except Exception:
+                print(f"  [手动打开] {pptx}")
+        else:
+            print(f"  [WARN] 文件不存在: claude-ppt {version}.pptx")
 
     # ------------------------------------------------------------------
     # Main workflow
     # ------------------------------------------------------------------
 
-    async def run(self) -> bool:
-        """Execute the full PPT production workflow."""
+    async def run(self, step: int) -> bool:
+        """Execute workflow for the given step (0=full auto, 1/2/3=single step)."""
         start_time = time.time()
-        state = {
-            "task_id": str(uuid.uuid4()),
-            "started_at": datetime.now().isoformat(),
-            "max_rounds": self.max_rounds,
-            "current_round": 0,
-            "agents_status": {},
-            "results": {},
-        }
 
         print(f"\n{'=' * 60}")
-        print(f"PPT 专业制作团队 — 启动")
-        print(f"最大迭代轮次: {self.max_rounds}")
+        if step == 0:
+            print(f"PPT 全自动模式 — 分析 -> 构建 -> 交付")
+        else:
+            step_names = {1: "分析 PPT 模板", 2: "构建 prompt", 3: "构建 & 交付 PPT"}
+            print(f"步骤{step} — {step_names.get(step, '?')}")
         print(f"{'=' * 60}")
 
-        # ---- Phase 1: Analyst (Pipeline direct + Agent if needed) ----
-        print(f"\n--- Phase 1: 模板分析 ---")
-        phase1_start = time.time()
+        success = False
 
-        # Step 1: Extract template shapes (skip if JSON is fresh)
-        json_path = self.project_root / "pipeline-progress" / "01-shape_detail_com.json"
-        xlsx_path = self.project_root / "pipeline-progress" / "01-shape_detail.xlsx"
-        template_path = self.project_root / "pipeline" / "standard and empty template.pptx"
-
-        skip_extract = (
-            json_path.exists() and xlsx_path.exists() and template_path.exists()
-            and json_path.stat().st_mtime > template_path.stat().st_mtime
-        )
-
-        if skip_extract:
-            print("  [Cache] JSON/xlsx 已是最新，跳过 PPT 提取")
-        else:
-            print("  [Pipeline] 01_shape_detail.py — 提取模板 shape ...")
-            r1 = self._run_pipeline("pipeline/01_shape_detail.py")
-            if r1.returncode != 0:
-                print(f"\n❌ 01_shape_detail.py 失败:\n{r1.stderr[:500]}")
-                return False
-            print(f"  ✅ 01_shape_detail.py 完成 ({time.time() - phase1_start:.0f}s)")
-
-        step1b_start = time.time()
-        print("  [Pipeline] 01b_auto_annotate.py — 规则推断批注 ...")
-        r2 = self._run_pipeline("pipeline/01b_auto_annotate.py")
-        if r2.returncode != 0:
-            print(f"\n❌ 01b_auto_annotate.py 失败:\n{r2.stderr[:500]}")
-            return False
-        # Show annotation summary from 01b
-        for line in r2.stdout.splitlines():
-            if line.strip():
-                print(f"    {line}")
-        print(f"  ✅ 01b_auto_annotate.py 完成 ({time.time() - step1b_start:.0f}s)")
-
-        # Step 2: Detect continuation state + prepare target sheet
-        ambiguous_count = 0
-        m = re.search(r"(\d+) 项待LLM审核", r2.stdout)
-        if m:
-            ambiguous_count = int(m.group(1))
-        if ambiguous_count > 0:
-            print(f"  [INFO] {ambiguous_count} 个模糊项需要 LLM 重点审核")
-
-        base_idx = self._detect_next_version_index()
-        fix_report = self.project_root / "pipeline-progress" / "04-fix_ppt.md"
-        is_continuation = (base_idx > 10) and fix_report.exists()
-
-        if is_continuation:
-            # Continuation: create new sheet via 02b BEFORE Analyst
-            # Retry with incrementing version if sheet already exists
-            version_idx = base_idx
-            while True:
-                next_version = self._idx_to_version(version_idx)
-                target_sheet = f"claude-ppt {next_version}"
-
-                print(f"\n  [续跑] 创建新 sheet「{target_sheet}」...")
-                t0 = time.time()
-                r = self._run_pipeline("pipeline/02b_iteration_setup.py", ["--version", next_version])
-                dur = time.time() - t0
-                if r.returncode != 0:
-                    print(f"\n❌ 02b_iteration_setup.py 失败 ({dur:.0f}s):\n{r.stderr[:500]}")
-                    return False
-
-                # Check if sheet already existed (02b prints "already exists")
-                if "already exists" in r.stdout:
-                    print(f"    sheet「{target_sheet}」已存在，尝试下一个版本...")
-                    self._record_version(next_version)  # record so future runs skip
-                    version_idx += 1
-                    continue
-
-                # New sheet created successfully
-                self._record_version(next_version)
-                base_idx = version_idx  # update for builder loop
-                for line in r.stdout.splitlines():
-                    stripped = line.strip()
-                    if stripped:
-                        print(f"    {stripped}")
-                print(f"  ✅ 02b_iteration_setup.py ({dur:.0f}s) — sheet「{target_sheet}」已创建")
-                break
-        else:
-            target_sheet = "Shape Detail"
-
-        # Step 3: LLM enhances annotations
-        # Priority: user override > auto-detection > default (run)
-        skip_analyst_llm = False
-
-        # Highest priority: user chose to skip at startup
-        if self.skip_analyst_first_round:
-            skip_analyst_llm = True
-            print(f"\n  [跳过 Agent] 用户选择跳过 Analyst LLM 增强")
-            self.results["analyst"] = ExecutionResult(
-                agent_name="analyst", status=AgentStatus.COMPLETED,
-                session_id="skipped-user", exit_code=0,
-                duration=0.0, cost=0.0, tokens=0, output_files=[],
-            )
-
-        # Auto-detection: skip if source sheet already enhanced and no new fix report
-        if not skip_analyst_llm and is_continuation:
-            prev_version = self._idx_to_version(version_idx - 1)
-            prev_sheet = f"claude-ppt {prev_version}"
-            marker_path = self.project_root / self.ENHANCED_MARKER
-            if prev_sheet in self._load_enhanced_list():
-                # Check if fix report is newer than marker → new reviewer feedback
-                fix_newer = (
-                    fix_report.exists() and marker_path.exists()
-                    and fix_report.stat().st_mtime > marker_path.stat().st_mtime
-                )
-                if fix_newer:
-                    print(f"\n  [INFO] 04-fix_ppt.md 有新反馈，Analyst LLM 需根据反馈重新增强")
-                else:
-                    skip_analyst_llm = True
-                    print(f"\n  [跳过 Agent] 批注已从增强的「{prev_sheet}」继承，无需重跑 LLM")
-                    self._mark_enhanced(target_sheet)
-                    self.results["analyst"] = ExecutionResult(
-                        agent_name="analyst", status=AgentStatus.COMPLETED,
-                        session_id="skipped-inherited", exit_code=0,
-                        duration=0.0, cost=0.0, tokens=0, output_files=[],
-                    )
-
-        if not skip_analyst_llm:
-            # Load fix data for targeted mode (continuation with fix report)
-            fix_shapes = None
-            diff_path = self.project_root / "pipeline-progress" / "04-diff_result.json"
-            if is_continuation and diff_path.exists():
-                try:
-                    diff_data = json.loads(diff_path.read_text(encoding="utf-8"))
-                    fixes = [f for f in diff_data.get("fixes", []) if f.get("fix_type") != "code"]
-                    if fixes:
-                        fix_shapes = fixes
-                        shape_names = [f["shape"] for f in fixes if f["shape"] != "(全局)"]
-                        print(f"\n  [Agent] Analyst 定向修正「{target_sheet}」中 {len(shape_names)} 个问题 shape ...")
-                    else:
-                        print(f"\n  [Agent] Analyst 增强「{target_sheet}」中所有 shape 批注 ...")
-                except (json.JSONDecodeError, IOError):
-                    print(f"\n  [Agent] Analyst 增强「{target_sheet}」中所有 shape 批注 ...")
-            else:
-                print(f"\n  [Agent] Analyst 增强「{target_sheet}」中所有 shape 批注 ...")
-
-            self.monitor.display_agent_start("analyst")
-            result = await self.error_handler.retry_with_backoff(
-                self.executor.run_agent, AGENT_CONFIGS["analyst"],
-                self._analyst_phase2_prompt(target_sheet, fix_shapes=fix_shapes)
-            )
-            self.results["analyst"] = result
-            self.monitor.display_agent_complete(result)
-            if result.status == AgentStatus.FAILED:
-                print("\n❌ Analyst LLM 增强失败，工作流终止。")
-                return False
-            self._mark_enhanced(target_sheet)
-
-        state["agents_status"]["analyst"] = self.results["analyst"].status.value
-
-        self.state_manager.save_state(state)
-
-        # ---- PAUSE for human review ----
-        if self.skip_analyst_first_round:
-            print(f"\n  [跳过 PAUSE] 用户选择跳过，直接进入构建阶段")
-        elif self.auto_mode:
-            print(f"\n  [全自动] 跳过批注校准暂停")
-        else:
-            xlsx_path = str((self.project_root / "pipeline-progress" / "01-shape_detail.xlsx").resolve())
-            try:
-                os.startfile(xlsx_path)
-                print(f"  [已打开] Excel: 01-shape_detail.xlsx")
-            except Exception:
-                print(f"  [手动打开] {xlsx_path}")
-            print(f"\n{'=' * 60}")
-            print(f"⏸️  PAUSE — 请校准批注  <sheet: {target_sheet}>")
-            print(f"   检查「{target_sheet}」中黄色「内容描述」单元格，确认批注是否正确。")
-            print("   修改完成后保存并关闭 Excel，然后按 Enter 继续...")
-            print(f"{'=' * 60}")
-            input()
-
-        for round_num in range(1, self.max_rounds + 1):
-            version = self._idx_to_version(base_idx + round_num - 1)
-            state["current_round"] = round_num
-            round_start = time.time()
-            builder_failed = False
-
-            # Three builder modes:
-            #   fresh_build:       first ever build (02→03a→03b, no --sheet)
-            #   continuation_r1:   continuation round 1 (02b+Analyst already done, pipeline with --sheet)
-            #   correction:        round 2+, or continuation round 2+ (02b→LLM→pipeline)
-            is_fresh_build = (round_num == 1 and not is_continuation)
-            is_continuation_r1 = (round_num == 1 and is_continuation)
-
-            print(f"\n--- Round {round_num}: 构建 claude-ppt {version}.pptx ---")
-            if not is_continuation_r1:
-                # continuation_r1 already recorded version before Analyst
-                self._record_version(version)
-
-            # ---- Builder ----
-            if is_fresh_build:
-                # First ever build: pure pipeline, no --sheet
-                builder_failed = not self._run_builder_pipeline(version)
-            elif is_continuation_r1:
-                # Continuation round 1: 02b + Analyst already done, just run pipeline
-                print(f"  [续跑] sheet「claude-ppt {version}」已由 Analyst 增强，直接生成 PPT")
-                builder_failed = not self._run_builder_pipeline(
-                    version, sheet_arg=["--sheet", f"claude-ppt {version}"])
-            else:
-                # Full correction round: 02b → LLM → pipeline
-
-                # Phase 1: create new sheet + basic fixes
-                if not self._run_pipeline_step("pipeline/02b_iteration_setup.py", ["--version", version]):
-                    builder_failed = True
-
-                # Phase 2: LLM agent — only xlsx COM modification
-                if not builder_failed:
-                    print(f"  [Agent] Builder LLM 精调 xlsx 批注 ...")
-                    self.monitor.display_agent_start("builder")
-                    result = await self.error_handler.retry_with_backoff(
-                        self.executor.run_agent, AGENT_CONFIGS["builder"],
-                        self._builder_llm_only_prompt(version)
-                    )
-                    self.monitor.display_agent_complete(result)
-                    if result.status == AgentStatus.FAILED:
-                        print(f"\n❌ Builder LLM 精调失败 (round {round_num})。")
-                        builder_failed = True
-
-                # Phase 3: pipeline regenerate (with prompt review)
-                if not builder_failed:
-                    builder_failed = not self._run_builder_pipeline(
-                        version, sheet_arg=["--sheet", f"claude-ppt {version}"])
-
-            # Record builder result
-            key = f"builder_round{round_num}"
-            builder_dur = time.time() - round_start
-            if builder_failed:
-                self.results[key] = ExecutionResult(
-                    agent_name="builder", status=AgentStatus.FAILED,
-                    session_id="pipeline-direct", exit_code=1,
-                    duration=builder_dur, cost=0.0, tokens=0, output_files=[],
-                    error_message=f"Pipeline script failed in round {round_num}",
-                )
-                state["agents_status"][key] = "failed"
-                self.state_manager.save_state(state)
-                print(f"\n❌ Builder 失败 (round {round_num})，工作流终止。")
-                break
-
-            self.results[key] = ExecutionResult(
-                agent_name="builder", status=AgentStatus.COMPLETED,
-                session_id="pipeline-direct", exit_code=0,
-                duration=builder_dur, cost=0.0, tokens=0,
-                output_files=[f"claude-ppt {version}.pptx"],
-            )
-            state["agents_status"][key] = "completed"
-            self.state_manager.save_state(state)
-
-            # Verify pptx actually exists
-            if not self._verify_pptx_exists(version):
-                print(f"\n❌ Builder 完成但 claude-ppt {version}.pptx 未生成。")
-                print(f"   请检查 pipeline 脚本输出。工作流终止。")
-                break
-
-            print(f"  ✅ Builder 完成 ({builder_dur:.0f}s)")
-
-            # ---- max_rounds=1: skip reviewer, end directly ----
-            if self.max_rounds == 1:
-                print(f"\n✅ claude-ppt {version}.pptx 已生成，请人工审核。")
-                self.monitor.display_summary(self.results, time.time() - start_time)
-                self.state_manager.clear_state()
-                return True
-
-            # ---- max_rounds>=2: pause for human review + confirm continue ----
-            if self.auto_mode:
-                print(f"\n  [全自动] 跳过 PPT 审核，直接进入验收")
-            else:
-                print(f"\n{'=' * 60}")
-                print(f"⏸️  PPT 已生成: claude-ppt {version}.pptx")
-                print(f"   请先人工审核 PPT。")
-                cont = input("   审核完成后，是否进入验收+修正流程？[Y/n]（直接回车=是）: ").strip().lower()
-                print(f"{'=' * 60}")
-                if cont in ('n', 'no'):
-                    print("用户选择终止，工作流结束。")
-                    self.monitor.display_summary(self.results, time.time() - start_time)
-                    self.state_manager.clear_state()
-                    return True
-
-            # ---- Reviewer: direct pipeline + conditional LLM ----
-            print(f"\n  [Pipeline] 04_shape_diff_test.py --target \"claude-ppt {version}.pptx\" ...")
-            t0 = time.time()
-            r = self._run_pipeline(
-                "pipeline/04_shape_diff_test.py",
-                ["--target", f"claude-ppt {version}.pptx"]
-            )
-            review_dur = time.time() - t0
-            # Show test output (04 returns 1 for FAIL, which is expected)
-            for line in r.stdout.splitlines():
-                stripped = line.strip()
-                if stripped:
-                    print(f"    {stripped}")
-            print(f"  ✅ 04_shape_diff_test.py ({review_dur:.0f}s)")
-
-            # Check pass/fail
-            passed, fix_type = self._check_review_passed()
-            if passed:
-                key = f"reviewer_round{round_num}"
-                self.results[key] = ExecutionResult(
-                    agent_name="reviewer", status=AgentStatus.COMPLETED,
-                    session_id="pipeline-direct", exit_code=0,
-                    duration=review_dur, cost=0.0, tokens=0,
-                    output_files=["pipeline-progress/04-diff_result.json"],
-                )
-                state["agents_status"][key] = "completed"
-                print(f"\n✅ claude-ppt {version}.pptx 验收通过！")
-                self.monitor.display_summary(self.results, time.time() - start_time)
-                self.state_manager.clear_state()
-                return True
-
-            # FAIL: LLM semantic review for enhanced fix suggestions
-            print(f"\n  [Agent] Reviewer LLM 语义审核 ...")
-            self.monitor.display_agent_start("reviewer")
-            result = await self.error_handler.retry_with_backoff(
-                self.executor.run_agent, AGENT_CONFIGS["reviewer"],
-                self._reviewer_llm_only_prompt(version)
-            )
-            key = f"reviewer_round{round_num}"
-            self.results[key] = result
-            self.monitor.display_agent_complete(result)
-            state["agents_status"][key] = result.status.value
-            self.state_manager.save_state(state)
-
-            print(f"\n⚠️  Round {round_num} 未通过 (fix_type={fix_type})")
-
-            if round_num >= self.max_rounds:
-                print(f"已达最大轮次 ({self.max_rounds})，工作流结束。请检查 04-fix_ppt.md。")
-                break
-
-            # Archive this round's reports
-            self._archive_round(round_num)
-
-            # Conditional: Developer for code fixes
-            if fix_type == "code":
-                print(f"\n--- Developer 介入修复代码 ---")
-                self.monitor.display_agent_start("developer")
-                result = await self.error_handler.retry_with_backoff(
-                    self.executor.run_agent, AGENT_CONFIGS["developer"], self._developer_prompt()
-                )
-                key = f"developer_round{round_num}"
-                self.results[key] = result
-                self.monitor.display_agent_complete(result)
-                state["agents_status"][key] = result.status.value
-                self.state_manager.save_state(state)
-
-                if result.status == AgentStatus.FAILED:
-                    print(f"\n❌ Developer 失败，工作流终止。")
+        if step == 0:
+            # Full auto: step1 -> step2 -> step3, with step3→step2 loop
+            for s in [1, 2, 3]:
+                if not await self._run_step(s):
+                    if s == 3 and self._has_step3_feedback():
+                        print(f"\n  [LOOP] Step3 内容问题 → 回退 Step2 重新生成...")
+                        if await self._run_step(2):
+                            print(f"\n  [LOOP] Step2 完成 → 重跑 Step3...")
+                            if await self._run_step(3):
+                                success = True
+                                self._open_latest_pptx()
+                        break
+                    step_names_zh = {1: "step1-analyzer", 2: "step2-architect", 3: "step3-builder"}
+                    print(f"\n  {step_names_zh[s]} 失败，工作流终止。")
                     break
+            else:
+                success = True
+                self._open_latest_pptx()
 
-        if self.auto_mode:
-            latest_idx = base_idx + min(round_num, self.max_rounds) - 1
-            final_ver = self._idx_to_version(latest_idx)
-            print(f"\n{'=' * 60}")
-            print(f"🤖 全自动模式完成 — {self.max_rounds} 轮迭代")
-            print(f"   最终产物: claude-ppt {final_ver}.pptx")
-            print(f"{'=' * 60}")
+        elif step in (1, 2):
+            success = await self._run_step(step)
+            if success:
+                self._open_xlsx()
+
+        elif step == 3:
+            success = await self._run_step(step)
+            if not success and self._has_step3_feedback():
+                print(f"\n  [LOOP] Step3 内容问题 → 回退 Step2 重新生成...")
+                if await self._run_step(2):
+                    print(f"\n  [LOOP] Step2 完成 → 重跑 Step3...")
+                    success = await self._run_step(3)
+            if success:
+                self._open_latest_pptx()
+
+        # Summary
         self.monitor.display_summary(self.results, time.time() - start_time)
-        self.state_manager.save_state(state)
-        return False
+        self.state_manager.clear_state()
+        return success
 
 
 # ============================================================
@@ -1255,12 +1267,12 @@ def find_project_root() -> Path:
 
 
 def _select_account() -> str:
-    """Select Claude account (mc or xh)."""
-    print("\n可用账户: mc / xh")
+    """Select Claude account (yk, mc, or xh)."""
+    print("\n可用账户: yk / mc / xh")
     while True:
-        choice = input("请选择账户 [直接回车=xh]: ").strip().lower()
+        choice = input("请选择账户 [直接回车=yk]: ").strip().lower()
         if not choice:
-            choice = 'xh'
+            choice = 'yk'
         if choice in CLAUDE_CONFIG_DIRS:
             config_dir = CLAUDE_CONFIG_DIRS[choice]
             if not os.path.exists(config_dir):
@@ -1273,114 +1285,139 @@ def _select_account() -> str:
 
 
 # ============================================================
+# Template selection
+# ============================================================
+
+def _load_last_template_choice(project_root: Path) -> Optional[Dict]:
+    """Load last template choice from cache file."""
+    cache = project_root / ".claude" / "last_template_choice.json"
+    if cache.exists():
+        try:
+            return json.loads(cache.read_text(encoding='utf-8'))
+        except (json.JSONDecodeError, IOError):
+            pass
+    return None
+
+
+def _save_last_template_choice(project_root: Path, pptx_name: str, xlsx_name: str) -> None:
+    """Save template choice to cache file."""
+    cache = project_root / ".claude" / "last_template_choice.json"
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    cache.write_text(json.dumps({"pptx": pptx_name, "xlsx": xlsx_name}, ensure_ascii=False), encoding='utf-8')
+
+
+def _select_template(project_root: Path) -> None:
+    """When template/ has multiple files, let user pick 1 pptx + 1 xlsx.
+    Sets PPT_TEMPLATE_PATH and PPT_EXCEL_PATH env vars.
+    If only one of each exists, auto-selects without prompting.
+    Remembers last choice as default for next run."""
+    template_dir = project_root / "template"
+    if not template_dir.exists():
+        return  # fall back to defaults in ppt_pipeline_common
+
+    pptx_files = sorted(template_dir.glob("*.pptx"))
+    xlsx_files = sorted(template_dir.glob("*.xlsx"))
+
+    if not pptx_files or not xlsx_files:
+        print("⚠️ template/ 中缺少 .pptx 或 .xlsx 文件")
+        return
+
+    # Auto-select if only one of each
+    if len(pptx_files) == 1 and len(xlsx_files) == 1:
+        os.environ["PPT_TEMPLATE_PATH"] = str(pptx_files[0])
+        os.environ["PPT_EXCEL_PATH"] = str(xlsx_files[0])
+        print(f"  模板: {pptx_files[0].name}")
+        print(f"  数据: {xlsx_files[0].name}")
+        return
+
+    # Multiple files — unified numbered list, user picks 2 numbers
+    all_files = pptx_files + xlsx_files
+    print("\n📂 template/ 中发现多套文件，请选择 1个PPT + 1个Excel:\n")
+    for i, f in enumerate(all_files, 1):
+        tag = "[PPT]  " if f.suffix == ".pptx" else "[Excel]"
+        print(f"  {i}. {tag} {f.name}")
+
+    # Resolve last choice to current indices as default
+    default_hint = ""
+    last = _load_last_template_choice(project_root)
+    if last:
+        name_to_idx = {f.name: i + 1 for i, f in enumerate(all_files)}
+        pptx_idx = name_to_idx.get(last.get("pptx"))
+        xlsx_idx = name_to_idx.get(last.get("xlsx"))
+        if pptx_idx and xlsx_idx:
+            default_hint = f"{pptx_idx} {xlsx_idx}"
+
+    while True:
+        if default_hint:
+            raw = input(f"\n请输入2个编号（直接回车={default_hint}）: ").strip()
+            if not raw:
+                raw = default_hint
+        else:
+            raw = input(f"\n请输入2个编号（用逗号或空格分隔，如 1,3）: ").strip()
+        parts = [s.strip() for s in raw.replace(",", " ").split() if s.strip()]
+        if len(parts) != 2:
+            print("❌ 请输入恰好2个编号")
+            continue
+        try:
+            idx_a, idx_b = int(parts[0]) - 1, int(parts[1]) - 1
+        except ValueError:
+            print("❌ 请输入数字编号")
+            continue
+        if not (0 <= idx_a < len(all_files)) or not (0 <= idx_b < len(all_files)):
+            print(f"❌ 编号范围 1-{len(all_files)}")
+            continue
+        fa, fb = all_files[idx_a], all_files[idx_b]
+        exts = {fa.suffix, fb.suffix}
+        if exts != {".pptx", ".xlsx"}:
+            print("❌ 请选择 1个PPT(.pptx) + 1个Excel(.xlsx)")
+            continue
+        selected_pptx = fa if fa.suffix == ".pptx" else fb
+        selected_xlsx = fa if fa.suffix == ".xlsx" else fb
+        break
+
+    os.environ["PPT_TEMPLATE_PATH"] = str(selected_pptx)
+    os.environ["PPT_EXCEL_PATH"] = str(selected_xlsx)
+    _save_last_template_choice(project_root, selected_pptx.name, selected_xlsx.name)
+    print(f"\n  ✓ 模板: {selected_pptx.name}")
+    print(f"  ✓ 数据: {selected_xlsx.name}")
+
+
+# ============================================================
 # CLI entry point
 # ============================================================
 
 def main():
-    parser = argparse.ArgumentParser(description="PPT 专业制作团队调度系统")
-    parser.add_argument("--max-rounds", type=int, default=3, help="最大迭代轮次 (default: 3)")
+    parser = argparse.ArgumentParser(description="PPT 制作调度系统 (3+1 Agent)")
     parser.add_argument("--max-budget", type=float, default=10.0, help="每个 agent 最大预算 USD (default: 10.0)")
-    parser.add_argument("--resume", action="store_true", help="从上次中断处恢复")
     args = parser.parse_args()
 
     _select_account()
     project_root = find_project_root()
     print(f"项目目录: {project_root}")
 
-    # Interactive round selection (overrides --max-rounds if user chooses)
-    max_rounds = args.max_rounds
-    auto_mode = False
-    review_only = False
-    if not any(a.startswith('--max-rounds') for a in sys.argv[1:]):
-        print("\n🎯 请选择运行模式:\n")
-        print("  1️⃣  1轮 ── 直接生成ppt，不验收")
-        print("  2️⃣  2轮 ── 完整流程×2：生成 → 验收 → 修正")
-        print("  3️⃣  3轮 ── 完整流程×3：生成 → 验收 → 修正；反复打磨，追求极致")
-        print("  4️⃣  🤖 全自动2轮 ── 自动跳过所有Pause，泡杯咖啡等结果")
-        print("  5️⃣  🔍 单独验收 ── 只跑验收，检查最新 PPT 质量\n")
-        auto_mode = False
-        review_only = False
-        while True:
-            choice = input("请选择 [直接回车=1]: ").strip()
-            if not choice:
-                max_rounds = 1
-                break
-            if choice in ('1', '2', '3'):
-                max_rounds = int(choice)
-                break
-            if choice == '4':
-                max_rounds = 2
-                auto_mode = True
-                break
-            if choice == '5':
-                review_only = True
-                max_rounds = 1
-                break
-            print("❌ 请输入 1-5")
-        if review_only:
-            print(f"✓ 🔍 单独验收模式")
-        elif auto_mode:
-            print(f"✓ 🤖 挂机托管: 全自动 2 轮，跳过所有暂停")
-        else:
-            labels = {1: "快速出图", 2: "标准打磨", 3: "精雕细琢"}
-            print(f"✓ {labels[max_rounds]}（{max_rounds} 轮）")
+    # Template selection (before mode selection)
+    _select_template(project_root)
 
-    # Option 5: review-only mode — find latest pptx + run 04
-    if review_only:
-        orch = PPTOrchestrator(
-            project_root=project_root, max_rounds=1,
-            max_budget=args.max_budget,
-        )
-        # Find latest pptx
-        latest_idx = orch._detect_next_version_index() - 1
-        if latest_idx < 10:
-            print("❌ 未找到任何 claude-ppt *.pptx 文件")
-            sys.exit(1)
-        version = orch._idx_to_version(latest_idx)
-        pptx_name = f"claude-ppt {version}.pptx"
-        if not (project_root / pptx_name).exists():
-            print(f"❌ 文件不存在: {pptx_name}")
-            sys.exit(1)
-        print(f"\n🔍 验收目标: {pptx_name}")
-        print(f"{'=' * 60}")
-        t0 = time.time()
-        r = orch._run_pipeline(
-            "pipeline/04_shape_diff_test.py",
-            ["--target", pptx_name]
-        )
-        dur = time.time() - t0
-        for line in r.stdout.splitlines():
-            stripped = line.strip()
-            if stripped:
-                print(f"  {stripped}")
-        passed, fix_type = orch._check_review_passed()
-        print(f"{'=' * 60}")
-        if passed:
-            print(f"✅ {pptx_name} 验收通过！({dur:.0f}s)")
-        else:
-            print(f"⚠️  {pptx_name} 未通过 (fix_type={fix_type}) ({dur:.0f}s)")
-            print(f"   报告: pipeline-progress/04-fix_ppt.md")
-            print(f"   数据: pipeline-progress/04-diff_result.json")
-        sys.exit(0 if passed else 1)
+    # New 4-option menu
+    print("\n\U0001f3af 请选择运行模式:\n")
+    print("  0\ufe0f\u20e3  <全自动> \u2500\u2500 分析 \u2192 构建 \u2192 交付ppt")
+    print("  1\ufe0f\u20e3  步骤1 \u2500\u2500 分析（新）PPT 模板")
+    print("  2\ufe0f\u20e3  步骤2 \u2500\u2500 构建 prompt")
+    print("  3\ufe0f\u20e3  步骤3 \u2500\u2500 构建 & 交付 ppt\n")
 
-    # Analyst LLM: auto-decide by max_rounds
-    skip_analyst = (max_rounds == 1 and not auto_mode)
-    if skip_analyst:
-        print("✓ 单轮模式：跳过 Analyst LLM，直接进入构建阶段")
-    elif auto_mode:
-        print("✓ 🤖 全自动模式：Analyst LLM 正常运行，全程无暂停")
-    else:
-        print("✓ 多轮模式：将运行 Analyst LLM 增强注释")
+    while True:
+        choice = input("请输入 [0-3]（直接回车=0）: ").strip() or "0"
+        if choice in ('0', '1', '2', '3'):
+            step = int(choice)
+            break
+        print("\u274c 请输入 0-3")
 
     orch = PPTOrchestrator(
         project_root=project_root,
-        max_rounds=max_rounds,
+        auto_mode=(step == 0),
         max_budget=args.max_budget,
-        skip_analyst_first_round=skip_analyst,
-        auto_mode=auto_mode,
     )
-
-    success = asyncio.run(orch.run())
+    success = asyncio.run(orch.run(step))
     sys.exit(0 if success else 1)
 
 

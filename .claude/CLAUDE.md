@@ -1,161 +1,88 @@
-# CLAUDE.md - PPT Pipeline + Agent 项目规范
+# CLAUDE.md - PPT Pipeline 项目规范
 
-> 本文件每次会话自动加载。保持精简。
+## 0. 防卡顿规范
 
----
-
-## 项目结构
-
-```
-项目根目录/
-├── orchestrator.py                  # 4-Agent 调度（Pipeline先行 + LLM精调）
-├── pipeline/
-│   ├── ppt_pipeline_common.py       # 公共工具（路径、COM、Excel、批注解析）
-│   ├── 01_shape_detail.py           # Step 1: 提取模板shape
-│   ├── 01b_auto_annotate.py         # Step 1B: 规则表自动批注
-│   ├── 02_shape_analysis.py         # Step 2: 角色推断 + prompt生成
-│   ├── 02b_iteration_setup.py       # Step 2B: 修正轮sheet创建 + 基础修正
-│   ├── 03a_build_shape.py           # Step 3A: 内容生成（Python/GPT）
-│   ├── 03b_build_ppt_com.py         # Step 3B: COM写入PPT
-│   ├── 04_shape_diff_test.py        # Step 4: 三层验收 + fix_type分类
-│   └── prompt_templates/gpt_summary.md  # GPT prompt 模板
-├── pipeline-progress/               # 中间产物（01-/02-/03a-/03b-/04- 前缀）
-├── .claude/agents/                  # 4个Agent配置
-│   ├── 01-analyst.md                # 分析师：Pipeline推断 + LLM审核模糊项
-│   ├── 02-builder.md                # 构建师：Pipeline生成 + LLM精调批注(修正轮)
-│   ├── 03-reviewer.md               # 验收师：Pipeline测试 + LLM语义审核
-│   └── 04-developer.md              # 代码专家：LLM修复pipeline代码
-└── src/Function_030.py              # GPT_5 函数（不修改，直接import）
-```
+- 同一方案连续失败 2 次 → 停下来说明原因，提出替代方案
+- 预计超过 2 分钟的操作 → 用 Agent(run_in_background) 分流
+- 遇到不确定的技术选型 → 先问用户，不要默默试超过 3 分钟
 
 ---
 
-## 关键规则
+## 1. 双轨架构（三重混合制）
+
+本项目存在**两套并行生产系统**，职责不同，不应混淆：
+
+| | Pipeline / Orchestrator | src/ / Main |
+|--|--|--|
+| 入口 | `orchestrator.py` | `Main.py` |
+| 机制 | Step1→2→3 + LLM Agents 自检 | 手工 Python + GPT 直调 |
+| 适用场景 | 新模板分析、通用内容生成 | 已知模板的日常生产运行 |
+| 核心文件 | `pipeline/*.py` | `src/Function_030.py` + `src/yzr_ppt.py` + `src/zxh_ppt.py` |
+
+**新模板移植路径**：Pipeline 跑到 ~80% 视觉满意度 → Developer 写 `src/{name}_ppt.py`
+（Clone 模板页继承格式，工具函数从 `src/_ppt_shared.py` import，prompt 从 Pipeline 产物提取）
+
+---
+
+## 2. 核心代码规则
 
 - **路径**: 始终用相对路径 + 正斜杠 `/`
 - **最小改动**: 只改必要的部分，先说明再动手
-- **输出**: 改代码时只说结论（改了什么、为什么、结果），不展示 diff
-- **Excel**: 统一用 `win32com.client` COM（加密环境，禁 openpyxl/pandas）
+- **Excel**: 统一 `win32com.client` COM（加密环境，禁 openpyxl/pandas）
 - **PPT**: Clone 模板页，不新建 shape；禁 `python-pptx`
+- **字体**: 统一微软雅黑（`_write_text` 自动设置）
+- **换行**: PPT COM 用 `\r` 分段，`\n` 无效
+- **染色**: GPT 用 `【】` 标注关键词 → `_apply_keyword_color` 按段落上下文红/蓝染色
+- **截图**: 系统加密 PPT 导出图片，改用剪贴板→Pillow 方案绕过
 
 ---
 
-## 混合工作流（Pipeline + Agent）
+## 3. 硬规则（反复踩过的坑）
 
-### 启动
+- **OLE 图表粘贴**：`Shapes.Paste()` 后必须 `CutCopyMode = False` 断热链接，否则删行后 PPT 图表失数据
+- **CopyPicture 常量**：xlPicture = **-4147**（矢量 EMF），`4` 是无效值会退化为位图
+- **删行前先 delete chart**：否则 chart 公式引用失效时 Excel 弹"错误公式引用"弹窗
+- **yzr_ppt / zxh_ppt 共享工具**：两文件 95% 重复，工具函数统一放 `src/_ppt_shared.py`，不要在各自文件中复制粘贴
+- **图表两套机制勿混淆**：Pipeline `_write_chart` = 原位注入模板 chart 数据；`Function_030.make_chart*` = Excel 新建 chart → OLE 粘贴，两者解决不同问题
+
+---
+
+## 4. 入口命令
 
 ```bash
-python orchestrator.py          # 交互选择轮次(1-3)
-python orchestrator.py --max-rounds 2   # 或直接指定
+python orchestrator.py    # Pipeline 系统（菜单 0=全自动 / 1/2/3 分步）
+python Main.py            # src/ 生产系统
+python src/yzr_ppt.py     # yzr 单页调试（需先打开 Excel）
+python src/zxh_ppt.py     # zxh 单页调试（需先打开 Excel）
 ```
-
-### 流程
-
-```
-[Analyst] Pipeline(01+01b) → LLM增强所有批注 → 填写xlsx
-    ↓
-  PAUSE — 用户校准xlsx → Enter继续
-    ↓
-[Builder] 直接Pipeline(02→03a→03b) → claude-ppt 1.0.pptx    ← 首轮无LLM
-    ↓
-[Reviewer] 直接Pipeline(04验收) → PASS/FAIL
-    ↓ FAIL → LLM语义审核 → fix_type分流
-    ├─ annotation → 直接Pipeline(02b) → [Builder] LLM精调xlsx → 直接Pipeline(02→03a→03b)
-    └─ code → [Developer] LLM修代码 → Builder重跑
-    ↓
-[Reviewer] 重新验收 → 循环至 max_rounds
-```
-
-### 混合模式：Pipeline 由 orchestrator 直接执行，LLM 只做智能任务
-
-| Agent | orchestrator 直接执行 | LLM 负责 | 何时跳过LLM |
-|-------|---------------------|---------|------------|
-| Analyst | 01提取 + 01b规则推断 | 增强所有shape批注 | 从不跳过 |
-| Builder首轮 | 02→03a→03b全链路 | 无 | 始终 |
-| Builder修正轮 | 02b + 02→03a→03b | 仅精调xlsx批注 | — |
-| Reviewer | 04三层测试 | 语义审核,补充精准建议 | PASS时 |
-| Developer | 无 | 读报告+修代码 | 无code问题时 |
-
-### 版本追溯
-
-| 轮次 | xlsx Sheet | PPT 文件 |
-|------|-----------|----------|
-| 首轮 | Shape Detail | claude-ppt 1.0.pptx |
-| 第2轮 | claude-ppt 1.1 | claude-ppt 1.1.pptx |
-| 第3轮 | claude-ppt 1.2 | claude-ppt 1.2.pptx |
-
-### 三层门禁（全部达标=PASS）
-
-| 层级 | 阈值 | 检查内容 |
-|------|------|---------|
-| Visual | >= 98 | 几何位置、字体、颜色、ChartType |
-| Readability | >= 95 | 文本长度比、行数比 |
-| Semantic | = 100 | 关键词覆盖：样本、建议、反馈 |
-
-### fix_type 分流（5 类）
-
-| fix_type | 含义 | 后续动作 |
-|----------|------|---------|
-| `keyword_missing` | 语义关键词缺失 | 02b 追加关键词要求 → 重跑 pipeline |
-| `budget_overflow` | 文本过长 | 02b 追加字数约束 → 重跑 pipeline |
-| `budget_underflow` | 文本过短/空白 | 02b 要求充实内容 → 重跑 pipeline |
-| `style_mismatch` | 格式/语调偏离 | 02b 追加风格约束 → 重跑 pipeline |
-| `code` | pipeline代码缺陷 | Developer修代码 → Builder重跑 |
-
-> orchestrator 路由逻辑：`code` → Developer，其余全部 → Builder(02b→pipeline)
 
 ---
 
-## 手动 Pipeline（不走 Orchestrator）
+## 5. 核心文件索引
 
-```bash
-python pipeline/01_shape_detail.py                                # → xlsx + JSON
-python pipeline/01b_auto_annotate.py                              # → 自动填写xlsx批注
-# 用户编辑 01-shape_detail.xlsx 黄色单元格
-python pipeline/02_shape_analysis.py                              # → 02-*.json
-python pipeline/03a_build_shape.py                                # → 03a-*.json
-python pipeline/03b_build_ppt_com.py --version 1.0                # → claude-ppt 1.0.pptx
-python pipeline/04_shape_diff_test.py --target "claude-ppt 1.0.pptx"  # → 04-* reports
-```
-
-### 用户批注字段（01-shape_detail.xlsx）
-
-| 字段 | 必填 | 说明 |
-|------|------|------|
-| **内容描述** | 是(黄色) | 映射知识入口：来源+方向+关键词要求+格式约束（见下方 golden reference） |
-| strategy | 否 | 精确策略代码，覆盖自动识别 |
-| params | 否 | `source=补充说明, filter=缺点` |
-
-> **备注字段已废弃**，所有指令统一写入「内容描述」。02 会自动解析 output_contract 子字段。
-
-#### 内容描述 golden reference（gpt_prompted 类）
-
-```
-缺点: 从补充说明总结缺点。必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例
-优点: 从补充说明总结优点。必须包含'建议'、'反馈'、'样本'关键词，用【】括起关键性能词，每段结论后注明(X/N)比例
-```
-
-### 关键配置
-
-- 模板: `pipeline/standard and empty template.pptx`（Slide1=空白, Slide2=标准）
-- 数据: `pipeline/source data.xlsx`
-- GPT: `openai/gpt-5.4`（OpenRouter），`from src.Function_030 import GPT_5`
+| 文件 | 作用 |
+|------|------|
+| `orchestrator.py` | Pipeline 调度入口（1425行） |
+| `pipeline/03a_build_shape.py` | GPT 内容生成 + prompt 管理 |
+| `pipeline/03b_build_ppt_com.py` | COM 写入 PPT（_write_chart / _write_text） |
+| `pipeline/prompt_templates/gpt_summary.md` | GPT prompt 模板（Pipeline 专用） |
+| `src/Function_030.py` | 生产核心库（3504行）：GPT_5、问卷、图表、Excel COM |
+| `src/yzr_ppt.py` | 杨祖锐模板：Clone Slide 15（含 `__main__` 单页调试） |
+| `src/zxh_ppt.py` | 之行模板：Clone Slide 17（含 p1p2 模式 + `__main__` 单页调试） |
+| `src/_ppt_shared.py` | 共享工具模块（fix2 计划新建，消除 yzr/zxh 重复） |
+| `Main.py` | src/ 生产入口（1055行） |
 
 ---
 
-## COM 开发规范
+## 6. 详情索引
 
-| 场景 | 错误做法 | 正确做法 |
-|------|---------|---------|
-| 读COM属性 | `getattr(shp,"X",None)` | `try: shp.X except: None` |
-| 多步骤开Excel | `Dispatch` 复用实例 | `DispatchEx` + `sleep(0.5)` 强制新进程 |
-| 写图表数据 | `ChartData.Workbook` | `SeriesCollection(1).Values/XValues` |
-| 插入图片 | `AddPicture(W=w,H=h)` | 先`-1/-1`取原始尺寸,再等比缩放 |
-| Clone幻灯片 | 不加sleep | `Copy→sleep(1.5)→Paste(X)→sleep(1.0)` |
-
----
-
-## 附：src/ 目录（非 Pipeline 核心）
-
-- `src/Function_030.py` — GPT_5 函数，Pipeline 通过 `import` 调用
-- `src/` 下其他文件为历史遗留的 main.py 相关模块，与 Pipeline/Agent 工作流无关
+| 主题 | 位置 |
+|------|------|
+| Step1/2/3 Agent 定义 | `.claude/agents/step1-analyzer.md` 等 |
+| Developer 移植规范 + Checklist | `.claude/agents/developer.md` |
+| 知识固化师（Curator） | `.claude/agents/curator.md` |
+| COM 开发规范 | `.claude/memory/feedback_com_constraints.md` |
+| 混合工作流 Pipeline→LLM | `.claude/memory/feedback_hybrid_workflow.md` |
+| 手动 Pipeline 命令 + 批注字段 | `.claude/memory/reference_manual_pipeline.md` |
+| 架构修复计划（fix2） | `[feature03-transplant]/fix2.md` |
+| Shape 微调工作流 + 调试入口 | `skills/fine-tuned-shapes.md` |

@@ -396,14 +396,20 @@ def questionnaire_summary_slide(mc_sht, mc_ppt, mc_slide, sample_name, mc_gpt='n
         _chart1 = make_chart_for_questionnaire(base_cell, mc_slide, Left=40, Top=90, Width=360, Height=170)
         _chart2 = make_chart_for_questionnaire(high_cell, mc_slide, Left=500, Top=90, Width=360, Height=170)
 
-        # 清理临时数据：PPT 侧已在 make_chart_for_questionnaire 内断链。
-        # 从下往上删行，避免先删 base_cell 后 high_cell 行号错位。
+        # 清理临时数据：先删 Excel chart 对象（切断 OLE 热链接），再删数据行。
+        # DisplayAlerts=False 压制删行时可能出现的"错误公式引用"弹窗。
+        _xl_app_api = None
+        try:
+            _xl_app_api = mc_sht.book.app.api
+            _xl_app_api.DisplayAlerts = False
+        except Exception:
+            pass
         try:
             _chart2.delete()
         except Exception:
             pass
         try:
-            high_cell.expand().rows.delete()
+            high_cell.expand().api.EntireRow.Delete()
         except Exception:
             pass
         try:
@@ -411,7 +417,12 @@ def questionnaire_summary_slide(mc_sht, mc_ppt, mc_slide, sample_name, mc_gpt='n
         except Exception:
             pass
         try:
-            base_cell.expand().rows.delete()
+            base_cell.expand().api.EntireRow.Delete()
+        except Exception:
+            pass
+        try:
+            if _xl_app_api is not None:
+                _xl_app_api.DisplayAlerts = True
         except Exception:
             pass
 
@@ -721,6 +732,33 @@ def ask_gpt_model():
 ##    result = ask_gpt_model()
 ##    print(f"选择结果: {result}")
 ##
+
+
+def ask_template_choice():
+    """弹窗选择问卷模板，返回 'yzr' 或 'zxh'。"""
+    choice = None
+
+    def select(v):
+        nonlocal choice
+        choice = v
+        win.quit()
+        win.destroy()
+
+    win = tk.Tk()
+    win.title("选择问卷模板")
+    win.resizable(False, False)
+    win.protocol("WM_DELETE_WINDOW", lambda: select("yzr"))
+
+    tk.Label(win, text="请选择问卷模板:", font=("Arial", 12)).pack(pady=10)
+    tk.Button(win, text="yzr模板", width=20, command=lambda: select("yzr")).pack(pady=5)
+    tk.Button(win, text="zxh模板", width=20, command=lambda: select("zxh")).pack(pady=5)
+
+    force_window_front(win)
+    center_window(win, 300, 160)
+    win.mainloop()
+
+    return choice or "yzr"
+
 
 # --------------------------- 弹窗函数 ---------------------------
 
@@ -1141,7 +1179,9 @@ def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_g
 
         j = mc_cell0.api.CurrentRegion.Columns.Count
 
-        mc_cell = mc_cell0.offset(row_offset=i0+i+5,column_offset=0)                #.select()   加了这个就变成一个动作了。。
+        # 临时数据起始位置：远离原始数据区（含浮动图片），放到下方第 20 行处的安全缓冲区
+        # 配合下方 try/finally 整行删除，确保不残留 + 不影响图片 mc_debug
+        mc_cell = mc_cell0.offset(row_offset=i0+i+20,column_offset=0)                #.select()   加了这个就变成一个动作了。。
 
 
         # 问卷全部原始数据 raw_data
@@ -1213,184 +1253,168 @@ def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_g
 
         # 1、-------------------------开始针对问卷【跑者1、2、3...】进行循环-------------------------------
 
+        # 临时数据不再删除：OLE 嵌入图表的行级引用无法通过 CutCopyMode=False 完全断开，
+        # 删行必然导致 PPT 图表数据丢失。改为保留临时数据，事后由用户手工清理 Excel。
         for runner in range(0, len(clean_pure_date)):                    # 每个runner 都是一行跑者评分数据
 
-            print(f"\n\n           开始处理第【{runner+1}】份问卷..................")
+                print(f"\n\n           开始处理第【{runner+1}】份问卷..................")
 
-        # 1、【左半部分】代码，先假设问卷只有1行数据，即1个 runner
+            # 1、【左半部分】代码，先假设问卷只有1行数据，即1个 runner
 
-            # 先做一个数据区域 new_data，然后适配我之前写的 mark_chart函数。。。 // 之前那个太复杂了，不想再折腾
+                # 先做一个数据区域 new_data，然后适配我之前写的 mark_chart函数。。。 // 之前那个太复杂了，不想再折腾
 
-            # 重写了一个函数 make_chart_for_questionnaire(mc_cell, mc_slide, Left=26, Top=168, Width=250, Height=150):
+                # 重写了一个函数 make_chart_for_questionnaire(mc_cell, mc_slide, Left=26, Top=168, Width=250, Height=150):
 
-            # 也回顾了之前的 make_chart函数，发现太复杂了，当时我把【制表】+【位置排版】混合在一起了
+                # 也回顾了之前的 make_chart函数，发现太复杂了，当时我把【制表】+【位置排版】混合在一起了
 
-            # 以后有空时，重写下这个make_chart函数，可以用Class来写，也可以拆分成不同函数。等以后有空再说吧 ==============================================================================================
+                # 以后有空时，重写下这个make_chart函数，可以用Class来写，也可以拆分成不同函数。等以后有空再说吧 ==============================================================================================
 
 
 
 
-            #+++++++++++++循环部分，没想到这个循环条件如此简单。。+++++++++++++++++++++++++++
+                #+++++++++++++循环部分，没想到这个循环条件如此简单。。+++++++++++++++++++++++++++
 
-            if runner % 2 == 0:    # 简单判断奇数偶数，[ 0, 1, 2, 3, 4, 5, 6.....]
+                if runner % 2 == 0:    # 简单判断奇数偶数，[ 0, 1, 2, 3, 4, 5, 6.....]
 
-                name_Left = 26          # 跑者信息
-                name_Top = 81
+                    name_Left = 26          # 跑者信息
+                    name_Top = 81
 
-                chart_Left = 66         # 偶数 = 左边  chart微调后右移40像素=66
-                chart_Top = 168
+                    chart_Left = 66         # 偶数 = 左边  chart微调后右移40像素=66
+                    chart_Top = 168
 
-                text_Left = 26          # 优缺点
-                text_Top = 327
+                    text_Left = 26          # 优缺点
+                    text_Top = 327
 
-                hint_Left = 15
-                hint_Top = 400
+                    hint_Left = 15
+                    hint_Top = 400
 
-            else:
+                else:
 
-                name_Left = 500
-                name_Top = 81
+                    name_Left = 500
+                    name_Top = 81
 
-                chart_Left = 543         #奇数 = 右边  chart微调后右移40像素=543
-                chart_Top = 168
+                    chart_Left = 543         #奇数 = 右边  chart微调后右移40像素=543
+                    chart_Top = 168
 
-                text_Left = 500
-                text_Top = 327
+                    text_Left = 500
+                    text_Top = 327
 
-                hint_Left = 500
-                hint_Top = 400
+                    hint_Left = 500
+                    hint_Top = 400
 
 
-            # 每页2名跑者，之后开始递增1页PPT
-            if runner in range(2, 1000, 2):
-                mc_slide = questionnaire_ppt(mc_ppt,mc_slide)   # 先增加一个【实战测试】空白页，然后再根据实际情况（问卷条目）酌情增加
+                # 每页2名跑者，之后开始递增1页PPT
+                if runner in range(2, 1000, 2):
+                    mc_slide = questionnaire_ppt(mc_ppt,mc_slide)   # 先增加一个【实战测试】空白页，然后再根据实际情况（问卷条目）酌情增加
 
-            #+++++++++++++++++++ 循环部分结束  +++++++++++++++++++++++++++
+                #+++++++++++++++++++ 循环部分结束  +++++++++++++++++++++++++++
 
 
-            # 1、首先展示跑者基本信息（排版时左、右） name_result
+                # 1、首先展示跑者基本信息（排版时左、右） name_result
 
-            name_result_text = (
-                f'跑者姓名：{runner_info[runner][0]}\n'
-                f'跑者体重：{runner_info[runner][1]}\n'
-                f'平均距离：{runner_info[runner][2]}\n'
-                f'配速区间：{runner_info[runner][3]}\n'
+                name_result_text = (
+                    f'跑者姓名：{runner_info[runner][0]}\n'
+                    f'跑者体重：{runner_info[runner][1]}\n'
+                    f'平均距离：{runner_info[runner][2]}\n'
+                    f'配速区间：{runner_info[runner][3]}\n'
 
-                )
+                    )
 
 
-            name_result = Title_3(mc_slide, name_Left, name_Top, name_result_text, scale=3)
+                name_result = Title_3(mc_slide, name_Left, name_Top, name_result_text, scale=3)
 
-            name_result.tr.Font.Size = 16
+                name_result.tr.Font.Size = 16
 
 
-            #Text.TextFrame.TextRange.ParagraphFormat.Bullet.Visible=0  # 试试看能否取消，不行只能 sleep了
-            #time.sleep(1)
-            #result.tr.ParagraphFormat.Bullet.Visible=0           # 调试起来好麻烦。。。。还是类的知识忘光了。。。改天恶补下 ---------------------------------------------------------------------------------------------
-            #result.tr.ParagraphFormat.Bullet.Visible=0            # twice 就解决了。。。
+                #Text.TextFrame.TextRange.ParagraphFormat.Bullet.Visible=0  # 试试看能否取消，不行只能 sleep了
+                #time.sleep(1)
+                #result.tr.ParagraphFormat.Bullet.Visible=0           # 调试起来好麻烦。。。。还是类的知识忘光了。。。改天恶补下 ---------------------------------------------------------------------------------------------
+                #result.tr.ParagraphFormat.Bullet.Visible=0            # twice 就解决了。。。
 
-                 #----------------------------------
+                     #----------------------------------
 
 
 
-            # 2、构建制表chart数据 & 发送给GPT的raw_data
+                # 2、构建制表chart数据 & 发送给GPT的raw_data
 
-                #首先要做一个 发送给gpt的数据出来
+                    #首先要做一个 发送给gpt的数据出来
 
-            temp_raw_data = []
-            temp_raw_data.append(raw_data_title)
-            temp_raw_data.append(raw_pure_date[runner])
+                temp_raw_data = []
+                temp_raw_data.append(raw_data_title)
+                temp_raw_data.append(raw_pure_date[runner])
 
 
-            # 基于 mc_cell0，循环生成 mc_cell，用来将数据在Excel中摆放好，便于生成条形图
+                # 基于 mc_cell0，循环生成 mc_cell，用来将数据在Excel中摆放好，便于生成条形图
 
-            temp_data = []
-            temp_data.append(clean_data_title)
-            temp_data.append(clean_pure_date[runner])
+                temp_data = []
+                temp_data.append(clean_data_title)
+                temp_data.append(clean_pure_date[runner])
 
 
-            # mc_cell已经定义好了，接下来基于mc_cell来干活
-            mc_cell.value = temp_data
+                # mc_cell已经定义好了，接下来基于mc_cell来干活
+                mc_cell.value = temp_data
 
-            # 直接基于数据，生成 问卷条形图，优雅！！！   执行完之后，ppt中应该已经摆放好了
-            # 后面重点设置下位置参数，配合循环即可！！ ------------------------------------------------------------------------------------------------  ing.........
-            _tmp_chart = make_chart_for_questionnaire(mc_cell, mc_slide, Left=chart_Left, Top=chart_Top, Width=250, Height=150)
+                # 直接基于数据，生成 问卷条形图，优雅！！！   执行完之后，ppt中应该已经摆放好了
+                # 后面重点设置下位置参数，配合循环即可！！ ------------------------------------------------------------------------------------------------  ing.........
+                _tmp_chart = make_chart_for_questionnaire(mc_cell, mc_slide, Left=chart_Left, Top=chart_Top, Width=250, Height=150)
 
-            # 循环内只删 Excel chart 对象（每轮生成一个必须每轮清）。
-            # 2 行临时数据每轮被下一轮覆盖，不在此处删行——否则 mc_cell 引用
-            # 在 rows.delete() 后变为 #REF!，下一轮 mc_cell.value 会报错。
-            try:
-                _tmp_chart.delete()
-            except Exception:
-                pass
+                # 删除 Excel chart 对象（每轮生成一个，Excel 不需要保留），
+                # 但【不删除】临时数据行——删行会导致 PPT OLE 图表数据丢失。
+                try:
+                    _tmp_chart.delete()
+                except Exception:
+                    pass
 
 
 
 
-            # 画蛇添足 - 在PPT中打字提示。。。
+                # 画蛇添足 - 在PPT中打字提示。。。
 
-            hint = '[OPENAI]服务器请求发送中，请耐心等待.........'
-            hint_shape = Title_3(mc_slide, Left=hint_Left, Top=hint_Top, Text=hint,scale=4)  # 2024 注意搞清楚Class文件生成的是一个什么对象，不然很麻烦
+                hint = '[OPENAI]服务器请求发送中，请耐心等待.........'
+                hint_shape = Title_3(mc_slide, Left=hint_Left, Top=hint_Top, Text=hint,scale=4)  # 2024 注意搞清楚Class文件生成的是一个什么对象，不然很麻烦
 
 
 
 
-            #接下来重点考虑 gpt的工作： 需要再定制一个 prompt
-            mc_prompt = gen_questionnaire_prompt(runner,temp_raw_data)
+                #接下来重点考虑 gpt的工作： 需要再定制一个 prompt
+                mc_prompt = gen_questionnaire_prompt(runner,temp_raw_data)
 
 
-            mc_completion = GPT_5(mc_prompt, model=mc_model)    # 先统一用 5 来调试，后续太慢了再考虑用4.1之类
-            #mc_completion = mc_reply
+                mc_completion = GPT_5(mc_prompt, model=mc_model)    # 先统一用 5 来调试，后续太慢了再考虑用4.1之类
+                #mc_completion = mc_reply
 
 
-            #假设我拿到了完美的 gpt 答复 mc_completion，接下来需要一个高级染色函数，优点用红色、缺点用蓝色  //  锦上添花，后面再弄吧  ------------------------------------------ ing.......
+                #假设我拿到了完美的 gpt 答复 mc_completion，接下来需要一个高级染色函数，优点用红色、缺点用蓝色  //  锦上添花，后面再弄吧  ------------------------------------------ ing.......
 
 
 
-            # 画蛇添足 - 在PPT中打字提示。。。 然后别忘记删除
-            hint_shape.tr.Text = '成功获取 [OPENAI] Reply ！'
-            time.sleep(1)
-            hint_shape.shape.Delete()  # TextRange 不能直接 Delete，必须使用 Parent 回到 Shape函数才能删除
+                # 画蛇添足 - 在PPT中打字提示。。。 然后别忘记删除
+                hint_shape.tr.Text = '成功获取 [OPENAI] Reply ！'
+                time.sleep(1)
+                hint_shape.shape.Delete()  # TextRange 不能直接 Delete，必须使用 Parent 回到 Shape函数才能删除
 
 
 
-            # 文字处理工作，先套用之前的参数，再微调 // 手工微调下，ok
+                # 文字处理工作，先套用之前的参数，再微调 // 手工微调下，ok
 
-            result = Result_Bullet_small(mc_slide, text_Left, text_Top, mc_completion, scale=0.5)
+                result = Result_Bullet_small(mc_slide, text_Left, text_Top, mc_completion, scale=0.5)
 
 
-            clean_Text = ''.join(ch for ch in result.tr.Text if ch not in (' ', '\u3000') )
-            result.tr.Text = clean_Text
+                clean_Text = ''.join(ch for ch in result.tr.Text if ch not in (' ', '\u3000') )
+                result.tr.Text = clean_Text
 
 
-            #Text.TextFrame.TextRange.ParagraphFormat.Bullet.Visible=0  # 试试看能否取消，不行只能 sleep了
-            #time.sleep(1)
-            result.tr.ParagraphFormat.Bullet.Visible=0           # 调试起来好麻烦。。。。还是类的知识忘光了。。。改天恶补下 ---------------------------------------------------------------------------------------------
-            result.tr.ParagraphFormat.Bullet.Visible=0            # twice 就解决了。。。
+                #Text.TextFrame.TextRange.ParagraphFormat.Bullet.Visible=0  # 试试看能否取消，不行只能 sleep了
+                #time.sleep(1)
+                result.tr.ParagraphFormat.Bullet.Visible=0           # 调试起来好麻烦。。。。还是类的知识忘光了。。。改天恶补下 ---------------------------------------------------------------------------------------------
+                result.tr.ParagraphFormat.Bullet.Visible=0            # twice 就解决了。。。
 
 
-            smart_color_text(result.tr, color_red=red, color_blue=light_blue)
+                smart_color_text(result.tr, color_red=red, color_blue=light_blue)
 
 
-            # 干完活之后，挪到下一个mc_cell
-            mc_cell = mc_cell.offset(row_offset=5,column_offset=0)
-
-
-        # 循环结束后整行删除所有临时数据（本轮 + 历史残留）。
-        # 策略：从 temp 起始行 一直删到 used_range 最后一行，
-        # 覆盖 questionnaire_Excel / questionnaire_summary_slide 等所有来源的残留。
-        # 图片是浮动对象，位于原始数据区，不受影响。
-        try:
-            mc_temp_start = mc_cell0.offset(row_offset=i0+i+5, column_offset=0)
-            last_row = mc_sht.used_range.last_cell.row
-            if last_row >= mc_temp_start.row:
-                mc_sht.range(
-                    (mc_temp_start.row, 1),
-                    (last_row, 1)
-                ).rows.delete()
-        except Exception:
-            pass
-
+                # 干完活之后，挪到下一个mc_cell
+                mc_cell = mc_cell.offset(row_offset=5,column_offset=0)
 
         return mc_sht, mc_slide     # 为了程序后续继续能够顺利运行   # for 运行完之后再return，否则for runner 提前终止了
                        #[0]         #[1]
@@ -1548,52 +1572,54 @@ def test_detail(mc_book):
 
     mc_sht0 = mc_book.sheets['基础信息']
 
-    test_start = search(mc_sht0,'测试列表',row_offset=1,column_offset=1).row
+    # 定位 "测试列表" 标题 → offset 后 selection = (表头行, 测试列表列)
+    start_cell = search(mc_sht0, '测试列表', row_offset=1, column_offset=1)
+    if start_cell is None:
+        return '', [], [], [], []
 
-    mc_book.selection.end('down').select()
+    header_row = start_cell.row       # 原 test_start；表头行（含列标题）
+    col_list   = start_cell.column    # 【+1】测试列表 列
+    col_marker = col_list - 1         # 【+0】标记列（非空=该行选中）
 
-    test_end = mc_book.selection.row
+    # 用 range.end('down') 替代 selection 操作，找到最后数据行
+    test_end = mc_sht0.range((header_row, col_list)).end('down').row
 
-    mc_book.selection.end('up').select()
+    data_start = header_row + 1       # 真实数据从表头下一行开始
+    if data_start > test_end:
+        return '', [], [], [], []
 
-    mc_book.selection.offset(row_offset=1,column_offset=-1).select()   # 复位 ，在 【测试列表】下方的（空）单元格
+    # 整块读取：(data_start, col_marker) ~ (test_end, col_marker+6)
+    # 原来每行 7 次 COM 调用，现在合并成 1 次，速度提升 ~7N 倍
+    raw = mc_sht0.range(
+        (data_start, col_marker),
+        (test_end,   col_marker + 6)
+    ).value
 
+    # xlwings 单行时返回 list（非 list-of-list），统一格式
+    if test_end == data_start:
+        raw = [raw]
 
-    # 采用一个for函数，构造出 带【\r】的字符串就行，easy！
+    test_list     = []   #【+1】测试项目
+    temp_text     = ''   #【+2】测试方法描述（带 \r 的拼接字符串）
+    pic_list      = []   #【+6】图片单元格 range
+    test_standard = []   #【+4】测试标准
+    test_result   = []   #【+5】参考文本（原 测试结论）
 
-    test_list = []  #【+1】测试项目 - 单元格 range （随意调用 row / column / value~）
-    temp_text = ''  #【+2】测试方法描述
-    #test_result = []  #【+5】测试结论  挪到后面去
-    pic_list = []  #【+6】测试方法图片 - 单元格 range （随意调用 row / column / value~）
+    for idx, row in enumerate(raw):
+        if row is None or row[0] is None:   # 标记列为空 → 未选中，跳过
+            continue
 
+        actual_row = data_start + idx
 
-    test_standard = [] #【+4】测试标准  2024 为了调用GPT，【测试标准】 和 【参考文本】成了最重要的输出内容。。。
-    test_result = []  #【+5】参考文本（原 测试结论）
+        test_list.append(row[1])                               # 测试列表
+        detail = row[2] if row[2] is not None else ''          # 测试详情（健壮性：防 None 拼接报错）
+        test_standard.append(row[4])                           # 测试标准
+        test_result.append(row[5])                             # 参考文本
+        pic_list.append(mc_sht0.range((actual_row, col_marker + 6)))   # 图片单元格（显式绑定 sheet）
 
-    for i in range(test_start,test_end+1):
+        temp_text += detail + '\r'
 
-        temp_i = mc_book.selection.row
-        temp_j = mc_book.selection.column
-
-        if mc_book.selection.value != None:
-
-            test_list.append(xlwings.Range((temp_i, temp_j+1)).value)
-
-            test_detail = xlwings.Range((temp_i, temp_j+2)).value
-
-            test_standard.append(xlwings.Range((temp_i, temp_j+4)).value)    #【+4】测试标准  2024 新增，为了不改动代码，只好放到最后的位置 return 出去。。。
-
-            test_result.append(xlwings.Range((temp_i, temp_j+5)).value)     #【+5】参考文本（原 测试结论）
-
-            pic_list.append(xlwings.Range((temp_i, temp_j+6)))
-
-
-            temp_text = temp_text + test_detail + '\r'   # 这个用于ppt的排版，不动它了，能work就行
-
-        mc_book.selection.offset(row_offset=1,column_offset=0).select() # 递增变量，差点忘记了
-
-
-    return temp_text,pic_list,test_list,test_result,test_standard
+    return temp_text, pic_list, test_list, test_result, test_standard
 
             # 【0】弱水三千 只取一瓢，我只要测试方法描述 test_detial —— 带【\r】的字符串 ； 搞定！
 
@@ -2051,27 +2077,20 @@ def make_chart_for_questionnaire(mc_cell, mc_slide, Left=26, Top=168, Width=250,
     #mc_app.api.ActiveWindow.Zoom = 100
     mc_cell.select()
 
+    # OLE 复制（粘贴原始图表，保留交互性和最高显示质量）
     mc_chart1.api[0].Copy()
-    # for _ in range(3):  # 尝试复制操作 3 次
-    #     try:
-    #         mc_chart1.api[0].Copy()
-    #         break  # 如果复制成功，跳出循环
-    #     except pywintypes.com_error:
-    #         print("复制失败，1 秒后重试")
-    #         time.sleep(1)  # 等待 1 秒后重试
-    # else:
-    #     print("复制操作失败")
 
     time.sleep(random.random()*delay)
 
     mc_shape = mc_slide.Shapes.Paste()
+    time.sleep(0.5)  # 等待 PPT 完成 OLE embed 渲染
 
-    # PPT 侧断链：必须在删除 Excel 图表/数据之前完成，否则 PPT 图表数据会一并消失
+    # 清除 Excel 剪贴板，断开 OLE 热链接：
+    # 粘贴后 Excel 仍保持 CutCopyMode=True（剪贴板激活），此时 PPT 与 Excel chart
+    # 之间存在 COM 热链接，Excel 图表的任何变动（包括删行）都会刷新 PPT 显示。
+    # 清除后 OLE embed 进入独立显示状态，后续删行/删 chart 不再影响 PPT 图表。
     try:
-        mc_shape.Chart.ChartData.Activate()
-        time.sleep(0.8)
-        mc_shape.Chart.ChartData.BreakLink()
-        time.sleep(0.3)
+        xlwings.apps.active.api.CutCopyMode = False
     except Exception:
         pass
 
@@ -3399,3 +3418,55 @@ print('Function文件导入完成！\n')   # 原来 import 会将整个程序 ru
 ##mc_cell = get_range(mc_sht)
 ##mc_prompt = gen_mc_prompt_question_data(mc_cell)
 ##reply = GPT-5(mc_prompt,model = 'gpt-5-mini')
+
+
+# ===========================================================================
+# GPT 等待遮罩（yzr_ppt / zxh_ppt 工作期间显示，完成后删除）
+# ===========================================================================
+
+def show_gpt_waiting_overlay(mc_slide):
+    """在当前 Slide 顶层插入「GPT 服务器通讯中」遮罩矩形，返回 Shape 供后续删除。
+
+    属性来自实测 PPT 手工调整结果：
+      黑色填充 / 透明度 0.17 / 无边框 / 微软雅黑 40pt 白色粗体 / 垂直居中
+    注意：先写文字再设尺寸，防止 TextFrame 自动调整触发意外缩放。
+    """
+    shp = mc_slide.Shapes.AddShape(1, 0, 213.3, 960, 141.7)
+
+    # 填充
+    shp.Fill.ForeColor.RGB = 0          # 黑色
+    shp.Fill.Transparency = 0.17        # 实测透明度（约 83% 不透明）
+
+    # 无边框
+    shp.Line.Visible = 0
+
+    # ① 先写文字 + 字体（文字可能触发 TextFrame 自动调整大小）
+    tf = shp.TextFrame
+    tf.VerticalAnchor = 3               # 垂直居中
+    tr = tf.TextRange
+    tr.Text = 'GPT 服务器通讯中，请耐心等待'
+    tr.Font.NameFarEast = '微软雅黑'
+    tr.Font.Name = '微软雅黑'
+    tr.Font.Size = 40
+    tr.Font.Bold = -1                   # 加粗
+    tr.Font.Color.RGB = 16777215        # 白色
+    tr.ParagraphFormat.Alignment = 1    # 左对齐
+
+    # ② 再锁定尺寸（覆盖自动调整结果）
+    shp.Left = 0
+    shp.Top = 213.3
+    shp.Width = 960
+    shp.Height = 141.7
+
+    # 置顶（msoBringToFront = 0）
+    shp.ZOrder(0)
+
+    return shp
+
+
+def remove_gpt_waiting_overlay(shp):
+    """删除「GPT 服务器通讯中」遮罩文本框。"""
+    try:
+        shp.Delete()
+    except Exception:
+        pass

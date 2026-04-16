@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import os
 import statistics
 import sys
 import time
@@ -47,10 +48,14 @@ def safe_print(*args, **kwargs) -> None:
 # ---- paths ----
 ROOT = Path(__file__).resolve().parent.parent          # project root
 SRC_DIR = ROOT / "src"
-EXCEL_PATH = ROOT / "pipeline" / "source data.xlsx"
-TEMPLATE_PATH = ROOT / "pipeline" / "standard and empty template.pptx"
+TEMPLATE_DIR = ROOT / "template"
+TEMPLATE_DIR.mkdir(parents=True, exist_ok=True)
+EXCEL_PATH = Path(os.environ.get("PPT_EXCEL_PATH", str(TEMPLATE_DIR / "source data.xlsx")))
+TEMPLATE_PATH = Path(os.environ.get("PPT_TEMPLATE_PATH", str(TEMPLATE_DIR / "standard and empty template.pptx")))
 PROGRESS_DIR = ROOT / "pipeline-progress"
 PROGRESS_DIR.mkdir(parents=True, exist_ok=True)        # create on first import
+OUTPUT_DIR = ROOT / "pipeline-output"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ---- tiny helpers ----
@@ -344,13 +349,27 @@ def extract_score_means(rows: List[List[Any]]) -> List[Tuple[str, float]]:
 # ---- text clamping ----
 
 def clamp_text(text: str, max_chars: int, max_lines: int) -> str:
-    """Hard-truncate text to budget constraints."""
+    """Clamp text to fit PPT shape: enforce both line count and character count.
+
+    Line clamp: hard cut at max_lines.
+    Char clamp: hard cut at sentence boundary when exceeding max_chars.
+    """
     t = safe_text(text)
-    if max_chars > 0 and len(t) > max_chars:
-        t = t[:max_chars]
+    # 行数限制（防止 PPT 版面溢出）
     if max_lines > 0:
         lines = t.splitlines() or [t]
         t = "\n".join(lines[:max_lines])
+    # 字数硬限制（在句子边界截断，保护信息可读性）
+    if max_chars > 0 and len(t) > max_chars:
+        truncated = t[:max_chars]
+        # 尝试在最近的句子/分句边界截断
+        for sep in ['。', '！', '？', '\n', '；', '，', '、', ' ']:
+            idx = truncated.rfind(sep)
+            if idx > max_chars * 0.5:  # 不要截太多（至少保留50%）
+                t = truncated[:idx + 1].rstrip()
+                break
+        else:
+            t = truncated  # 无合适边界，硬截断
     return t
 
 
@@ -382,6 +401,7 @@ STRATEGY_CODES = frozenset({
     "grade_letter",     # compute mean → normalize to 100pt → letter grade
     "sample_aggregation",  # extract stats from Excel (no GPT)
     "extract_column",   # pull value from a specific Excel column
+    "extract_image",    # extract embedded image from Excel sheet
     "gpt_prompted",     # GPT with full questionnaire text in prompt
     "mean_extraction",  # bar chart means (chart shapes only)
     "template_direct",  # copy template text verbatim
@@ -873,3 +893,128 @@ def parse_params(params_str: str) -> dict:
             k, _, v = part.partition("=")
             result[k.strip()] = v.strip()
     return result
+
+
+# ---- self-check helpers (used by 03b) ----
+
+def slide_export_png(ppt_app, slide, out_path: str,
+                     width: int = 1920, height: int = 1080) -> bool:
+    """Export a single slide to PNG via clipboard → Pillow.
+
+    Uses COM Copy → PIL.ImageGrab to bypass file-level encryption
+    that affects PowerPoint's native slide.Export().
+
+    Returns:
+        True on success, False if export fails.
+    """
+    import time
+    try:
+        from PIL import ImageGrab
+    except ImportError:
+        safe_print("[WARN] slide_export_png: Pillow not installed")
+        return False
+    try:
+        slide.Copy()
+        time.sleep(1.0)
+        img = ImageGrab.grabclipboard()
+        if img is None:
+            safe_print("[WARN] slide_export_png: clipboard empty after Copy")
+            return False
+        img.save(str(out_path))
+        return Path(out_path).exists()
+    except Exception as e:
+        safe_print(f"[WARN] slide_export_png failed: {e}")
+        return False
+
+
+def ssim_compare(img_path_a: str, img_path_b: str) -> float:
+    """Compute structural similarity (SSIM) between two images.
+
+    Uses Pillow + basic numpy-free mean/variance calculation.
+    Returns a float in [0, 1] where 1.0 = identical.
+    Falls back to -1.0 if comparison fails.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        safe_print("[WARN] Pillow not installed, SSIM skipped")
+        return -1.0
+
+    try:
+        a = Image.open(img_path_a).convert("L")
+        b = Image.open(img_path_b).convert("L")
+        # Resize to same dimensions if needed
+        if a.size != b.size:
+            b = b.resize(a.size, Image.LANCZOS)
+        pixels_a = list(a.getdata())
+        pixels_b = list(b.getdata())
+        n = len(pixels_a)
+        if n == 0:
+            return -1.0
+
+        mean_a = sum(pixels_a) / n
+        mean_b = sum(pixels_b) / n
+        var_a = sum((p - mean_a) ** 2 for p in pixels_a) / n
+        var_b = sum((p - mean_b) ** 2 for p in pixels_b) / n
+        cov = sum((pa - mean_a) * (pb - mean_b)
+                   for pa, pb in zip(pixels_a, pixels_b)) / n
+
+        C1 = (0.01 * 255) ** 2
+        C2 = (0.03 * 255) ** 2
+        num = (2 * mean_a * mean_b + C1) * (2 * cov + C2)
+        den = (mean_a ** 2 + mean_b ** 2 + C1) * (var_a + var_b + C2)
+        return num / den if den != 0 else 0.0
+    except Exception as e:
+        safe_print(f"[WARN] ssim_compare failed: {e}")
+        return -1.0
+
+
+def generate_self_check_report(issues: List[Dict], out_path: str,
+                               ssim_score: float = -1.0,
+                               attempts: int = 1) -> None:
+    """Write a structured self-check report in markdown.
+
+    Args:
+        issues: List of dicts with keys: shape, dimension, description, severity, status.
+        out_path: Path for the output .md file.
+        ssim_score: Visual similarity score (-1 = skipped).
+        attempts: Number of self-check attempts made.
+    """
+    lines = ["# 03b Self-Check Report", ""]
+
+    if issues:
+        lines.append("| # | Shape | 维度 | 问题描述 | 严重度 | 状态 |")
+        lines.append("|---|-------|------|---------|--------|------|")
+        for i, iss in enumerate(issues, 1):
+            lines.append(
+                f"| {i} | {iss.get('shape', '-')} | {iss.get('dimension', '-')} "
+                f"| {iss.get('description', '-')} | {iss.get('severity', '-')} "
+                f"| {iss.get('status', '-')} |"
+            )
+    else:
+        lines.append("无问题发现。")
+
+    lines.append("")
+    lines.append("## 总结")
+
+    severe = sum(1 for i in issues if i.get("severity") == "严重")
+    medium = sum(1 for i in issues if i.get("severity") == "中等")
+    fixed = sum(1 for i in issues if "已修复" in i.get("status", ""))
+    unfixed_severe = sum(1 for i in issues
+                         if i.get("severity") == "严重"
+                         and "已修复" not in i.get("status", ""))
+
+    lines.append(f"- 自检轮次：{attempts}")
+    lines.append(f"- 发现问题：{severe} 严重 / {medium} 中等")
+    lines.append(f"- 已修复：{fixed} / 未修复严重：{unfixed_severe}")
+    if ssim_score >= 0:
+        lines.append(f"- 视觉相似度：SSIM {ssim_score:.2f}")
+    else:
+        lines.append("- 视觉相似度：SKIPPED")
+
+    if unfixed_severe == 0:
+        lines.append("- 结论：PASS 通过，交付终验")
+    else:
+        lines.append("- 结论：FAIL 存在未修复的严重问题")
+
+    write_md(Path(out_path), lines)

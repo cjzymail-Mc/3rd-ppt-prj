@@ -296,46 +296,99 @@ def _call_gpt(prompt: str, fallback: str) -> Tuple[str, bool]:
 # explicit (X/N) ratio requirement, strict format/tone instructions.
 # ---------------------------------------------------------------------------
 
-# Score column name shortcuts (strip English parenthetical)
-_SCORE_COLS = [
-    "抓地性（Traction）", "缓震性（Cushioning）", "包裹性（Lockdwon）",
-    "抗扭转性（Torsional Support ）", "重量&透气性（Weight&Ventilation）",
-    "防侧翻性（Lateral Stability）", "耐久性（Durability）",
-]
-_TEXT_COLS = [
-    "你的脚型", "你认为这双鞋是否有足够的足弓支撑",
-    "你认为这双鞋更加适合什么打法的球员穿", "补充说明",
-]
+# Column matching keywords (dynamic — works across different Excel formats)
+_NAME_KEYWORDS = ["姓名", "name"]
+_WEIGHT_KEYWORDS = ["体重", "weight"]
+_SKIP_KEYWORDS = ["鞋款", "轮次", "身高", "累计", "场次"]  # metadata, not feedback
+
+
+def _find_col(headers: List[str], keywords: List[str]) -> Optional[str]:
+    """Find first header containing any keyword (case-insensitive)."""
+    for h in headers:
+        hl = h.lower()
+        for kw in keywords:
+            if kw.lower() in hl:
+                return h
+    return None
+
+
+def _classify_columns(headers: List[str], rows: List[List[Any]]
+                      ) -> Tuple[List[str], List[str]]:
+    """Dynamically classify columns into score (numeric) and text (feedback).
+
+    Score columns: >70% of data rows have numeric values in 1-10 range.
+    Text columns:  >30% of data rows have string values longer than 5 chars.
+    """
+    name_col = _find_col(headers, _NAME_KEYWORDS)
+    weight_col = _find_col(headers, _WEIGHT_KEYWORDS)
+    skip_cols = {name_col, weight_col} | {
+        h for h in headers
+        if any(kw in h for kw in _SKIP_KEYWORDS)
+    }
+
+    score_cols, text_cols = [], []
+    n_data = len(rows) - 1
+    if n_data < 1:
+        return score_cols, text_cols
+
+    for ci, h in enumerate(headers):
+        if h in skip_cols:
+            continue
+        nums, texts = 0, 0
+        for row in rows[1:]:
+            val = row[ci] if ci < len(row) else None
+            if val is None:
+                continue
+            try:
+                v = float(val)
+                if 0 <= v <= 10:
+                    nums += 1
+            except (ValueError, TypeError):
+                if len(str(val).strip()) > 5:
+                    texts += 1
+        if nums / n_data > 0.7:
+            score_cols.append(h)
+        elif texts / n_data > 0.3:
+            text_cols.append(h)
+
+    return score_cols, text_cols
 
 
 def _build_respondent_block(rows: List[List[Any]]) -> Tuple[str, int]:
     """Build a per-respondent data block for inclusion in GPT prompt.
+    Dynamically matches columns — works with any Excel format.
     Returns (block_text, respondent_count)."""
     if not rows or len(rows) < 2:
         return "（无数据）", 0
 
     headers = [safe_text(h) for h in rows[0]]
     n = len(rows) - 1
-    blocks = []
 
+    name_col = _find_col(headers, _NAME_KEYWORDS)
+    weight_col = _find_col(headers, _WEIGHT_KEYWORDS)
+    score_cols, text_cols = _classify_columns(headers, rows)
+
+    blocks = []
     for i, row in enumerate(rows[1:], 1):
         fd: Dict[str, str] = {}
         for j, h in enumerate(headers):
             if j < len(row):
                 fd[h] = safe_text(row[j])
 
-        name = fd.get("姓名（name）", f"受访者{i}")
-        weight = fd.get("体重（Weight）", "")
+        name = fd.get(name_col, f"受访者{i}") if name_col else f"受访者{i}"
+        weight = fd.get(weight_col, "") if weight_col else ""
 
         scores = ", ".join(
-            f"{h.split('（')[0]}={fd[h]}"
-            for h in _SCORE_COLS if fd.get(h)
+            f"{h.split('（')[0] if '（' in h else h}={fd[h]}"
+            for h in score_cols if fd.get(h)
         )
         feedbacks = "\n  ".join(
             f"{h.split('（')[0] if '（' in h else h}: {fd[h]}"
-            for h in _TEXT_COLS if fd.get(h)
+            for h in text_cols if fd.get(h)
         )
-        parts = [f"【受访者{i}】{name}  体重:{weight}KG"]
+
+        weight_str = f"  体重:{weight}KG" if weight else ""
+        parts = [f"【受访者{i}】{name}{weight_str}"]
         if scores:
             parts.append(f"  各项评分: {scores}")
         if feedbacks:
@@ -402,7 +455,7 @@ def _build_rich_prompt(
     # Build user instruction section (independent paragraph, high weight)
     user_section = ""
     if user_instruction:
-        user_section = f"\n【用户指令】\n{user_instruction}\n"
+        user_section = f"\n用户指令：\n{user_instruction}\n"
 
     # Build output contract section
     contract_section = ""
@@ -416,7 +469,7 @@ def _build_rich_prompt(
         if output_contract.get("ratio_required"):
             lines.append("- 每段结论后注明 (X/N) 比例")
         if lines:
-            contract_section = "\n【输出合约 — 必须满足】\n" + "\n".join(lines) + "\n"
+            contract_section = "\n输出合约（必须满足）：\n" + "\n".join(lines) + "\n"
 
     # Try loading external template
     mode = "free_form" if focus else "categorized"
@@ -456,8 +509,8 @@ def _build_rich_prompt(
         format_note = "- 严格按照参考文本的格式、语调、陈述方式\n"
 
     return (
-        f"【参考文本（参考语调和信息密度）】\n{style_anchor}\n\n"
-        f"【你的任务】\n{task_line}\n"
+        f"1、参考文本（参考语调和信息密度）\n{style_anchor}\n\n"
+        f"2、你的任务\n{task_line}\n"
         f"{user_section}"
         f"{contract_section}\n"
         f"注意：\n"
@@ -467,8 +520,8 @@ def _build_rich_prompt(
         f"- 总字数控制在{target_chars}字左右\n"
         f"- 不超过{max_lines}行\n"
         f"- 每个分类不超过3行\n"
-        f"- 结论中请自然融入：'样本'（如'本次{n}名样本'）、'反馈'（如'样本反馈'）、'建议'（末尾给出改进建议）\n\n"
-        f"【{n}名测试者原始反馈】\n{respondent_block}\n\n"
+        f"- 关键词要求：开头第一句必须同时包含'样本'和'反馈'（如\"本次{n}名样本反馈显示\"），正文中自然融入'建议'（如\"建议关注...\"）\n\n"
+        f"3、{n}名测试者原始反馈\n{respondent_block}\n\n"
         f"直接输出结论，不需要任何前言。"
     )
 
@@ -576,10 +629,10 @@ def build_content(
                 focus=flt, user_instruction=user_instruction, output_contract=output_contract,
             )
             if dry_run:
-                return fallback, prompt, "gpt_rich", ""
+                return fallback, prompt, "gpt_prompted", ""
             txt, used_fb = _call_gpt(prompt, fallback)
             gap = "GPT未返回有效结果，已使用兜底文本" if used_fb else ""
-            return txt, prompt, "gpt_rich", gap
+            return txt, prompt, "gpt_prompted", gap
 
         if s == "mean_extraction":
             means = extract_score_means(rows)
@@ -593,7 +646,7 @@ def build_content(
             img_path = _extract_excel_image(sheet_hint)
             if img_path:
                 return f"IMAGE:{img_path}", "extract_image_ok", "extract_image", ""
-            return "", "extract_image_failed", "extract_image", "未能从Excel问卷sheet提取图片"
+            return "IMAGE_MISSING:请手动插入产品图片", "extract_image_failed", "extract_image", "未能从Excel问卷sheet提取图片"
 
         # Unknown strategy_exact code — fall through to keyword matching below
         safe_print(f"[WARN] Unknown strategy_exact='{s}' for '{shape_name}', falling back to hint")
@@ -648,10 +701,10 @@ def build_content(
             user_instruction=user_instruction, output_contract=output_contract,
         )
         if dry_run:
-            return fallback, prompt, "gpt_rich", ""
+            return fallback, prompt, "gpt_prompted", ""
         txt, used_fb = _call_gpt(prompt, fallback)
         gap = "GPT未返回有效结果，已使用兜底文本" if used_fb else ""
-        return txt, prompt, "gpt_rich", gap
+        return txt, prompt, "gpt_prompted", gap
 
     # -----------------------------------------------------------------------
     # 6. chart role → deterministic mean extraction
@@ -703,10 +756,10 @@ def build_content(
             user_instruction=user_instruction, output_contract=output_contract,
         )
         if dry_run:
-            return fallback, prompt, "gpt_rich", ""
+            return fallback, prompt, "gpt_prompted", ""
         txt, used_fb = _call_gpt(prompt, fallback)
         gap = "GPT未返回有效结果，已使用兜底文本" if used_fb else ""
-        return txt, prompt, "gpt_rich", gap
+        return txt, prompt, "gpt_prompted", gap
 
     # -----------------------------------------------------------------------
     # 10. Other roles → basic prompt (no questionnaire data needed)
@@ -834,7 +887,7 @@ def _build_all(mapping, prompts_spec, budgets, rows, metrics, shape_types,
         })
 
         # Collect pending GPT prompts (dry_run only)
-        if dry_run and strategy in ("gpt_rich", "gpt_prompted"):
+        if dry_run and strategy == "gpt_prompted":
             pending.append({
                 "shape_name": name,
                 "role": role,

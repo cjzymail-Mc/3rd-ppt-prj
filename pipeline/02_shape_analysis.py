@@ -118,8 +118,6 @@ def main() -> int:
     setup_console_encoding()
 
     ap = argparse.ArgumentParser()
-    ap.add_argument("--sheet", default=None,
-                    help="Read annotations from a specific xlsx sheet (e.g. 'claude-ppt 1.1')")
     args = ap.parse_args()
 
     if not SHAPE_JSON.exists():
@@ -142,19 +140,12 @@ def main() -> int:
     headers = metrics["headers"]
 
     # --- Load user annotations (human-in-the-loop) ---
-    safe_print(f"[INFO] Reading annotations from sheet: {args.sheet or '(default/first)'}")
-    annotations = parse_user_annotations(sheet_name=args.sheet)
+    safe_print("[INFO] Reading annotations from xlsx (first sheet)")
+    annotations = parse_user_annotations()
     if annotations:
         safe_print(f"✅ Found user annotations for {len(annotations)} shapes")
     else:
-        safe_print(f"⚠️ No user annotations found in sheet '{args.sheet or 'Sheet 1'}'")
-
-    # GUARDRAIL: if --sheet was specified (continuation run),
-    # 0 annotations is a fatal error — the annotation chain is broken.
-    if args.sheet and not annotations:
-        safe_print(f"❌ ABORT: --sheet '{args.sheet}' 指定但批注为空。"
-                   f"可能是 COM 连接不稳定，请重试。")
-        return 1
+        safe_print("⚠️ No user annotations found")
 
     mapping = []
     prompts = []

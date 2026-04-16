@@ -105,6 +105,9 @@ from datetime import datetime
 # 先解决路径问题
 import sys                           # 导入sys模块，来调取path 系统默认路径
 mc_path = os.getcwd()
+# 兼容 VS Code 等 IDE（cwd 可能不是脚本目录）
+if not os.path.isdir(os.path.join(mc_path, 'src')):
+    mc_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(mc_path)     # 将我的mod路径，添加至 系统默认路径
 #print(sys.path)  # 检查下路径有没有问题
 
@@ -114,7 +117,8 @@ sys.path.append(mc_path)     # 将我的mod路径，添加至 系统默认路径
 # 2025 更新了 package 的导入方式，多亏张老师的教材！！ 感谢张老师
 from src.Class_030 import *
 from src.Function_030 import *
-from src.codex_ppt import make_codex_slide
+from src.yzr_ppt import make_codex_slide
+from src.zxh_ppt import make_zxh_slide
 
 
 
@@ -794,16 +798,19 @@ if mc_gpt == 'y' and mc_sht is not None:
 #     )
 
 
-# 【5.6】Codex 分析页：高保真评测汇总
+# 【5.6】Claude / Codex 移植模板 —— —— —— 分析页：高保真评测汇总
 if mc_sht is not None:
-    mc_slide = make_codex_slide(
-        mc_sht,
-        mc_ppt,
-        mc_slide,
-        sample_name,
-        mc_gpt=mc_gpt,
-        mc_model=mc_model,
-    )
+    template_choice = ask_template_choice()
+    if template_choice == "zxh":
+        mc_slide = make_zxh_slide(
+            mc_sht, mc_ppt, mc_slide, sample_name,
+            mc_gpt=mc_gpt, mc_model=mc_model,
+        )
+    else:
+        mc_slide = make_codex_slide(
+            mc_sht, mc_ppt, mc_slide, sample_name,
+            mc_gpt=mc_gpt, mc_model=mc_model,
+        )
 
 
 
