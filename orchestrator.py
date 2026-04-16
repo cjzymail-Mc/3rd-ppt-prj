@@ -98,7 +98,7 @@ AGENT_CONFIGS = {
     "step3-builder": AgentConfig(
         name="step3-builder",
         role_file=".claude/agents/step3-builder.md",
-        output_files=[],  # dynamic: output/claude-ppt N.N.pptx
+        output_files=[],  # dynamic: pipeline-output/claude-ppt N.N.pptx
     ),
 }
 
@@ -494,9 +494,9 @@ class PPTOrchestrator:
         max_idx = 9  # so first version = 10 = "1.0"
         ver_pattern = re.compile(r"(\d+)\.(\d+)")
 
-        # Source 1: existing pptx files in output/
+        # Source 1: existing pptx files in pipeline-output/
         pptx_pattern = re.compile(r"^claude-ppt (\d+)\.(\d+)\.pptx$")
-        output_dir = self.project_root / "output"
+        output_dir = self.project_root / "pipeline-output"
         for f in output_dir.glob("claude-ppt *.pptx") if output_dir.exists() else []:
             m = pptx_pattern.match(f.name)
             if m:
@@ -1181,7 +1181,7 @@ class PPTOrchestrator:
             print("  [WARN] 未找到 claude-ppt *.pptx")
             return
         version = self._idx_to_version(idx)
-        pptx = self.project_root / "output" / f"claude-ppt {version}.pptx"
+        pptx = self.project_root / "pipeline-output" / f"claude-ppt {version}.pptx"
         if pptx.exists():
             try:
                 os.startfile(str(pptx.resolve()))

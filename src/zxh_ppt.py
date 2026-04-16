@@ -11,10 +11,16 @@ Self-contained: 所有工具函数都从 pipeline/03a + 03b + ppt_pipeline_commo
 from __future__ import annotations
 
 import re
+import sys
 import time
 import tempfile
+import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+# 直接运行时（python src/zxh_ppt.py），将项目根目录加入 sys.path
+if __name__ == "__main__":
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # src 内部依赖：GPT_5 + overlay helpers
 GPT_5 = None
@@ -26,13 +32,17 @@ except Exception:
     try:
         from src.Function_030 import GPT_5, show_gpt_waiting_overlay, remove_gpt_waiting_overlay  # type: ignore
     except Exception:
-        GPT_5 = None
+        try:
+            from Function_030 import GPT_5, show_gpt_waiting_overlay, remove_gpt_waiting_overlay  # type: ignore
+        except Exception:
+            GPT_5 = None
 
 # ---------------------------------------------------------------------------
 # 共享纯数据工具（Fix2）：常量 / 评分 / 文本裁剪 / Excel 列工具
 # 视觉写入、prompt、模板 shape 定义仍保留在本文件内，以保证 per-template
 # 独立微调能力（zxh 的 p1p2 模式、section-aware 染色顺序等）。
 # ---------------------------------------------------------------------------
+_shared_import_ok = False
 try:
     from ._ppt_shared import (  # type: ignore
         _RED, _BLUE, _BLACK,
@@ -43,16 +53,30 @@ try:
         clamp_text,
         _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
     )
+    _shared_import_ok = True
 except Exception:
-    from src._ppt_shared import (  # type: ignore
-        _RED, _BLUE, _BLACK,
-        _ADVANTAGE_MARKERS, _DISADVANTAGE_MARKERS,
-        _find_col, _classify_columns, _col_values,
-        _extract_score_means, _xlwings_to_rows,
-        _score_10pt, _score_to_grade, _sample_stat_text,
-        clamp_text,
-        _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
-    )
+    pass
+if not _shared_import_ok:
+    try:
+        from src._ppt_shared import (  # type: ignore
+            _RED, _BLUE, _BLACK,
+            _ADVANTAGE_MARKERS, _DISADVANTAGE_MARKERS,
+            _find_col, _classify_columns, _col_values,
+            _extract_score_means, _xlwings_to_rows,
+            _score_10pt, _score_to_grade, _sample_stat_text,
+            clamp_text,
+            _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
+        )
+    except Exception:
+        from _ppt_shared import (  # type: ignore
+            _RED, _BLUE, _BLACK,
+            _ADVANTAGE_MARKERS, _DISADVANTAGE_MARKERS,
+            _find_col, _classify_columns, _col_values,
+            _extract_score_means, _xlwings_to_rows,
+            _score_10pt, _score_to_grade, _sample_stat_text,
+            clamp_text,
+            _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
+        )
 
 # Default GPT model
 _MODEL = "openai/gpt-5.4"
@@ -334,12 +358,24 @@ def _build_content(spec: dict, rows: List[List[Any]],
         focus = params.get("filter", "")
         fmt   = params.get("format", "")
         src   = params.get("source", "补充说明")
+        # 默认文本取自 Template 2.1.pptx 第 17 页模板原始内容
+        tb15_txt = (
+            "优势\r包裹性表现较好，鞋脚一体性明显 \r支撑与刚性在线，实战稳定性较好 "
+            "\r整体舒适度不错\r\r问题\r抓地不足（4/7）：木地板、急停、横移时更明显 "
+            "\r后跟/脚踝问题（3/7）：掉跟、外踝卡脚 "
+            "\r缓震偏硬/偏薄（2/7）：前掌硬、后跟硬、缓震感不足 "
+            "\r鞋带偏短（2/7） "
+        )
+        tb17_txt = (
+            "修改建议\rP1：优化抓地\v核查橡胶硬度，如果硬度正确考虑调软"
+            "\r更换为普通橡胶或者止滑橡胶\rP1：优化后跟锁定\v调整后跟杯、领口泡棉"
+            " \rP2：修正细节体验\v加长鞋带"
+        )
         fallback_map = {
-            "优点":    "样本反馈总体稳定，核心指标表现均衡。",
-            "缺点":    "反馈集中，建议围绕关键指标继续优化。",
-            "修改建议": "P1：优化核心指标\r根据样本反馈重点改进",
+            "":        tb15_txt,
+            "修改建议": tb17_txt,
         }
-        fallback = fallback_map.get(focus, "样本反馈总体稳定，核心指标表现均衡。")
+        fallback = fallback_map.get(focus, tb15_txt)
         prompt = _build_rich_prompt(budget, rows, focus=focus, fmt=fmt,
                                     content_source=src, style_anchor=style_anchor)
         result = _call_gpt(prompt, fallback, gpt_enabled, model)
@@ -576,13 +612,23 @@ def make_zxh_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
         except Exception:
             pass
 
-    # Fix 1+2: 矫正 TextBox 17 布局
-    # 模板原始 L=550 W=480 → R=1030，溢出 slide 右边界(960pt)，且与 TB15(R=687)重叠 137pt
-    # 矫正后: L=700 W=240 → R=940（不溢出，与 TB15 间距 13pt）
+    # Shape 位置微调 #fine_tuned
+    # TextBox 15: 模板原始值 L=37.75 T=128.25 W=648.99 H=330.55
+    try:
+        _tb15 = new_slide.Shapes("TextBox 15")
+        _tb15.Left   = 37.75
+        _tb15.Top    = 128.25
+        _tb15.Width  = 540
+        _tb15.Height = 330.55
+    except Exception:
+        pass
+    # TextBox 17: 模板原始 L=550 W=480 溢出，矫正后值
     try:
         _tb17 = new_slide.Shapes("TextBox 17")
-        _tb17.Left  = 650   #700 mc_debug / OK，该参数非常完美
-        _tb17.Width = 280   #240 mc_debug / OK，该参数非常完美
+        _tb17.Left   = 600
+        _tb17.Top    = 146.63
+        _tb17.Width  = 280
+        _tb17.Height = 265.11
     except Exception:
         pass
 
@@ -632,3 +678,49 @@ def make_zxh_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
             pass
 
     return new_slide
+
+
+# ---------------------------------------------------------------------------
+# 单独调试入口：连接已打开的 Excel + 自动打开模板 PPT，只跑 zxh 这一页
+# 用法：python src/zxh_ppt.py
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    import os
+    import win32com.client
+    import xlwings
+
+    # 项目根目录
+    _proj_root = str(Path(__file__).resolve().parent.parent)
+
+    # 打开 PPT 模板（与 Main.py 同方式，不自动保存）
+    mc_app = win32com.client.Dispatch("PowerPoint.Application")
+    mc_app.DisplayAlerts = 0
+    mc_app.Visible = True
+    mc_ppt = mc_app.Presentations.Open(_proj_root + r"\src\Template 2.1.pptx")
+    mc_slide = mc_ppt.Slides(mc_ppt.Slides.Count)
+
+    # 连接已打开的 Excel（问卷 sheet）
+    mc_book = xlwings.books.active
+    mc_sht = None
+    for s in mc_book.sheets:
+        if "问卷" in s.name:
+            mc_sht = s
+            break
+    if mc_sht is None:
+        print("未找到包含'问卷'的 sheet，请检查 Excel")
+        exit(1)
+
+    sample_name = mc_book.sheets["基础信息"].range("B2").value or "调试样品"
+
+    print(f"[debug] sample: {sample_name}")
+    print(f"[debug] sheet:  {mc_sht.name}")
+    print(f"[debug] slides: {mc_ppt.Slides.Count}")
+
+    mc_gpt = 'n' # input("启用GPT? (y/n, 默认n): ").strip() or "n"
+
+    new_slide = make_zxh_slide(
+        mc_sht, mc_ppt, mc_slide, sample_name,
+        mc_gpt=mc_gpt, mc_model=_MODEL,
+    )
+    print(f"[debug] 完成！新页在第 {new_slide.SlideIndex} 页")
+    print(f"[debug] 注意：模板文件未保存，请手动检查后关闭（不要保存）")

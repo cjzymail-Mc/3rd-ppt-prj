@@ -52,6 +52,8 @@
 ```bash
 python orchestrator.py    # Pipeline 系统（菜单 0=全自动 / 1/2/3 分步）
 python Main.py            # src/ 生产系统
+python src/yzr_ppt.py     # yzr 单页调试（需先打开 Excel）
+python src/zxh_ppt.py     # zxh 单页调试（需先打开 Excel）
 ```
 
 ---
@@ -65,8 +67,8 @@ python Main.py            # src/ 生产系统
 | `pipeline/03b_build_ppt_com.py` | COM 写入 PPT（_write_chart / _write_text） |
 | `pipeline/prompt_templates/gpt_summary.md` | GPT prompt 模板（Pipeline 专用） |
 | `src/Function_030.py` | 生产核心库（3504行）：GPT_5、问卷、图表、Excel COM |
-| `src/yzr_ppt.py` | 杨祖锐模板：Clone Slide 15 |
-| `src/zxh_ppt.py` | 之行模板：Clone Slide 17（含 p1p2 模式） |
+| `src/yzr_ppt.py` | 杨祖锐模板：Clone Slide 15（含 `__main__` 单页调试） |
+| `src/zxh_ppt.py` | 之行模板：Clone Slide 17（含 p1p2 模式 + `__main__` 单页调试） |
 | `src/_ppt_shared.py` | 共享工具模块（fix2 计划新建，消除 yzr/zxh 重复） |
 | `Main.py` | src/ 生产入口（1055行） |
 
@@ -83,3 +85,4 @@ python Main.py            # src/ 生产系统
 | 混合工作流 Pipeline→LLM | `.claude/memory/feedback_hybrid_workflow.md` |
 | 手动 Pipeline 命令 + 批注字段 | `.claude/memory/reference_manual_pipeline.md` |
 | 架构修复计划（fix2） | `[feature03-transplant]/fix2.md` |
+| Shape 微调工作流 + 调试入口 | `skills/fine-tuned-shapes.md` |

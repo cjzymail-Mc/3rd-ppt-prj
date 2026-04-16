@@ -19,7 +19,7 @@ tools: Read, Bash, Edit, Write
 
 ## 输出
 
-- `output/claude-ppt N.N.pptx`
+- `pipeline-output/claude-ppt N.N.pptx`
 
 ---
 

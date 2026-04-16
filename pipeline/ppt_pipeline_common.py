@@ -54,7 +54,7 @@ EXCEL_PATH = Path(os.environ.get("PPT_EXCEL_PATH", str(TEMPLATE_DIR / "source da
 TEMPLATE_PATH = Path(os.environ.get("PPT_TEMPLATE_PATH", str(TEMPLATE_DIR / "standard and empty template.pptx")))
 PROGRESS_DIR = ROOT / "pipeline-progress"
 PROGRESS_DIR.mkdir(parents=True, exist_ok=True)        # create on first import
-OUTPUT_DIR = ROOT / "output"
+OUTPUT_DIR = ROOT / "pipeline-output"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 

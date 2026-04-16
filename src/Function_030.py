@@ -1179,9 +1179,9 @@ def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_g
 
         j = mc_cell0.api.CurrentRegion.Columns.Count
 
-        # 临时数据起始位置：远离原始数据区（含浮动图片），放到下方第 100 行处的安全缓冲区
-        # 配合下方 try/finally 整行删除，确保不残留 + 不影响图片
-        mc_cell = mc_cell0.offset(row_offset=i0+i+100,column_offset=0)                #.select()   加了这个就变成一个动作了。。
+        # 临时数据起始位置：远离原始数据区（含浮动图片），放到下方第 20 行处的安全缓冲区
+        # 配合下方 try/finally 整行删除，确保不残留 + 不影响图片 mc_debug
+        mc_cell = mc_cell0.offset(row_offset=i0+i+20,column_offset=0)                #.select()   加了这个就变成一个动作了。。
 
 
         # 问卷全部原始数据 raw_data

@@ -11,10 +11,16 @@ Self-contained: 所有工具函数都从 pipeline/03a + 03b + ppt_pipeline_commo
 from __future__ import annotations
 
 import re
+import sys
 import time
 import tempfile
+import textwrap
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
+
+# 直接运行时（python src/yzr_ppt.py），将项目根目录加入 sys.path
+if __name__ == "__main__":
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 # src 内部依赖：GPT_5 + overlay helpers
 GPT_5 = None
@@ -26,13 +32,17 @@ except Exception:
     try:
         from src.Function_030 import GPT_5, show_gpt_waiting_overlay, remove_gpt_waiting_overlay  # type: ignore
     except Exception:
-        GPT_5 = None
+        try:
+            from Function_030 import GPT_5, show_gpt_waiting_overlay, remove_gpt_waiting_overlay  # type: ignore
+        except Exception:
+            GPT_5 = None
 
 # ---------------------------------------------------------------------------
 # 共享纯数据工具（Fix2）：常量 / 评分 / 文本裁剪 / Excel 列工具
 # 影响视觉输出的函数（_write_text / _write_chart / _apply_keyword_color /
 # _build_rich_prompt 等）仍保留在本文件内，以保证 per-template 独立微调能力。
 # ---------------------------------------------------------------------------
+_shared_import_ok = False
 try:
     from ._ppt_shared import (  # type: ignore
         _RED, _BLUE, _BLACK,
@@ -43,16 +53,30 @@ try:
         clamp_text,
         _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
     )
+    _shared_import_ok = True
 except Exception:
-    from src._ppt_shared import (  # type: ignore
-        _RED, _BLUE, _BLACK,
-        _ADVANTAGE_MARKERS, _DISADVANTAGE_MARKERS,
-        _find_col, _classify_columns, _col_values,
-        _extract_score_means, _xlwings_to_rows,
-        _score_10pt, _score_to_grade, _sample_stat_text,
-        clamp_text,
-        _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
-    )
+    pass
+if not _shared_import_ok:
+    try:
+        from src._ppt_shared import (  # type: ignore
+            _RED, _BLUE, _BLACK,
+            _ADVANTAGE_MARKERS, _DISADVANTAGE_MARKERS,
+            _find_col, _classify_columns, _col_values,
+            _extract_score_means, _xlwings_to_rows,
+            _score_10pt, _score_to_grade, _sample_stat_text,
+            clamp_text,
+            _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
+        )
+    except Exception:
+        from _ppt_shared import (  # type: ignore
+            _RED, _BLUE, _BLACK,
+            _ADVANTAGE_MARKERS, _DISADVANTAGE_MARKERS,
+            _find_col, _classify_columns, _col_values,
+            _extract_score_means, _xlwings_to_rows,
+            _score_10pt, _score_to_grade, _sample_stat_text,
+            clamp_text,
+            _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
+        )
 
 # Default GPT model
 _MODEL = "openai/gpt-5.4"
@@ -65,7 +89,7 @@ _COPY_PASTE_DELAY = 1.5
 # 注意：shape 名用 PPT 实际名称（英文前缀 Rectangle/Picture/TextBox），
 # 仅 "图表 44" 保持中文（图表 shape 默认名）。
 # ---------------------------------------------------------------------------
-CODEX_SHAPES = [
+YZR_SHAPES = [
     {"name": "Rectangle 11", "strategy": "score_10pt"},
     {"name": "Rectangle 12", "strategy": "grade_letter"},
     {"name": "Rectangle 17", "strategy": "sample_aggregation"},
@@ -274,6 +298,23 @@ def _build_content(spec: dict, rows: List[List[Any]],
     params = spec.get("params", {})
     budget = spec.get("budget", {"max_chars": 80, "max_lines": 4})
 
+    bad_txt = textwrap.dedent("""\
+        【包裹性】
+        前掌内/外侧弯折处均出现卡脚情况（3/3）
+        鞋带孔生涩，在绑缚过程中较难对鞋带进行高效的收紧与放松（3/3）
+        在进行内收步、剪刀步时，前掌外侧橡胶出现明显的挤压第五跖趾关节现象（1/3）
+        【稳定性】
+        在进行一些特定的动作时（行进间急停摆脱防守），出现轻微足外翻，具体位置在相比较前掌而言，后跟内侧支撑略低，但尚能接受（1/3）
+        【止滑性】
+        鞋底容易吸灰，导致打滑（3/3）
+        鞋底在与地面摩擦时无[吱吱吱~]声响，对篮球爱好者来说安全感低。""")
+    good_txt = textwrap.dedent("""\
+        【止滑性】
+        在室内干净木地板、室外水泥地上均能牢牢地锁定在地面。但在灰尘较大的木地板或塑胶场地上，需要频繁的擦拭鞋底灰尘。
+        【场地感】
+        静态下，前掌填覆材料异物感不明显。在动态下，前掌有明显的马蹄形[气垫]回弹反馈，在无碳板的结构下能给到足够澎湃的触地反馈。
+        注：三种不同硬度的填覆材料，测试结果为：30C硬度下，所给到的脚感反馈最佳！""")
+
     if strategy == "skip":
         return ""
 
@@ -304,8 +345,8 @@ def _build_content(spec: dict, rows: List[List[Any]],
     if strategy == "gpt_prompted":
         focus = params.get("filter", "")
         src = params.get("source", "补充说明")
-        fallback_map = {"优点": "样本反馈总体稳定，核心指标表现均衡。",
-                        "缺点": "反馈集中，建议围绕关键指标继续优化。"}
+        fallback_map = {"优点": good_txt,
+                        "缺点": bad_txt}
         fallback = fallback_map.get(focus, "样本反馈总体稳定，核心指标表现均衡。")
         prompt = _build_rich_prompt(budget, rows, focus=focus,
                                     content_source=src, style_anchor="")
@@ -488,7 +529,7 @@ def make_codex_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
     """Generate yzr evaluation slide, integrated into Main.py Copy->Paste flow.
 
     Clones Slide(15) (yzr 标准模板页) to end of presentation,
-    then writes all shape content per CODEX_SHAPES specs.
+    then writes all shape content per YZR_SHAPES specs.
 
     Returns the new slide object (caller should update mc_slide).
     """
@@ -510,8 +551,26 @@ def make_codex_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
         except Exception:
             pass
 
+    # Shape 位置微调 #fine_tuned
+    try:
+        _r68 = new_slide.Shapes("Rectangle 68")
+        _r68.Left   = 24
+        _r68.Top    = 264
+        _r68.Width  = 415
+        _r68.Height = 250
+    except Exception:
+        pass
+    try:
+        _r77 = new_slide.Shapes("Rectangle 77")
+        _r77.Left   = 454
+        _r77.Top    = 264
+        _r77.Width  = 272
+        _r77.Height = 226
+    except Exception:
+        pass
+
     # === Per-shape content build and write ===
-    for spec in CODEX_SHAPES:
+    for spec in YZR_SHAPES:
         name     = spec["name"]
         strategy = spec["strategy"]
 
@@ -554,3 +613,49 @@ def make_codex_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
             pass
 
     return new_slide
+
+
+# ---------------------------------------------------------------------------
+# 单独调试入口：连接已打开的 Excel + PPT，只跑 yzr 这一页
+# 用法：python src/yzr_ppt.py
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    import os
+    import win32com.client
+    import xlwings
+
+    # 项目根目录
+    _proj_root = str(Path(__file__).resolve().parent.parent)
+
+    # 打开 PPT 模板（与 Main.py 同方式，不自动保存）
+    mc_app = win32com.client.Dispatch("PowerPoint.Application")
+    mc_app.DisplayAlerts = 0
+    mc_app.Visible = True
+    mc_ppt = mc_app.Presentations.Open(_proj_root + r"\src\Template 2.1.pptx")
+    mc_slide = mc_ppt.Slides(mc_ppt.Slides.Count)
+
+    # 连接已打开的 Excel（问卷 sheet）
+    mc_book = xlwings.books.active
+    mc_sht = None
+    for s in mc_book.sheets:
+        if "问卷" in s.name:
+            mc_sht = s
+            break
+    if mc_sht is None:
+        print("未找到包含'问卷'的 sheet，请检查 Excel")
+        exit(1)
+
+    sample_name = mc_book.sheets["基础信息"].range("B2").value or "调试样品"
+
+    print(f"[debug] sample: {sample_name}")
+    print(f"[debug] sheet:  {mc_sht.name}")
+    print(f"[debug] slides: {mc_ppt.Slides.Count}")
+
+    mc_gpt = "n" #input("启用GPT? (y/n, 默认n): ").strip() or "n"
+
+    new_slide = make_codex_slide(
+        mc_sht, mc_ppt, mc_slide, sample_name,
+        mc_gpt=mc_gpt, mc_model=_MODEL,
+    )
+    print(f"[debug] 完成！新页在第 {new_slide.SlideIndex} 页")
+    print(f"[debug] 注意：模板文件未保存，请手动检查后关闭（不要保存）")
