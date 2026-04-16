@@ -1,0 +1,22 @@
+{
+  "generated_at": "2026-04-14T11:36:25",
+  "target": "claude-ppt 1.9.pptx",
+  "results": [
+    {
+      "shape_name": "TextBox 15",
+      "updated": true,
+      "mode": "text",
+      "written_len": 268,
+      "readback_len": 268,
+      "match_method": "name"
+    },
+    {
+      "shape_name": "TextBox 17",
+      "updated": true,
+      "mode": "text",
+      "written_len": 183,
+      "readback_len": 183,
+      "match_method": "name"
+    }
+  ]
+}

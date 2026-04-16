@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-04-14T11:36:57.278677",
+  "source": "step3_self_check",
+  "issues": [
+    {
+      "shape": "see report",
+      "problem": "| 1 | 全页 | 视觉对照 | SSIM=0.25 < 0.85 视觉差异过大 | 严重 | 需人工检查 |"
+    },
+    {
+      "shape": "see report",
+      "problem": "| 2 | TextBox 15 | 内容完整性 | 内容超长 240字 (上限159字, 超出81字) | 严重 | 待修复 |"
+    },
+    {
+      "shape": "see report",
+      "problem": "| 3 | TextBox 17 | 内容完整性 | 内容超长 167字 (上限97字, 超出70字) | 严重 | 待修复 |"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "status": "ok",
+  "generated_at": "2026-04-09T14:36:51",
+  "template_slide": 2,
+  "blank_slide": 1,
+  "blank_shape_count": 1,
+  "std_shape_count": 3,
+  "new_shapes": [
+    {
+      "slide_index": 2,
+      "name": "TextBox 15",
+      "left": 37.74614334106445,
+      "top": 128.25196838378906,
+      "width": 648.9874877929688,
+      "height": 330.5467834472656,
+      "shape_type": 17,
+      "text": "优势\r包裹性表现较好，鞋脚一体性明显 \r支撑与刚性在线，实战稳定性较好 \r整体舒适度不错\r\r问题\r抓地不足（4/7）：木地板、急停、横移时更明显 \r后跟/脚踝问题（3/7）：掉跟、外踝卡脚 \r缓震偏硬/偏薄（2/7）：前掌硬、后跟硬、缓震感不足 \r鞋带偏短（2/7） ",
+      "font_name": "Arial",
+      "font_size": 18.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 2
+    },
+    {
+      "slide_index": 2,
+      "name": "TextBox 17",
+      "left": 550.347412109375,
+      "top": 146.63409423828125,
+      "width": 480.0,
+      "height": 265.1139221191406,
+      "shape_type": 17,
+      "text": "修改建议\rP1：优化抓地\u000b核查橡胶硬度，如果硬度正确考虑调软\r更换为普通橡胶或者止滑橡胶\rP1：优化后跟锁定\u000b调整后跟杯、领口泡棉 \rP2：修正细节体验\u000b加长鞋带",
+      "font_name": "Arial",
+      "font_size": 18.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 3
+    }
+  ]
+}
