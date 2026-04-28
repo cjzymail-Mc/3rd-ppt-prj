@@ -545,14 +545,59 @@ def gen_questionnaire_prompt(runner,temp_raw_data):
 
 
 # 总结分析所有信息 prompt
-# 需要传入【sample_name】1个参数。
-def gen_result_prompt(sample_name):
+#   - sample_name: 必填
+#   - sheet_summaries: 各测试方法 sheet 的 GPT 结论（list[str]，按顺序）
+#   - questionnaire_summaries: 各运动员问卷反馈的 GPT 结论（list[str]）
+# 显式注入先前结论，不再依赖 messages 上下文（plan4：更鲁棒、可被 clamp_text 控制结构）
+def gen_result_prompt(sample_name, sheet_summaries=None, questionnaire_summaries=None):
+
+    sheet_block = ""
+    if sheet_summaries:
+        sheet_block = "\n\n".join(
+            f"【测试方法 {i+1}】\n{str(s).strip()}"
+            for i, s in enumerate(sheet_summaries) if s and str(s).strip()
+        )
+
+    qn_block = ""
+    if questionnaire_summaries:
+        qn_block = "\n\n".join(
+            f"【运动员 {i+1}】\n{str(s).strip()}"
+            for i, s in enumerate(questionnaire_summaries) if s and str(s).strip()
+        )
+
+    info_section = ""
+    if sheet_block or qn_block:
+        info_section = (
+            "【已知信息】\n"
+            "以下是先前已经分析得出的结论，请直接基于此做总结，"
+            "不要再展开重复分析：\n\n"
+        )
+        if sheet_block:
+            info_section += sheet_block + "\n\n"
+        if qn_block:
+            info_section += qn_block + "\n\n"
 
     mc_prompt = (
-                f'接下来，前面我们讨论的测试数据、测试反馈和你的分析结果，请对 {sample_name} 的性能进行总结。'
-                f'注意，你只能在测试结果给出的信息范围内对该产品进行总结，不要去推测其他未知的性能。'
-                f'如果你的总结有好几条，请分不同段落展示。另外，你的总结字数不能超过300个汉字。'
-                 )           #f'下面是汇总的测试结果：\r {str(messages)}'   # 既然是连续聊天，应该不需要再发送一次 messages 了，GPT应该能够自动识别历史聊天记录
+        f"{info_section}"
+        f"【你的任务】\n"
+        f"请综合上述信息，对【{sample_name}】给出一份最终评测总结。\n\n"
+        f"严格按以下三段式输出，每段用编号条目（1、2、3...）：\n"
+        f"【优点】\n1、...\n2、...\n3、...\n\n"
+        f"【缺点】\n1、...\n2、...\n3、...\n\n"
+        f"【修改建议】\n1、...\n2、...\n3、...\n\n"
+        f"硬性要求：\n"
+        f"- 三段段头【优点】/【缺点】/【修改建议】必须保留，单独占一行。\n"
+        f"- 每段至少 2-3 条；若确实无内容，保留段头并写\"暂无显著XX\"。\n"
+        f"- **关键词标注规则**（必须严格遵守，外层程序按括号类型自动染色）：\n"
+        f"    · 在【优点】段，把核心优势/性能词用半角尖括号 < > 包起来，例如：<回弹性能>。\n"
+        f"    · 在【缺点】段，把核心问题/不足词用半角方括号 [ ] 包起来，例如：[支撑不足]。\n"
+        f"    · 在【修改建议】段，把建议关键词用半角圆括号 ( ) 包起来，例如：(加厚中底)。\n"
+        f"    · 仅包关键词本身、不含任何标点；段头【优点】/【缺点】/【修改建议】保持中文方括号 【】 不变。\n"
+        f"    · 每条至少 1 个关键词标注；同一条结论可标多个关键词。\n"
+        f"- 总字数 ≤ 270 汉字，总行数 ≤ 12 行（含 3 段头），尽量写满让页面饱满。\n"
+        f"- 只能基于已有数据，不允许推测或编造。\n"
+        f"- 直接输出结论，不重述题面、不展示分析过程、不输出空行、不使用 Markdown。\n"
+    )
 
     return mc_prompt
 
@@ -586,144 +631,410 @@ def gen_result_prompt(sample_name):
 import tkinter as tk
 from tkinter import messagebox
 import sys
+import json
+from pathlib import Path
+
+# ===== 用户偏好（按钮记忆）持久化 =====
+# 首次运行时弹窗按 first_default 倒计时；用户一旦选择，则下次倒计时改在用户选择上。
+# 放在 src/ 下与 Function_030.py 同级，方便打包分发。
+_PREFS_FILE = Path(__file__).resolve().parent / ".ppt_prefs.json"
+
+
+def _load_prefs() -> dict:
+    try:
+        if _PREFS_FILE.exists():
+            return json.loads(_PREFS_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+    return {}
+
+
+def _save_pref(key: str, value: str) -> None:
+    try:
+        prefs = _load_prefs()
+        prefs[key] = value
+        _PREFS_FILE.write_text(
+            json.dumps(prefs, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    except Exception as e:
+        print(f"[prefs] 保存失败: {e}")
+
+
+def _get_toplevel_hwnd(win):
+    """取 Tk 顶层窗口的真实 Windows HWND（非子控件 HWND）。
+
+    `win.winfo_id()` 返回的是 Tk 内部子控件 HWND，FlashWindowEx /
+    SetWindowPos 对它静默失败 —— 这是老 bug 任务栏不闪烁的根因。
+    正确做法：`win.wm_frame()` 直接返回顶层 HWND（含 0x 前缀的字符串）。
+    """
+    if sys.platform != 'win32':
+        return None
+    try:
+        return int(win.wm_frame(), 16)
+    except Exception:
+        try:
+            import ctypes
+            hwnd = win.winfo_id()
+            # 兜底：向上找两层 GetParent
+            for _ in range(2):
+                parent = ctypes.windll.user32.GetParent(hwnd)
+                if parent:
+                    hwnd = parent
+            return hwnd
+        except Exception:
+            return None
+
 
 def center_window(win, width, height):
-    """将窗口居中显示"""
+    """将窗口居中显示（多显示器友好：居中到鼠标所在屏幕的工作区）。
+
+    旧实现用 `winfo_screenwidth()` —— 多显示器/缩放下不稳定，弹窗经常
+    跑到主屏中间但用户的 PPT/Excel 在副屏，导致用户看不见。
+    新实现：Windows 下读光标当前所在的 Monitor，按工作区（避开任务栏）居中。
+    """
     win.update_idletasks()
-    screen_w = win.winfo_screenwidth()
-    screen_h = win.winfo_screenheight()
-    x = (screen_w - width) // 2
-    y = (screen_h - height) // 2
+
+    if sys.platform == 'win32':
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            class POINT(ctypes.Structure):
+                _fields_ = [('x', ctypes.c_long), ('y', ctypes.c_long)]
+
+            class RECT(ctypes.Structure):
+                _fields_ = [('left', ctypes.c_long), ('top', ctypes.c_long),
+                            ('right', ctypes.c_long), ('bottom', ctypes.c_long)]
+
+            class MONITORINFO(ctypes.Structure):
+                _fields_ = [('cbSize', ctypes.c_ulong),
+                            ('rcMonitor', RECT), ('rcWork', RECT),
+                            ('dwFlags', ctypes.c_ulong)]
+
+            user32 = ctypes.windll.user32
+            pt = POINT()
+            user32.GetCursorPos(ctypes.byref(pt))
+            MONITOR_DEFAULTTONEAREST = 2
+            mon = user32.MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST)
+            mi = MONITORINFO()
+            mi.cbSize = ctypes.sizeof(MONITORINFO)
+            user32.GetMonitorInfoW(mon, ctypes.byref(mi))
+            wa = mi.rcWork  # 工作区，自动避开任务栏
+            x = wa.left + (wa.right - wa.left - width) // 2
+            y = wa.top + (wa.bottom - wa.top - height) // 2
+            win.geometry(f"{width}x{height}+{x}+{y}")
+            return
+        except Exception as _e:
+            print(f"[center_window] 多屏居中失败，回退主屏: {_e}")
+
+    # Fallback：单屏 / 非 Windows
+    sw = win.winfo_screenwidth()
+    sh = win.winfo_screenheight()
+    x = (sw - width) // 2
+    y = (sh - height) // 2
     win.geometry(f"{width}x{height}+{x}+{y}")
 
-def flash_taskbar(win):
-    """让任务栏图标闪烁"""
-    if sys.platform == 'win32':
-        try:
-            import ctypes
-            # 获取窗口句柄
-            hwnd = win.winfo_id()
-            # FLASHWINFO 结构
-            class FLASHWINFO(ctypes.Structure):
-                _fields_ = [
-                    ('cbSize', ctypes.c_uint),
-                    ('hwnd', ctypes.c_void_p),
-                    ('dwFlags', ctypes.c_uint),
-                    ('uCount', ctypes.c_uint),
-                    ('dwTimeout', ctypes.c_uint)
-                ]
 
-            # FLASHW_ALL = 闪烁标题栏和任务栏
-            # FLASHW_TIMERNOFG = 直到窗口获得焦点前一直闪烁
-            FLASHW_ALL = 0x00000003
-            FLASHW_TIMERNOFG = 0x0000000C
+def flash_taskbar(win, count=8):
+    """让任务栏图标闪烁直到窗口获得焦点。"""
+    if sys.platform != 'win32':
+        return
+    hwnd = _get_toplevel_hwnd(win)
+    if not hwnd:
+        return
+    try:
+        import ctypes
 
-            flash_info = FLASHWINFO(
-                ctypes.sizeof(FLASHWINFO),
-                hwnd,
-                FLASHW_ALL | FLASHW_TIMERNOFG,
-                5,  # 闪烁5次
-                0
-            )
-            ctypes.windll.user32.FlashWindowEx(ctypes.byref(flash_info))
-        except Exception as e:
-            print(f"任务栏闪烁失败: {e}")
+        class FLASHWINFO(ctypes.Structure):
+            _fields_ = [
+                ('cbSize', ctypes.c_uint),
+                ('hwnd', ctypes.c_void_p),
+                ('dwFlags', ctypes.c_uint),
+                ('uCount', ctypes.c_uint),
+                ('dwTimeout', ctypes.c_uint),
+            ]
 
-def force_window_front(win):
-    """强制窗口置顶的多重方法"""
-    # 方法1: 设置topmost属性
+        FLASHW_ALL = 0x00000003
+        FLASHW_TIMERNOFG = 0x0000000C  # 闪到获得焦点为止
+
+        flash_info = FLASHWINFO(
+            ctypes.sizeof(FLASHWINFO),
+            hwnd,
+            FLASHW_ALL | FLASHW_TIMERNOFG,
+            count,
+            0,
+        )
+        ctypes.windll.user32.FlashWindowEx(ctypes.byref(flash_info))
+    except Exception as e:
+        print(f"任务栏闪烁失败: {e}")
+
+
+def force_window_front(win, beep=True, flash=True):
+    """强制窗口置顶 + 提示用户（任务栏闪烁 + 系统蜂鸣）。
+
+    修法要点（旧版老 bug 复盘）：
+      1. 必须用 `_get_toplevel_hwnd` 取真正的顶层 HWND，
+         否则 SetWindowPos / FlashWindowEx 静默失败。
+      2. 不能永久 topmost=True —— 那样弹窗会一直挡 PPT。改为
+         先 topmost True 推到前台，~400ms 后取消，并 SetWindowPos NOTOPMOST。
+      3. 默认开启任务栏闪烁 + 系统蜂鸣，解决"用户无感"问题。
+    """
+    # tk 层先抢焦点
     win.attributes('-topmost', True)
-
-    # 方法2: 提升窗口层级
     win.lift()
     win.focus_force()
+    win.update_idletasks()
 
-    # 方法3: Windows系统特定处理
     if sys.platform == 'win32':
+        hwnd = _get_toplevel_hwnd(win)
+        if hwnd:
+            try:
+                import ctypes
+                user32 = ctypes.windll.user32
+                HWND_TOPMOST = -1
+                HWND_NOTOPMOST = -2
+                SWP_NOMOVE = 0x0002
+                SWP_NOSIZE = 0x0001
+                SWP_SHOWWINDOW = 0x0040
+                FLAGS = SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW
+                user32.SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, FLAGS)
+                # 取消永久置顶（保留窗口在前，但允许后续切换）
+                win.after(400, lambda: user32.SetWindowPos(
+                    hwnd, HWND_NOTOPMOST, 0, 0, 0, 0, FLAGS))
+                if beep:
+                    user32.MessageBeep(0x00000040)  # MB_ICONINFORMATION
+            except Exception as e:
+                print(f"SetWindowPos失败: {e}")
+
+    # tk 层在短延迟后取消 topmost，与 SetWindowPos 同步
+    win.after(450, lambda: win.attributes('-topmost', False))
+    win.after(500, lambda: win.focus_force())
+
+    if flash:
+        flash_taskbar(win)
+
+
+# ===== 弹窗视觉常量（iOS systemGroupedBackground 风格 + 参考图饱和蓝） =====
+# 关键设计：窗口底色用 iOS 系统分组背景灰 (#F2F2F7)，按钮反而是纯白卡片 ——
+# "白色卡片浮于浅灰底"的经典 iOS 设置页分层；
+# 默认按钮强调描边换成参考截图的饱和 Indigo (#4A6CF7)，去掉旧的红色。
+_UI_FONT_FAMILY      = "Microsoft YaHei UI"  # 中文渲染干净（Win 自带）
+_UI_BG               = "#F2F2F7"              # 窗口：iOS systemGroupedBackground
+_UI_FG               = "#1C1C1E"              # 主文本：iOS label primary（更黑）
+_UI_FG_MUTED         = "#8E8E93"              # 次要描述：iOS secondaryLabel
+_UI_ACCENT           = "#4A6CF7"              # 默认按钮强调描边：饱和 Indigo（参考截图）
+_UI_BTN_BG           = "#FFFFFF"              # 按钮：纯白卡片（与窗口浅灰拉开层次）
+_UI_BTN_BG_HOVER     = "#E3F2FD"              # hover：浅蓝（与白色卡片对比清晰）
+_UI_BTN_BORDER_HOVER = "#64B5F6"              # hover 描边：稍深蓝（强化层次）
+_UI_BTN_BORDER       = "#E5E5EA"              # 静态描边：iOS separator gray
+
+
+def _ask_with_countdown(
+    title: str,
+    message: str,
+    options,            # list of (label, value[, description, fg])
+    pref_key: str,
+    first_default,
+    countdown_seconds: int = 5,
+    width: int = 360,
+    on_close_value=None,
+):
+    """通用「倒计时 + 记忆」弹窗。
+
+    options 每项可为 (label, value) 或 (label, value, description) 或
+    (label, value, description, fg)。
+    倒计时显示在「上次用户选过的按钮」（首次运行落到 first_default）。
+    时间到自动按下默认按钮；用户点击任意按钮取消倒计时。
+    返回值会写入 pref_key，下次调用时该值变为新的默认。
+    """
+    prefs = _load_prefs()
+    default_value = prefs.get(pref_key, first_default)
+
+    # 找到默认值在 options 中的索引；找不到则回退到首项
+    default_idx = 0
+    for i, opt in enumerate(options):
+        if opt[1] == default_value:
+            default_idx = i
+            break
+    default_value = options[default_idx][1]
+    default_label = options[default_idx][0]
+
+    state = {"choice": None, "after_id": None, "remaining": countdown_seconds}
+
+    win = tk.Tk()
+    win.title(title)
+    win.resizable(False, False)
+    win.configure(bg=_UI_BG)
+
+    def cancel_countdown():
+        if state["after_id"] is not None:
+            try:
+                win.after_cancel(state["after_id"])
+            except Exception:
+                pass
+            state["after_id"] = None
+
+    def select(v):
+        state["choice"] = v
+        cancel_countdown()
         try:
-            import ctypes
-            # 获取窗口句柄
-            hwnd = win.winfo_id()
-            # SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW
-            HWND_TOPMOST = -1
-            SWP_NOMOVE = 0x0002
-            SWP_NOSIZE = 0x0001
-            SWP_SHOWWINDOW = 0x0040
-            ctypes.windll.user32.SetWindowPos(
-                hwnd, HWND_TOPMOST, 0, 0, 0, 0,
-                SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW
-            )
-        except Exception as e:
-            print(f"SetWindowPos失败: {e}")
+            win.quit()
+            win.destroy()
+        except Exception:
+            pass
 
-    # 方法4: 短暂延迟后再次置顶(解决某些情况下的失效)
-    win.after(50, lambda: win.attributes('-topmost', True))
-    win.after(100, lambda: win.focus_force())
+    fallback_close = on_close_value if on_close_value is not None else default_value
+    win.protocol("WM_DELETE_WINDOW", lambda: select(fallback_close))
 
-    # 方法5: 任务栏闪烁提醒
-    #flash_taskbar(win)
+    # ===== 外层容器（统一内边距，告别 raw pack pady=10/8/2 的零散感） =====
+    container = tk.Frame(win, bg=_UI_BG, padx=28, pady=24)
+    container.pack(fill="both", expand=True)
+
+    # ===== 标题文本 =====
+    tk.Label(
+        container,
+        text=message,
+        font=(_UI_FONT_FAMILY, 13, "bold"),
+        fg=_UI_FG, bg=_UI_BG,
+        anchor="w", justify="left",
+        wraplength=max(width - 56, 240),
+    ).pack(fill="x", pady=(0, 18))
+
+    buttons = []
+    last_idx = len(options) - 1
+    for i, opt in enumerate(options):
+        label, value = opt[0], opt[1]
+        desc = opt[2] if len(opt) >= 3 else ""
+        fg_desc = opt[3] if len(opt) >= 4 else _UI_FG_MUTED
+        is_default = (i == default_idx)
+
+        # 每个按钮 + 描述包成一个 row Frame，便于整体间距控制
+        row = tk.Frame(container, bg=_UI_BG)
+        row.pack(fill="x", pady=(0, 14 if i < last_idx else 0))
+
+        rest_border = _UI_ACCENT if is_default else _UI_BTN_BORDER
+        btn = tk.Button(
+            row,
+            text=label,
+            font=(_UI_FONT_FAMILY, 11, "bold" if is_default else "normal"),
+            fg=_UI_FG, bg=_UI_BTN_BG,
+            activeforeground=_UI_FG,
+            activebackground=_UI_BTN_BG_HOVER,
+            relief="flat", bd=0,
+            highlightthickness=2,
+            highlightbackground=rest_border,
+            highlightcolor=rest_border,
+            cursor="hand2",
+            padx=14, pady=9,
+            command=lambda v=value: select(v),
+        )
+        btn.pack(fill="x")
+
+        # Hover 反馈：浅蓝填充 + 略深蓝描边（一起变更出层次感）
+        def _on_enter(_e, b=btn):
+            try:
+                b.config(
+                    bg=_UI_BTN_BG_HOVER,
+                    highlightbackground=_UI_BTN_BORDER_HOVER,
+                    highlightcolor=_UI_BTN_BORDER_HOVER,
+                )
+            except Exception:
+                pass
+
+        def _on_leave(_e, b=btn, br=rest_border):
+            try:
+                b.config(
+                    bg=_UI_BTN_BG,
+                    highlightbackground=br,
+                    highlightcolor=br,
+                )
+            except Exception:
+                pass
+
+        btn.bind("<Enter>", _on_enter)
+        btn.bind("<Leave>", _on_leave)
+
+        if desc:
+            tk.Label(
+                row,
+                text=desc,
+                font=(_UI_FONT_FAMILY, 9),
+                fg=fg_desc, bg=_UI_BG,
+                anchor="w", justify="left",
+                wraplength=max(width - 56, 240),
+            ).pack(fill="x", padx=2, pady=(5, 0))
+
+        buttons.append(btn)
+
+    default_btn = buttons[default_idx]
+
+    def tick():
+        if state["remaining"] <= 0:
+            select(default_value)
+            return
+        try:
+            default_btn.config(text=f"{default_label}（{state['remaining']}s）")
+        except Exception:
+            return  # 窗口已销毁
+        state["remaining"] -= 1
+        state["after_id"] = win.after(1000, tick)
+
+    force_window_front(win)
+
+    # 自然尺寸：让 tk 自己量好，再用入参 width 作下限保证横向不挤
+    win.update_idletasks()
+    natural_w = container.winfo_reqwidth()
+    natural_h = container.winfo_reqheight()
+    final_w = max(width, natural_w)
+    final_h = natural_h
+    center_window(win, final_w, final_h)
+
+    state["after_id"] = win.after(1000, tick)
+    win.mainloop()
+
+    final = state["choice"] if state["choice"] is not None else default_value
+    _save_pref(pref_key, final)
+    return final
 
 
 def ask_gpt_model():
     """
-    交互选择 GPT 模型：
+    交互选择 GPT 模型（带 5s 倒计时 + 记忆）：
     返回：
-        'n'               → 不启用
-        'gpt-5'           → 启用 GPT-5
-        'gpt-4.1-preview' → 启用 GPT-4.1
+        'n'                  → 不启用 GPT
+        'openai/gpt-5.4' 等  → 启用 GPT，返回模型 id
     """
-    # 第一步：是否启用 GPT (优化messagebox的置顶)
-    root = tk.Tk()
-    root.withdraw()
-
-    # 确保messagebox也置顶
-    root.attributes('-topmost', True)
-    root.update()
-
-    result = messagebox.askquestion("需要启动GPT吗？", "是否启用 GPT?（需建立VPN连接）", parent=root)
-    root.destroy()
-
-    if result != 'yes':
+    # 弹窗1：是否启用 GPT —— 默认按钮 "是"，5s 倒计时
+    enable = _ask_with_countdown(
+        title="需要启动 GPT 吗？",
+        message="是否启用 GPT?（需建立 VPN 连接）",
+        options=[
+            ("是", "y"),
+            ("否", "n"),
+        ],
+        pref_key="gpt_enable",
+        first_default="y",
+        countdown_seconds=5,
+        width=320,
+    )
+    if enable != "y":
         return "n"
 
-    # 第二步:选择版本
-    version = None
-
-    def select_v(v):
-        nonlocal version
-        version = v
-        version_win.quit()  # 使用quit而不是destroy,更稳定
-        version_win.destroy()
-
-    version_win = tk.Tk()
-    version_win.title("选择 GPT 版本")
-
-    # 设置窗口属性
-    version_win.resizable(False, False)  # 禁止调整大小
-    version_win.protocol("WM_DELETE_WINDOW", lambda: select_v("n"))  # 点击关闭按钮
-
-    # 构建UI    #main_model = "gpt-5.1"    mini_model = "gpt-5-mini"
-    tk.Label(version_win, text="请选择要使用的 GPT 模型:",
-             font=("Arial", 12)).pack(pady=10)
-
-    tk.Button(version_win, text=main_model, width=20,
-              command=lambda: select_v(main_model)).pack(pady=5)
-    tk.Label(version_win, text="最新模型，速度稍慢，专业性强",
-             font=("Arial", 9), fg="red").pack()
-
-    tk.Button(version_win, text=mini_model, width=20,
-              command=lambda: select_v(mini_model)).pack(pady=15)
-    tk.Label(version_win, text="速度最快，精确度可能欠缺",
-             font=("Arial", 9), fg="gray").pack()
-
-    # 先强制窗口置顶
-    force_window_front(version_win)
-
-    # 然后居中(必须在置顶之后,否则会被重置到左上角)
-    center_window(version_win, 320, 200)
-
-    version_win.mainloop()
-
+    # 弹窗2：选择 GPT 版本 —— 默认按钮 main_model（GPT-5.4），5s 倒计时
+    version = _ask_with_countdown(
+        title="选择 GPT 版本",
+        message="请选择要使用的 GPT 模型:",
+        options=[
+            (main_model, main_model, "最新模型，速度稍慢，专业性强", "red"),
+            (mini_model, mini_model, "速度最快，精确度可能欠缺", "gray"),
+        ],
+        pref_key="gpt_model",
+        first_default=main_model,
+        countdown_seconds=5,
+        width=360,
+        on_close_value="n",
+    )
     return version or "n"
 
 
@@ -735,29 +1046,22 @@ def ask_gpt_model():
 
 
 def ask_template_choice():
-    """弹窗选择问卷模板，返回 'yzr' 或 'zxh'。"""
-    choice = None
+    """弹窗选择问卷模板（带 5s 倒计时 + 记忆），返回 'yzr' 或 'zxh'。
 
-    def select(v):
-        nonlocal choice
-        choice = v
-        win.quit()
-        win.destroy()
-
-    win = tk.Tk()
-    win.title("选择问卷模板")
-    win.resizable(False, False)
-    win.protocol("WM_DELETE_WINDOW", lambda: select("yzr"))
-
-    tk.Label(win, text="请选择问卷模板:", font=("Arial", 12)).pack(pady=10)
-    tk.Button(win, text="yzr模板", width=20, command=lambda: select("yzr")).pack(pady=5)
-    tk.Button(win, text="zxh模板", width=20, command=lambda: select("zxh")).pack(pady=5)
-
-    force_window_front(win)
-    center_window(win, 300, 160)
-    win.mainloop()
-
-    return choice or "yzr"
+    首次运行倒计时落在 yzr；用户选过后，下次倒计时落在用户上次选的模板。
+    """
+    return _ask_with_countdown(
+        title="选择问卷模板",
+        message="请选择问卷模板:",
+        options=[
+            ("yzr模板", "yzr"),
+            ("zxh模板", "zxh"),
+        ],
+        pref_key="template_choice",
+        first_default="yzr",
+        countdown_seconds=5,
+        width=300,
+    )
 
 
 # --------------------------- 弹窗函数 ---------------------------
@@ -924,24 +1228,15 @@ def parse_survey_data(data_tuple):
         # 判断条件：
         # 1. 至少80%的数据是数字
         # 2. 至少80%的数字在0-10范围内（典型评分范围）
-        # 3. 数据中不包含1（性能评分通常不会打1分，用于剔除"第几轮反馈"等非评分列）
+        # 3. 列标题不是"轮次/第几轮"等非评分列（原来用 not has_one 会误排打了1分的性能列）
         total_count = len(col_values)
-        has_one = False
-        for value in col_values:
-            if isinstance(value, (int, float)) and value == 1.0:
-                has_one = True
-                break
-            elif isinstance(value, str):
-                try:
-                    if float(value.strip()) == 1.0:
-                        has_one = True
-                        break
-                except (ValueError, AttributeError):
-                    pass
+        col_header_str = str(header[col_idx]) if col_idx < len(header) else ""
+        _round_keys = ["第几轮", "轮次", "轮反馈", "这是第几"]
+        is_round_col = any(k in col_header_str for k in _round_keys)
 
         if (numeric_count >= total_count * 0.8 and
             valid_range_count >= numeric_count * 0.8 and
-            not has_one):
+            not is_round_col):
             score_indices.append(col_idx)
 
     # 组合所有需要的列索引：姓名列 + 所有评分列
@@ -1138,7 +1433,7 @@ def questionnaire_ppt(mc_ppt,mc_slide):
 
 # 将main中的【问卷生成ppt】函数挪到这里试试看   # 挪动后结果发现需要不断新增参数，因为发生了嵌套。。。
 
-def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_gpt="y"):
+def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_gpt="y", summary_sink=None):
 
     #  这部分一空就是好多年。。  2025终于开动了，感谢AI时代。。
 
@@ -1313,10 +1608,10 @@ def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_g
                 # 1、首先展示跑者基本信息（排版时左、右） name_result
 
                 name_result_text = (
-                    f'跑者姓名：{runner_info[runner][0]}\n'
-                    f'跑者体重：{runner_info[runner][1]}\n'
-                    f'平均距离：{runner_info[runner][2]}\n'
-                    f'配速区间：{runner_info[runner][3]}\n'
+                    f'测试者姓名：{runner_info[runner][0]}\n'
+                    f'测试者体重：{runner_info[runner][1]}\n'
+                    #f'平均距离：{runner_info[runner][2]}\n'
+                    #f'配速区间：{runner_info[runner][3]}\n'
 
                     )
 
@@ -1382,6 +1677,13 @@ def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_g
 
                 mc_completion = GPT_5(mc_prompt, model=mc_model)    # 先统一用 5 来调试，后续太慢了再考虑用4.1之类
                 #mc_completion = mc_reply
+
+                # plan4：把每位 runner 的 GPT 结论累积给 Main.py 6.3 用
+                if summary_sink is not None:
+                    try:
+                        summary_sink.append(mc_completion)
+                    except Exception:
+                        pass
 
 
                 #假设我拿到了完美的 gpt 答复 mc_completion，接下来需要一个高级染色函数，优点用红色、缺点用蓝色  //  锦上添花，后面再弄吧  ------------------------------------------ ing.......
@@ -2045,6 +2347,20 @@ def make_chart_for_questionnaire(mc_cell, mc_slide, Left=26, Top=168, Width=250,
     mc_chart1.chart_type = 'bar_clustered'
     mc_chart1.set_source_data(mc_sht.range((i0,j0),(i0+i-1,j0+j-1)))
 
+    # 自动识别量表范围：5分制 or 10分制（只有这两种情况）
+    # 取评分列（跳过姓名列 j0 和"第几轮"列 j0+1），检查是否有分值 > 5
+    try:
+        score_vals = mc_sht.range((i0 + 1, j0 + 2), (i0 + i - 1, j0 + j - 1)).value
+        # xlwings：单行返回 flat list，多行返回 list of list
+        if score_vals and isinstance(score_vals[0], (list, tuple)):
+            flat_vals = [v for row in score_vals for v in row if isinstance(v, (int, float))]
+        else:
+            flat_vals = [v for v in (score_vals or []) if isinstance(v, (int, float))]
+        _scale_max = 10 if any(v > 5 for v in flat_vals) else 5
+        print(f'  识别量表范围: {_scale_max} 分制（数据最大值={max(flat_vals, default=0):.1f}）')
+    except Exception as _e:
+        _scale_max = 10
+        print(f'  量表范围识别异常，默认10分制: {_e}')
 
     # 感谢【Tools】 017 Docx 工具包。。。。 这些代码究竟是怎样写出来的。。。VBA的工程师们，写的时候完全没考虑过API使用感受。。。
 
@@ -2060,8 +2376,23 @@ def make_chart_for_questionnaire(mc_cell, mc_slide, Left=26, Top=168, Width=250,
     mc_chart1.api[1].SetElement(328)   #隐藏 y轴的网格线（横线）    (330) = 显示 y轴的网格线（横线）
 
 
-    # 删除坐标轴【网络线】  （目前只会删除，删除后不知道如何反向操作，不纠结了，找不到API）
-    mc_chart1.api[1].Axes(2).Delete()     #    Axes(1) = 左侧坐标轴      Axes(2) = 下方坐标轴
+    # 固定坐标轴量程（0 ~ scale_max），并隐藏坐标轴显示
+    # 注意：不能先 Delete() 再设 scale——Delete 会触发 Excel 重新自适应，量程设置丢失。
+    # 改为：先固定 MinimumScale/MaximumScale，再把轴线/刻度/标签全部隐藏，视觉效果与 Delete 相同。
+    _val_axis = mc_chart1.api[1].Axes(2)   # Axes(1)=左侧分类轴, Axes(2)=下方数值轴
+    _val_axis.MinimumScaleIsAuto = False
+    _val_axis.MaximumScaleIsAuto = False
+    # 坐标轴最大值 = 量表max + 1（5分制→6，10分制→11），给数据标签留出空间，
+    # 避免 score = max 时数据标签压在 bar 末端
+    _axis_max = _scale_max + 1
+    _val_axis.MinimumScale = 0
+    _val_axis.MaximumScale = _axis_max
+    _val_axis.TickLabelPosition = -4142    # xlTickLabelPositionNone：隐藏刻度标签
+    _val_axis.MajorTickMark = -4142        # xlTickMarkNone：隐藏主刻度线
+    _val_axis.MinorTickMark = -4142        # xlTickMarkNone：隐藏副刻度线
+    _val_axis.Format.Line.Visible = 0      # msoFalse：隐藏轴线本身
+    print(f'  坐标轴已固定: 0 ~ {_axis_max}（{_scale_max}分制+1，预留数据标签空间），轴线/刻度/标签已隐藏')
+    #    Axes(1) = 左侧坐标轴      Axes(2) = 下方坐标轴
 
     # 添加【数据标签】
     mc_chart1.api[1].SeriesCollection(1).ApplyDataLabels()

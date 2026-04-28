@@ -62,9 +62,21 @@ Developer 工作:
      → 在 _build_rich_prompt 上方添加 prompt_src / synced_at 注释（Fix4）
   □ 导入纯数据工具：from src._ppt_shared import _find_col, _classify_columns, ...
      （不要复制粘贴纯数据函数）
+  □ 染色函数选用决策（写新 GPT prompted shape 时）：
+     ┌─ 单 shape 单段语境（per-shape "优点" 或 "缺点" 一种基调）
+     │   → _apply_keyword_color (section context 染色)
+     │   → GPT prompt 用 【keyword】 单一标记
+     │
+     └─ 单 shape 多段多色语境（如 6.3 结论页"优点+缺点+修改建议"三段同框）
+         → _apply_conclusion_color (bracket-typed 染色)
+         → GPT prompt 用 <keyword> 红 / [keyword] 蓝 / (keyword) 仅粗
+         → 中文【】保留给 section header（_strip_bullet_on_section_headers 识别）
+         → 详见 .claude/memory/feedback_conclusion_coloring.md
   □ 保留各自独立的函数（允许微调）：
-     _write_text / _write_chart / _apply_keyword_color / _build_rich_prompt
+     _write_text / _write_chart / _build_rich_prompt
      _build_content / _build_respondent_block
+     （染色函数 _apply_keyword_color / _apply_conclusion_color 已迁入 _ppt_shared.py，
+      不要再 per-template 复制）
   □ 处理图表 shape（决策树）：
      ┌─ 系列数固定 + 模板已含该图表 shape
      │   → 用 _write_chart()（保留在模板文件，从 yzr 复制）
@@ -91,6 +103,73 @@ Developer 工作:
 ### 场景 3: 移植 Pipeline 能力到 src/
 - 将 pipeline 新增功能（如新染色逻辑、截断算法）同步到 `src/yzr_ppt.py`
 - 适配不同的模板/数据源
+
+---
+
+## Pipeline 产物消费手册（plan3）
+
+当用户跑完 Pipeline 后调用 /developer 移植时，**优先消费以下产物**而不是从零写：
+
+### 必读产物（按阶段）
+
+| Pipeline 阶段 | 产物文件 | Developer 用法 |
+|--|--|--|
+| Step 1 | `pipeline-progress/01-shape_detail.xlsx` | shape 清单的真相源头：COM 名 / 类型 / Left/Top/Width/Height / 用户标注列 |
+| Step 1 | `pipeline-progress/01-shape_detail_com.json` | 同上 JSON 版本，便于程序读取 |
+| Step 2 | `pipeline-progress/02-prompt_specs.json` | **每 shape 的最终 prompt** —— 直接提取 `instruction` / `output_constraints` / `user_instruction` 字段写入 `_build_rich_prompt()` |
+| Step 2 | `pipeline-progress/02-shape_analysis_map.json` | 每 shape 的 strategy 推断结果 —— 用于决定 SHAPES 列表里的 `strategy` 字段（如 `score_10pt` / `gpt_prompted` / `mean_extraction`） |
+| Step 2 | `pipeline-progress/02-readability_budget.json` | 每 shape 的字数/行数预算 —— 写入 SHAPES 列表的 `budget` 字段 |
+| Step 4 | `pipeline-progress/04-fix_ppt.md` | 自检报告：visual/readability/semantic 分数 + 修正建议 —— 移植前的健康度参考 |
+
+### 字段映射规范（02-prompt_specs.json → _build_rich_prompt）
+
+```python
+# Pipeline JSON 字段 → src/{template}_ppt.py 代码位置
+{
+  "shape_name": "Rectangle 68",        →  SHAPES 列表的 "name"
+  "role": "advantage",                 →  内部分支判断 / 提示词
+  "model": "openai/gpt-5-mini",        →  _MODEL 常量（或 spec 里的 model 字段）
+  "instruction": "...",                →  _build_rich_prompt() 的核心 instruction 段
+  "output_constraints": {              →  SHAPES 列表的 "budget" 字段
+    "max_chars": 270,                  →  budget["max_chars"]
+    "max_lines": 9,                    →  budget["max_lines"]
+    "no_markdown": true                →  prompt 里加"禁 markdown"约束
+  },
+  "context_headers": [...],            →  Excel 列名清单，用于 _classify_columns
+  "user_content_source": "...",        →  spec["params"]["source"]
+  "user_instruction": "..."            →  prompt 拼接到 instruction 末尾
+}
+```
+
+### 同步追溯注释（fix2 范式 / fix4 维持）
+
+每个移植自 Pipeline 的 prompt，必须在 `_build_rich_prompt()` 上方加 3 行追溯注释：
+
+```python
+# prompt_src:  pipeline/prompt_templates/gpt_summary.md
+# synced_at:   2026-04-XX  ← 同步当天日期
+# synced_by:   Developer（移植 / 整改时从 pipeline 拷贝的最新版本）
+def _build_rich_prompt(...):
+    ...
+```
+
+未来 Pipeline 升级 `gpt_summary.md` 时，可用 diff 工具检查哪些模板需要重新同步。
+
+### 不要做的事
+
+- ❌ 不要从零写 prompt（Pipeline 已经迭代到 80%+ 满意度，丢弃浪费）
+- ❌ 不要忽略 `02-readability_budget.json`（字数预算是 Pipeline 自检的关键，直接复用）
+- ❌ 不要把 02-*.json 的内容硬编码进 Python 字符串（保留 JSON 形态，必要时读取）
+- ❌ 不要在 src/ 里重新做 shape 角色判断（Step 2 已经做完）
+
+### 当 Pipeline 产物缺失时（仅跑了 Step 1）
+
+如果用户只跑了 Step 1（评估后觉得不需要继续迭代），Developer 拿到的只有：
+- ✅ shape 清单（01-shape_detail.xlsx）
+- ❌ prompt（需 Developer 自己写）
+- ❌ strategy 推断（需 Developer 自己判断或问用户）
+
+**这种情况下**：参考 yzr_ppt.py / zxh_ppt.py 的现有 prompt 模板，复制改造，比从零写快得多。
 
 ## 技术栈约束（不可违反）
 

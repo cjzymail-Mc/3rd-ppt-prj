@@ -1,0 +1,5 @@
+{
+  "gpt_enable": "y",
+  "gpt_model": "openai/gpt-5-mini",
+  "template_choice": "zxh"
+}

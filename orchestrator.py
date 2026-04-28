@@ -459,6 +459,20 @@ class ProgressMonitor:
             icon = "✅" if r.status == AgentStatus.COMPLETED else "❌"
             print(f"  {icon} {name:12s} — {r.status.value}")
 
+        # plan3 工作流引导：跑完 Pipeline 后告诉用户下一步该做什么
+        all_completed = all(r.status == AgentStatus.COMPLETED for r in results.values())
+        if all_completed and len(results) >= 3:
+            print(f"\n{'─' * 60}")
+            print(f"📋 Pipeline 全流程已完成。下一步建议（plan3 工作流 §2）：")
+            print(f"  1. 检查产物：")
+            print(f"     - pipeline-progress/04-fix_ppt.md（视觉/可读性/语义分数）")
+            print(f"     - 03b 输出的 PPT 文件（肉眼检查视觉效果）")
+            print(f"  2. 决策：")
+            print(f"     a) 视觉满意度 ≥ 80% → 进入移植：在主 Claude 输入 /developer")
+            print(f"     b) 视觉满意度 < 80% → 修改 01-shape_detail.xlsx 标注 → 重跑 Step2/3")
+            print(f"  3. 复杂问题（路线决策 / 沉默 bug）→ 主 Claude 对话")
+            print(f"{'─' * 60}")
+
 
 # ============================================================
 # PPTOrchestrator — core workflow
