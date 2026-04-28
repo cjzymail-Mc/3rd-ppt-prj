@@ -19,3 +19,8 @@ Excel/PPT 读写必须用 `win32com.client` COM 接口。
 | 写图表数据 | `ChartData.Workbook` | `SeriesCollection(1).Values/XValues` |
 | 插入图片 | `AddPicture(W=w,H=h)` | 先`-1/-1`取原始尺寸,再等比缩放 |
 | Clone幻灯片 | 不加sleep | `Copy→sleep(1.5)→Paste(X)→sleep(1.0)` |
+| 访问 `Shapes.Paste()` 的 chart | `mc_shape.Chart.X`（抛 -2147352567） | `mc_shape.Item(1).Chart.X`（Paste 返 ShapeRange，.Chart 不 fan-out） |
+| tk 顶层窗口 HWND | `win.winfo_id()`（子控件 HWND，FlashWindowEx 静默失败） | `int(win.wm_frame(), 16)` 或封装的 `_get_toplevel_hwnd(win)` |
+| 多显示器居中弹窗 | `winfo_screenwidth()`（主屏分辨率，副屏看不见） | `MonitorFromPoint(GetCursorPos) + GetMonitorInfoW.rcWork` |
+| chart 主标题隐藏 | 单调 `SetElement(0)`（COM 时序敏感） | `HasTitle=False` + `SetElement(0)` 双保险 |
+| GPT 输出文本入 PPT | 直接 `_write_text(shp, gpt_out)` | 先 `clamp_text(gpt_out, max_chars, max_lines)`（自动剔空行） |

@@ -52,6 +52,7 @@ try:
         _score_10pt, _score_to_grade, _sample_stat_text,
         clamp_text,
         _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
+        _com_get, _write_text, _write_chart,
     )
     _shared_import_ok = True
 except Exception:
@@ -66,6 +67,7 @@ if not _shared_import_ok:
             _score_10pt, _score_to_grade, _sample_stat_text,
             clamp_text,
             _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
+            _com_get, _write_text, _write_chart,
         )
     except Exception:
         from _ppt_shared import (  # type: ignore
@@ -76,6 +78,7 @@ if not _shared_import_ok:
             _score_10pt, _score_to_grade, _sample_stat_text,
             clamp_text,
             _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
+            _com_get, _write_text, _write_chart,
         )
 
 # Default GPT model
@@ -134,12 +137,6 @@ def _numeric(v: Any):
         return None
 
 
-def _com_get(obj, attr: str, default=None):
-    """Safe getattr for COM objects (getattr raises on COM objects)."""
-    try:
-        return getattr(obj, attr)
-    except Exception:
-        return default
 
 
 def _shoe_name(rows: List[List[Any]], col_hint: str = "") -> str:
@@ -397,64 +394,9 @@ def _build_content(spec: dict, rows: List[List[Any]],
 
 
 # ---------------------------------------------------------------------------
-# COM write helpers (upgraded versions from pipeline/03b_build_ppt_com.py)
+# COM write helpers: _com_get / _write_text / _write_chart
+# 已移入 _ppt_shared.py，此处通过顶部 import 引入，不再本地定义。
 # ---------------------------------------------------------------------------
-
-def _write_text(shp, content: str) -> bool:
-    """Write text to shape with \\n→\\r conversion and 微软雅黑 font."""
-    if not bool(_com_get(shp, "HasTextFrame", 0)):
-        return False
-    tf = _com_get(shp, "TextFrame", None)
-    tr = _com_get(tf, "TextRange", None) if tf is not None else None
-    if tr is None:
-        return False
-    try:
-        tf.AutoSize = 0  # ppAutoSizeNone — preserve template geometry
-    except Exception:
-        pass
-    try:
-        # PPT COM 使用 \r 作为段落分隔符；\n 会被忽略
-        tr.Text = content.replace("\n", "\r")
-        tr.Font.Name = "微软雅黑"
-        return True
-    except Exception:
-        return False
-
-
-def _write_chart(shp, content: str) -> bool:
-    """Write chart data via SeriesCollection."""
-    chart = _com_get(shp, "Chart", None)
-    if chart is None:
-        return False
-
-    lines = [x.strip() for x in (content or "").splitlines() if x.strip()]
-    labels, values = [], []
-    for line in lines[:10]:
-        if ":" in line:
-            k, v = line.rsplit(":", 1)
-            labels.append(k.strip())
-            try:
-                values.append(float(v.strip()))
-            except Exception:
-                values.append(0.0)
-
-    if not labels:
-        return False
-
-    try:
-        try:
-            chart.ChartData.Activate()
-            time.sleep(0.5)
-            chart.ChartData.BreakLink()
-            time.sleep(0.3)
-        except Exception:
-            pass
-        series = chart.SeriesCollection(1)
-        series.Values = tuple(values)
-        series.XValues = tuple(labels)
-        return True
-    except Exception:
-        return False
 
 
 def _apply_keyword_color(shp) -> None:
@@ -595,10 +537,13 @@ def make_zxh_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
     Returns the new slide object (caller should update mc_slide).
     """
     gpt_enabled = (mc_gpt == "y")
+    print(f"\n[zxh] 开始生成评测页  sample={sample_name}  gpt={'开启' if gpt_enabled else '关闭'}")
     rows = _xlwings_to_rows(mc_sht)
+    print(f"[zxh] 读取问卷数据：{len(rows)} 行（含标题行），{len(rows[0]) if rows else 0} 列")
 
     # === Clone pattern — identical to all other sections in main.py ===
     X = mc_ppt.Slides.Count + 1
+    print(f"[zxh] 克隆模板第 {_TEMPLATE_SLIDE} 页 → 新建第 {X} 页...")
     mc_ppt.Slides(_TEMPLATE_SLIDE).Copy()
     time.sleep(_COPY_PASTE_DELAY)
     new_slide = mc_ppt.Slides.Paste(X)
@@ -633,11 +578,13 @@ def make_zxh_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
         pass
 
     # === Per-shape content build and write ===
+    print(f"[zxh] 开始逐 shape 写入，共 {len(ZXH_SHAPES)} 个...")
     for spec in ZXH_SHAPES:
         name     = spec["name"]
         strategy = spec["strategy"]
 
         if strategy == "skip":
+            print(f"  [skip] {name}")
             continue
 
         # Find shape on the new slide
@@ -647,13 +594,19 @@ def make_zxh_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
         except Exception:
             pass
         if shp is None:
+            print(f"  [未找到] {name}（模板中不存在此 shape，跳过）")
             continue
+
+        print(f"  [处理] {name}  strategy={strategy}")
 
         # Special case: image extraction needs the sheet reference
         if strategy == "extract_image":
             img_path = _extract_shoe_image(mc_sht)
             if img_path:
+                print(f"    图片路径: {img_path}")
                 _replace_image(new_slide, shp, img_path)
+            else:
+                print(f"    未找到图片，跳过")
             continue
 
         # Build content
@@ -665,6 +618,8 @@ def make_zxh_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
             _write_chart(shp, content)
         else:
             ok = _write_text(shp, content)
+            if not ok:
+                print(f"    [警告] _write_text 返回 False")
             if ok and strategy == "gpt_prompted":
                 # section-aware coloring: 自动按上下文判断红/蓝/黑
                 _apply_keyword_color(shp)
@@ -677,6 +632,7 @@ def make_zxh_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
         except Exception:
             pass
 
+    print(f"[zxh] 完成！新页在第 {new_slide.SlideIndex} 页")
     return new_slide
 
 

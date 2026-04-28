@@ -49,9 +49,13 @@ try:
         _ADVANTAGE_MARKERS, _DISADVANTAGE_MARKERS,
         _find_col, _classify_columns, _col_values,
         _extract_score_means, _xlwings_to_rows,
-        _score_10pt, _score_to_grade, _sample_stat_text,
+        _score_10pt, _score_to_grade, _score_to_grade_letter,
+        _score_to_grade_modifier, _sample_stat_text,
         clamp_text,
         _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
+        _com_get, _write_text, _write_chart,
+        make_chart_for_yzr, _prepare_yzr_chart_data,
+        _apply_keyword_color, _strip_bullet_on_section_headers,
     )
     _shared_import_ok = True
 except Exception:
@@ -63,9 +67,13 @@ if not _shared_import_ok:
             _ADVANTAGE_MARKERS, _DISADVANTAGE_MARKERS,
             _find_col, _classify_columns, _col_values,
             _extract_score_means, _xlwings_to_rows,
-            _score_10pt, _score_to_grade, _sample_stat_text,
+            _score_10pt, _score_to_grade, _score_to_grade_letter,
+            _score_to_grade_modifier, _sample_stat_text,
             clamp_text,
             _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
+            _com_get, _write_text, _write_chart,
+            make_chart_for_yzr, _prepare_yzr_chart_data,
+            _apply_keyword_color, _strip_bullet_on_section_headers,
         )
     except Exception:
         from _ppt_shared import (  # type: ignore
@@ -73,9 +81,13 @@ if not _shared_import_ok:
             _ADVANTAGE_MARKERS, _DISADVANTAGE_MARKERS,
             _find_col, _classify_columns, _col_values,
             _extract_score_means, _xlwings_to_rows,
-            _score_10pt, _score_to_grade, _sample_stat_text,
+            _score_10pt, _score_to_grade, _score_to_grade_letter,
+            _score_to_grade_modifier, _sample_stat_text,
             clamp_text,
             _NAME_KEYWORDS, _WEIGHT_KEYWORDS,
+            _com_get, _write_text, _write_chart,
+            make_chart_for_yzr, _prepare_yzr_chart_data,
+            _apply_keyword_color, _strip_bullet_on_section_headers,
         )
 
 # Default GPT model
@@ -91,7 +103,8 @@ _COPY_PASTE_DELAY = 1.5
 # ---------------------------------------------------------------------------
 YZR_SHAPES = [
     {"name": "Rectangle 11", "strategy": "score_10pt"},
-    {"name": "Rectangle 12", "strategy": "grade_letter"},
+    {"name": "Rectangle 12", "strategy": "grade_letter_only"},
+    {"name": "Rectangle 22", "strategy": "grade_modifier_only"},
     {"name": "Rectangle 17", "strategy": "sample_aggregation"},
     {"name": "Rectangle 19", "strategy": "skip"},
     {"name": "Picture 39",   "strategy": "extract_image"},
@@ -103,7 +116,7 @@ YZR_SHAPES = [
     {"name": "Rectangle 77", "strategy": "gpt_prompted",
      "params": {"source": "补充说明", "filter": "优点"},
      "budget": {"max_chars": 201, "max_lines": 5}},
-    {"name": "图表 44",      "strategy": "mean_extraction"},
+    {"name": "Chart 13",      "strategy": "mean_extraction"},
 ]
 
 # yzr 标准模板所在页（Template 2.1.pptx 第 15 页）
@@ -124,14 +137,6 @@ def _numeric(v: Any):
         return float(v)
     except Exception:
         return None
-
-
-def _com_get(obj, attr: str, default=None):
-    """Safe getattr for COM objects (getattr raises on COM objects)."""
-    try:
-        return getattr(obj, attr)
-    except Exception:
-        return default
 
 
 def _shoe_name(rows: List[List[Any]], col_hint: str = "") -> str:
@@ -330,6 +335,18 @@ def _build_content(spec: dict, rows: List[List[Any]],
             return _score_to_grade(score)
         return "B+"
 
+    if strategy == "grade_letter_only":
+        score = _score_10pt(rows)
+        if score is not None:
+            return _score_to_grade_letter(score)
+        return "B"
+
+    if strategy == "grade_modifier_only":
+        score = _score_10pt(rows)
+        if score is not None:
+            return _score_to_grade_modifier(score)
+        return "+"
+
     if strategy == "sample_aggregation":
         text = _sample_stat_text(rows)
         if not text:
@@ -359,7 +376,9 @@ def _build_content(spec: dict, rows: List[List[Any]],
     if strategy == "mean_extraction":
         means = _extract_score_means(rows)
         if not means:
+            print("  [均值] _extract_score_means 返回空列表，使用占位数据")
             return "减震:0\n回弹:0\n稳定:0"
+        print(f"  [均值] 提取到 {len(means)} 个指标均值: {[(k, round(v,2)) for k,v in means[:8]]}")
         return "\n".join(f"{k}:{v:.2f}" for k, v in means[:8])
 
     if strategy == "extract_image":
@@ -369,118 +388,12 @@ def _build_content(spec: dict, rows: List[List[Any]],
 
 
 # ---------------------------------------------------------------------------
-# COM write helpers (upgraded versions from pipeline/03b_build_ppt_com.py)
+# COM write helpers: _com_get / _write_text / _write_chart
+# 已移入 _ppt_shared.py，此处通过顶部 import 引入，不再本地定义。
 # ---------------------------------------------------------------------------
 
-def _write_text(shp, content: str) -> bool:
-    """Write text to shape with \\n→\\r conversion and 微软雅黑 font."""
-    if not bool(_com_get(shp, "HasTextFrame", 0)):
-        return False
-    tf = _com_get(shp, "TextFrame", None)
-    tr = _com_get(tf, "TextRange", None) if tf is not None else None
-    if tr is None:
-        return False
-    try:
-        tf.AutoSize = 0  # ppAutoSizeNone — preserve template geometry
-    except Exception:
-        pass
-    try:
-        # PPT COM 使用 \r 作为段落分隔符；\n 会被忽略
-        tr.Text = content.replace("\n", "\r")
-        tr.Font.Name = "微软雅黑"
-        return True
-    except Exception:
-        return False
 
-
-def _write_chart(shp, content: str) -> bool:
-    """Write chart data via SeriesCollection."""
-    chart = _com_get(shp, "Chart", None)
-    if chart is None:
-        return False
-
-    lines = [x.strip() for x in (content or "").splitlines() if x.strip()]
-    labels, values = [], []
-    for line in lines[:10]:
-        if ":" in line:
-            k, v = line.rsplit(":", 1)
-            labels.append(k.strip())
-            try:
-                values.append(float(v.strip()))
-            except Exception:
-                values.append(0.0)
-
-    if not labels:
-        return False
-
-    try:
-        try:
-            chart.ChartData.Activate()
-            time.sleep(0.5)
-            chart.ChartData.BreakLink()
-            time.sleep(0.3)
-        except Exception:
-            pass
-        series = chart.SeriesCollection(1)
-        series.Values = tuple(values)
-        series.XValues = tuple(labels)
-        return True
-    except Exception:
-        return False
-
-
-def _apply_keyword_color(shp) -> None:
-    """Remove 【】 brackets, then bold+color keywords by section context.
-
-    Rules:
-      - Keywords in advantage sections (优势/优点/...) → red + bold
-      - Keywords in disadvantage sections (问题/缺点/...) → blue + bold
-      - All other text → black
-    """
-    try:
-        tf = _com_get(shp, "TextFrame", None)
-        if tf is None:
-            return
-        tr = tf.TextRange
-        full_text = tr.Text
-
-        keywords = list(dict.fromkeys(re.findall(r'【([^】]+)】', full_text)))
-        if not keywords:
-            return
-
-        # Build keyword→color map based on section context
-        kw_color: Dict[str, int] = {}
-        current_section = "neutral"
-        for line in full_text.split('\r'):
-            line_stripped = line.strip()
-            if any(m in line_stripped for m in _ADVANTAGE_MARKERS):
-                current_section = "advantage"
-            elif any(m in line_stripped for m in _DISADVANTAGE_MARKERS):
-                current_section = "disadvantage"
-            for kw in re.findall(r'【([^】]+)】', line):
-                if current_section == "advantage":
-                    kw_color[kw] = _RED
-                elif current_section == "disadvantage":
-                    kw_color[kw] = _BLUE
-
-        # Remove all 【】 brackets
-        tr.Text = re.sub(r'[【】]', '', full_text)
-
-        # Reset entire shape to black first (clear any inherited colors)
-        tr.Font.Color = _BLACK
-
-        # Bold + color each keyword
-        for kw, color in kw_color.items():
-            start = 1
-            while start <= tr.Length:
-                found = tr.Find(kw, start)
-                if found is None:
-                    break
-                found.Font.Bold = True
-                found.Font.Color = color
-                start = found.Start + found.Length
-    except Exception:
-        pass  # coloring is cosmetic — never fail the build
+# _apply_keyword_color 已移入 _ppt_shared.py（plan4），通过顶部 import 引入。
 
 
 def _replace_image(slide, shp, img_path: str) -> None:
@@ -534,10 +447,13 @@ def make_codex_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
     Returns the new slide object (caller should update mc_slide).
     """
     gpt_enabled = (mc_gpt == "y")
+    print(f"\n[yzr] 开始生成评测页  sample={sample_name}  gpt={'开启' if gpt_enabled else '关闭'}")
     rows = _xlwings_to_rows(mc_sht)
+    print(f"[yzr] 读取问卷数据：{len(rows)} 行（含标题行），{len(rows[0]) if rows else 0} 列")
 
     # === Clone pattern — identical to all other sections in main.py ===
     X = mc_ppt.Slides.Count + 1
+    print(f"[yzr] 克隆模板第 {_TEMPLATE_SLIDE} 页 → 新建第 {X} 页...")
     mc_ppt.Slides(_TEMPLATE_SLIDE).Copy()
     time.sleep(_COPY_PASTE_DELAY)
     new_slide = mc_ppt.Slides.Paste(X)
@@ -568,13 +484,46 @@ def make_codex_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
         _r77.Height = 226
     except Exception:
         pass
+    # 鞋款名称 TextBox（用户实测坐标，2026-04-27）
+    try:
+        _tb16 = new_slide.Shapes("TextBox 16")
+        _tb16.Left   = 20
+        _tb16.Top    = 20
+        _tb16.Width  = 200
+        _tb16.Height = 36.35
+    except Exception:
+        pass
+
+    # 确保 Rectangle 22 (评级 +/- 修饰符) 存在（2026-04-27）
+    # Template 2.1.pptx 第 15 页中并无此 shape，YZR_SHAPES 循环找不到会跳过 →
+    # PPT 上只显示 A、不显示 +/-。在此处自动创建 TextBox 并命名为 Rectangle 22，
+    # 位置贴在 Rectangle 12（A）的右上角邻近，让循环后续能写入并写出 +/- 字符。
+    try:
+        new_slide.Shapes("Rectangle 22")  # 若已存在则跳过创建
+    except Exception:
+        try:
+            _r12 = new_slide.Shapes("Rectangle 12")
+            _r12_left  = float(_com_get(_r12, "Left",  0))
+            _r12_top   = float(_com_get(_r12, "Top",   0))
+            _r12_width = float(_com_get(_r12, "Width", 60))
+            _mod_left   = _r12_left + _r12_width - 6   # 紧贴 A 右缘
+            _mod_top    = _r12_top + 16                # 略低于 A 顶部，视觉居中偏上
+            _mod_width  = 32
+            _mod_height = 55
+            # 第一个参数 1 = msoTextOrientationHorizontal
+            _r22 = new_slide.Shapes.AddTextbox(1, _mod_left, _mod_top, _mod_width, _mod_height)
+            _r22.Name = "Rectangle 22"
+        except Exception as _e:
+            print(f"  [警告] 自动创建 Rectangle 22 失败：{_e}")
 
     # === Per-shape content build and write ===
+    print(f"[yzr] 开始逐 shape 写入，共 {len(YZR_SHAPES)} 个...")
     for spec in YZR_SHAPES:
         name     = spec["name"]
         strategy = spec["strategy"]
 
         if strategy == "skip":
+            print(f"  [skip] {name}")
             continue
 
         # Find shape on the new slide
@@ -584,13 +533,19 @@ def make_codex_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
         except Exception:
             pass
         if shp is None:
+            print(f"  [未找到] {name}（模板中不存在此 shape，跳过）")
             continue
+
+        print(f"  [处理] {name}  strategy={strategy}")
 
         # Special case: image extraction needs the sheet reference
         if strategy == "extract_image":
             img_path = _extract_shoe_image(mc_sht)
             if img_path:
+                print(f"    图片路径: {img_path}")
                 _replace_image(new_slide, shp, img_path)
+            else:
+                print(f"    未找到图片，跳过")
             continue
 
         # Build content
@@ -598,12 +553,85 @@ def make_codex_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
 
         # Route to correct writer
         if strategy == "mean_extraction" or bool(_com_get(shp, "HasChart", False)):
-            _write_chart(shp, content)
+            # fix4: 分发场景 chart 走从零制表路线（xlwings 新建 + OLE 粘贴）
+            # 不再用 _write_chart 原位改模板 chart 数据。
+            # 路线决策与论据见 [feature03-transplant]/fix4（图表路线切换）.md
+            try:
+                L = float(_com_get(shp, "Left", 0))
+                T = float(_com_get(shp, "Top", 0))
+                W = float(_com_get(shp, "Width", 360))
+                H = float(_com_get(shp, "Height", 170))
+                shp.Delete()
+            except Exception as _e:
+                print(f"    [警告] 读取/删除模板 chart shape 失败: {_e}")
+                continue
+
+            # Chart 位置/尺寸微调 #fine_tuned
+            # 用户实测调整后的最终坐标（2026-04-24），覆盖模板 Chart 13 原始位置
+            # 读自 skills/read_selected_shape.py 输出（Chart 20 on slide 18）
+            L = 242.19
+            T = 21.95
+            W = 467.24
+            H = 224.48
+
+            try:
+                mc_cell = _prepare_yzr_chart_data(mc_sht, content)
+            except Exception as _e:
+                print(f"    [警告] 写入 Excel 临时数据失败: {_e}")
+                continue
+
+            try:
+                _tmp_chart = make_chart_for_yzr(
+                    mc_cell, new_slide, Left=L, Top=T, Width=W, Height=H,
+                )
+            except Exception as _e:
+                print(f"    [警告] make_chart_for_yzr 失败: {_e}")
+                continue
+
+            # 清理 Excel：**只删 chart 对象，保留临时数据行**
+            # 理由（用户实测经验）：
+            #   - 即使 CutCopyMode = False 已执行，删除 Excel 端临时数据行仍会
+            #     导致 PPT 端 OLE chart 数据丢失（bars 消失）
+            #   - 保留临时数据虽然会让 Excel 稍显凌乱，但保证 PPT 产物稳定
+            # 对照 Mc-debug-4.md line 744："我决定不折腾了，直接保留临时数据、保留图表吧。
+            # 优先保证 ppt 图表的稳定性"
+            _xl_app_api = None
+            try:
+                _xl_app_api = mc_sht.book.app.api
+                _xl_app_api.DisplayAlerts = False
+            except Exception:
+                pass
+            try:
+                _tmp_chart.delete()
+            except Exception:
+                pass
+            try:
+                if _xl_app_api is not None:
+                    _xl_app_api.DisplayAlerts = True
+            except Exception:
+                pass
         else:
             ok = _write_text(shp, content)
+            if not ok:
+                print(f"    [警告] _write_text 返回 False")
             if ok and strategy == "gpt_prompted":
                 # section-aware coloring: 自动按上下文判断红/蓝/黑
                 _apply_keyword_color(shp)
+
+    # Rectangle 22 字体后处理：让 +/- 视觉上像"小一号的 A"
+    # 模仿 Rectangle 12 (A) 的样式：微软雅黑 / 白色 / 加粗，仅字号显著小于 A
+    # （A 的字号为 72，此处用 40 形成清晰的主次对比）
+    try:
+        _r22 = new_slide.Shapes("Rectangle 22")
+        _tf = _r22.TextFrame
+        _tf.AutoSize = 0
+        _tr = _tf.TextRange
+        _tr.Font.Name  = "微软雅黑"
+        _tr.Font.Size  = 40
+        _tr.Font.Bold  = True
+        _tr.Font.Color.RGB = 0xFFFFFF  # 白色，与 A 一致
+    except Exception:
+        pass
 
     # 工作完成，删除等待遮罩
     if _overlay is not None and remove_gpt_waiting_overlay is not None:
@@ -612,6 +640,7 @@ def make_codex_slide(mc_sht, mc_ppt, mc_slide, sample_name: str,
         except Exception:
             pass
 
+    print(f"[yzr] 完成！新页在第 {new_slide.SlideIndex} 页")
     return new_slide
 
 

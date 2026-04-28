@@ -119,6 +119,15 @@ from src.Class_030 import *
 from src.Function_030 import *
 from src.yzr_ppt import make_codex_slide
 from src.zxh_ppt import make_zxh_slide
+# plan4 + todays-task：6.3 结论页所需共享工具
+#   - _apply_conclusion_color：按 <>/[]/() 括号类型染色（优点红 / 缺点蓝 / 建议仅粗体）
+#   - _strip_bullet_on_section_headers：段头【XX】去 ■ bullet
+#   - clamp_text：字数 / 行数硬截断，防止溢出 shape
+from src._ppt_shared import (
+    _apply_conclusion_color,
+    _strip_bullet_on_section_headers,
+    clamp_text,
+)
 
 
 
@@ -538,6 +547,10 @@ content_slide(mc_ppt)
 #completion_list = []
 messages = []
 
+# plan4：累积所有先前 GPT 结论，最终在 【6.3】 显式注入给 gen_result_prompt
+all_sheet_summaries = []          # 各 sheet（测试方法）的 GPT 结论
+all_questionnaire_summaries = []  # 各运动员问卷反馈的 GPT 结论
+
 
 for c in mc_book.sheets:   # c = 针对所有的 sheet（一共4个sheet）
 
@@ -690,6 +703,11 @@ for c in mc_book.sheets:   # c = 针对所有的 sheet（一共4个sheet）
 
 
 
+            # plan4：累积本 sheet 的 GPT 结论给 6.3 用
+            if mc_gpt == 'y' and mc_completion:
+                all_sheet_summaries.append(mc_completion)
+
+
             # 针对每个sheet，都使用一次 chat 函数，生成结论，最后用Result_Bullet函数，输出结论到ppt
             Left  = 15    # temp_p[0]
             Top   =  temp_c[1] + temp_c[2] + 5                # 在最后一张chart的基础上，继续下移5个像素
@@ -778,7 +796,7 @@ for c in mc_book.sheets:   # c = 针对所有的 sheet（一共n个sheet）
 
 if mc_gpt == 'y' and mc_sht is not None:
 
-    mc_work =questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name=sample_name, mc_gpt=mc_gpt)     # 问卷逐页+汇总整合到同一函数
+    mc_work = questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name=sample_name, mc_gpt=mc_gpt, summary_sink=all_questionnaire_summaries)     # 问卷逐页+汇总整合到同一函数
                                                                                                                             # 结果报错，需要传递 mc_model这个参数。。。 GPT也是这样建议我
                                                                                                                               # 再次报错，mc_ppt也需要传入
 
@@ -877,15 +895,21 @@ if mc_gpt == 'y':
     hint_shape = Title_3(mc_slide, Left=Left, Top=Top, Text=hint,scale=4)  # 2024 注意搞清楚Class文件生成的是一个什么对象，不然很麻烦
 
 
-    # 需要传入【sample_name】1个参数。
-    mc_prompt=gen_result_prompt(sample_name)
+    # plan4：显式注入先前结论 → 三段式总结 + 关键词高亮
+    mc_prompt = gen_result_prompt(
+        sample_name,
+        sheet_summaries=all_sheet_summaries,
+        questionnaire_summaries=all_questionnaire_summaries,
+    )
 
 
 
 
     mc_completion = GPT_5(mc_prompt,model=mc_model)
 
-    #mc_completion = mc_reply
+    # todays-task：扩充 budget 让页面下半部分饱满（Result_Bullet 默认 AutoSize 自适应高度）
+    # 字数 280 / 行数 13（≈ 9-10 内容行 + 3 段头），与 prompt 中 270/12 留 ~10% 缓冲
+    mc_completion = clamp_text(mc_completion, max_chars=280, max_lines=13)
 
 
     # 画蛇添足 - 在PPT中打字提示。。。 然后别忘记删除
@@ -896,11 +920,17 @@ if mc_gpt == 'y':
 
 
     Left = 51
-    Top = 281
+    Top = 205   #fine-tuned 结论shape微调位置   
 
     Text = Result_Bullet(mc_slide, Left, Top, mc_completion, scale=1)
 
-    # 对结论进行染色
+    # plan4：段头【优点】/【缺点】/【修改建议】去掉 ■ bullet（视觉冗余）
+    _strip_bullet_on_section_headers(Text.tr)
+
+    # todays-task：按括号类型染色 — <…>红+粗 / […]蓝+粗 / (…)仅粗体；并剥离 ASCII 括号
+    _apply_conclusion_color(Text.shape)
+
+    # 保留旧逻辑：sample_name 整体染红
     key = sample_name
     color_key(Text.tr, key, red)
 
