@@ -238,24 +238,6 @@ def get_messages():
     return messages
 
 
-def run_com_template_analysis(blank_ppt="0-空白 ppt 模板.pptx", standard_ppt="1-标准 ppt 模板.pptx", output_json="shape_detail_com.json"):
-    """调用独立 COM 分析脚本，输出 shape_detail_com.json。"""
-    from analyze_templates_com import analyze_templates
-    return analyze_templates(blank_ppt, standard_ppt, output_json)
-
-
-def run_com_build_final_ppt(template_ppt="1-标准 ppt 模板.pptx", data_excel="2025 数据 v2.2.xlsx", output_ppt="gemini-jules.pptx", slide_index=1):
-    """调用独立 COM 构建脚本，返回生成文件路径。"""
-    from build_codex_ppt_com import build_final_ppt
-    return build_final_ppt(template_ppt=template_ppt, data_excel=data_excel, output_ppt=output_ppt, slide_index=slide_index)
-
-
-def run_com_verify_fidelity(standard_ppt="1-标准 ppt 模板.pptx", generated_ppt="gemini-jules.pptx", output_json="fidelity_diff_report.json"):
-    """调用独立 COM 保真度校验脚本，输出 fidelity_diff_report.json。"""
-    from verify_ppt_fidelity_com import verify_ppt_fidelity
-    return verify_ppt_fidelity(std_ppt=standard_ppt, gen_ppt=generated_ppt, output_json=output_json)
-
-
 # ========= 聊天室函数 =========
 def chat_room(model="openai/gpt-5-mini"):  # 注意：OpenRouter的模型名需要带前缀
     """
@@ -1046,7 +1028,7 @@ def ask_gpt_model():
 
 
 def ask_template_choice():
-    """弹窗选择问卷模板（带 5s 倒计时 + 记忆），返回 'yzr' 或 'zxh'。
+    """弹窗选择问卷模板（带 5s 倒计时 + 记忆），返回 'yzr' / 'zxh' / 'apparel'。
 
     首次运行倒计时落在 yzr；用户选过后，下次倒计时落在用户上次选的模板。
     """
@@ -1056,6 +1038,7 @@ def ask_template_choice():
         options=[
             ("yzr模板", "yzr"),
             ("zxh模板", "zxh"),
+            ("apparel 服装测试", "apparel"),
         ],
         pref_key="template_choice",
         first_default="yzr",

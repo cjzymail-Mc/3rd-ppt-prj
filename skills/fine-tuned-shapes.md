@@ -80,7 +80,23 @@ xlwings 默认 3D 视角不等于模板期望视角，必须显式设置。映�
 
 ## 用 COM 实时读取当前选中的 Shape
 
-在 IDLE / VS Code 终端中运行以下脚本，可读取**当前 PPT 中手工选中的 shape** 的所有关键属性，用于确认名称、位置、图表类型、数据等，是微调和诊断的核心工具。
+**首选：`python skills/read_selected_shape.py`**（项目自带桥接脚本，免开发）
+
+输出包含 shape name / type / position / text full + 段落级字体颜色 / fill / line + chart series + picture crop，是 PPT 调试的核心工具。
+
+```bash
+# Windows 终端跑
+PYTHONIOENCODING=utf-8 python skills/read_selected_shape.py
+# 输出乱码时必加 PYTHONIOENCODING=utf-8（GBK 默认会破坏中文 shape 名 / 文本）
+```
+
+**触发场景**：用户提"我选中的"、"我当前打开的"、"屏幕上的 X" → **第一动作就是跑这个脚本**，不要凭"无访问能力"先否认（详见 `.claude/memory/feedback_debug_protocol.md` "默认能力假设反模式"）。
+
+---
+
+### 内联版（IDLE / VS Code 终端，临时调试用）
+
+skills/read_selected_shape.py 已是首选；以下内联脚本仅在需要 ad-hoc 修改输出格式时参考：
 
 ```python
 import sys, io

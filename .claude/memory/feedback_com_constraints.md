@@ -24,3 +24,5 @@ Excel/PPT 读写必须用 `win32com.client` COM 接口。
 | 多显示器居中弹窗 | `winfo_screenwidth()`（主屏分辨率，副屏看不见） | `MonitorFromPoint(GetCursorPos) + GetMonitorInfoW.rcWork` |
 | chart 主标题隐藏 | 单调 `SetElement(0)`（COM 时序敏感） | `HasTitle=False` + `SetElement(0)` 双保险 |
 | GPT 输出文本入 PPT | 直接 `_write_text(shp, gpt_out)` | 先 `clamp_text(gpt_out, max_chars, max_lines)`（自动剔空行） |
+| Excel chart Copy/Delete | UI Selection 路径（`Range.Select() → api[0].Copy()`，需 `Excel_zoom` 让 chart 进视口） | 对象引用路径（`mc_chart1 = mc_sht.charts.add()` → `mc_chart1.api[0].Copy()` / `_tmp_chart.delete()`），免疫缩放/滚动/视口可见。详见 `feedback_chart_write.md` |
+| 读 PPT 当前选中 shape | 凭"无访问能力"否认，让用户描述 | `python skills/read_selected_shape.py`（项目自带 win32com `GetActiveObject` 桥接），输出乱码加 `PYTHONIOENCODING=utf-8` |

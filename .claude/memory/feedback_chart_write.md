@@ -109,5 +109,33 @@ chart.SetElement(0)        # UI 命令，等价于点击"图表元素 → 标题
 - 5 分制 → MaximumScale = 6
 - 10 分制 → MaximumScale = 11
 
-已落地：`Function_030.py::make_chart_for_questionnaire`。
+已落地：`Function_030.py::make_chart_for_questionnaire`、`apparel_ppt.py::make_chart_for_apparel`。
 未落地：`_ppt_shared.py::make_chart_for_yzr`（当前硬编码 10，未分发未触发问题；分发前改）。
+
+---
+
+## 对象引用 vs Selection 路径（2026-04-29）
+
+Excel COM 里 chart 操作有两套完全不同的访问路径，**决定了是否需要 `Excel_zoom` 把 chart 缩进视口**：
+
+| 路径 | API 形态 | 依赖 | 失效条件 |
+|--|--|--|--|
+| **A. UI Selection** | `Range.Select() → Selection.End() → mc_chart1.api[0].Copy()` | `ActiveWindow` + 视口可见 + 选中状态 | chart 被滚到屏幕外、Window 不 active、Sheet 没 select |
+| **B. 对象引用** | `mc_chart1 = mc_sht.charts.add(...) → mc_chart1.api[0].Copy() → _tmp_chart.delete()` | 仅 Worksheet 对象本身 | 工作簿被关、Sheet 被删 |
+
+**根因**：`ChartObject.Copy()` 这个 COM 方法**不读 `ActiveSelection`**，按 self（自己持有的内部句柄）操作；`ChartObject.Delete()` 同理。所以路径 B 完全免疫缩放/滚动/视口可见性。路径 A 看起来也调 `Copy()`，但前面那串 `Range.Select()` / `selection.end('down')` 用来"导航出 control_count / chart 锚点"——这串 `Select` 强依赖视口可见。Copy 是被 Select 拖累的。
+
+**项目实战分布**：
+- 路径 A：`Function_030.py::make_chart`（line 2471） — 用 `xlwings.search("图表i")` + `temp_list[p_i].select()` 导航锚点 → 必须配 `Excel_zoom(mc_sht, 30)` 把 sheet 缩到 30% 让所有 chart 进入视口（line 2461 `Excel_zoom`）。是技术债，但稳定。
+- 路径 B：`yzr_ppt.py::make_chart_for_yzr` / `zxh_ppt.py` 共用的 / `apparel_ppt.py::make_chart_for_apparel` / `_ppt_shared.py::make_chart_for_yzr` —— 锚点 `mc_cell` 由外层传入，`mc_sht.charts.add()` 直接拿对象引用，完全绕开 Selection。无需 zoom。
+
+**残留 chart 删除**（每轮跑完清理 Excel 端，保持文件整洁）：路径 B 用 `_tmp_chart.delete()` 通过对象引用直接销毁，**chart 在屏幕外也能删**——`yzr/zxh/apparel` 都是这个写法（即使 chart 滚到视口外，删除照样成功）。
+
+**新写 chart 函数一律走 B**。`Function_030.make_chart` 的重构方向：
+1. 锚点由外层传入 `mc_cell`，丢弃 `search("图表i")` 扫描
+2. `mc_sht.charts.add(...)` 拿对象引用
+3. Copy/Delete 走 `mc_chart1.api[0]` / `_tmp_chart.delete()`
+4. 删掉所有 `temp_list[p_i].select()` / `mc_book.selection.*`
+5. 自动免疫缩放——可以丢弃 `Excel_zoom`
+
+短期不改也行（A 在配 zoom 后是有效的折中），但欠债已记。

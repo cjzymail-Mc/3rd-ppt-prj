@@ -119,6 +119,7 @@ from src.Class_030 import *
 from src.Function_030 import *
 from src.yzr_ppt import make_codex_slide
 from src.zxh_ppt import make_zxh_slide
+from src.apparel_ppt import make_apparel_slide
 # plan4 + todays-task：6.3 结论页所需共享工具
 #   - _apply_conclusion_color：按 <>/[]/() 括号类型染色（优点红 / 缺点蓝 / 建议仅粗体）
 #   - _strip_bullet_on_section_headers：段头【XX】去 ■ bullet
@@ -821,6 +822,11 @@ if mc_sht is not None:
     template_choice = ask_template_choice()
     if template_choice == "zxh":
         mc_slide = make_zxh_slide(
+            mc_sht, mc_ppt, mc_slide, sample_name,
+            mc_gpt=mc_gpt, mc_model=mc_model,
+        )
+    elif template_choice == "apparel":
+        mc_slide = make_apparel_slide(
             mc_sht, mc_ppt, mc_slide, sample_name,
             mc_gpt=mc_gpt, mc_model=mc_model,
         )
