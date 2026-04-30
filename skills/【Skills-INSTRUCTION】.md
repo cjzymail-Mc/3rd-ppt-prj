@@ -12,6 +12,11 @@
 | `(legacy) diagnose_chart_write.py` | Python 脚本（历史） | 诊断 chart COM 写入跨机兼容性（STRAT 1-6 分级测试）；fix4 之后不再是主路径 |
 | `fine-tuned-shapes.md` | 规范文档 | Shape 位置微调工作流（何时/如何在 xxx_ppt.py 插入硬编码坐标） |
 | `port_handoff_checklist.md` | 规范文档 | Pipeline → /developer 移植衔接 Checklist（plan3 5 阶段流程的阶段 ④ 详细手册） |
+| `memory-junction-3account.md` | 规范文档 | 3 账号 auto-memory NTFS junction 同步方案（含移植到新项目/新机器的步骤） |
+| `memory_union_merge.py` | Python 脚本 | 扫描 N 账号 auto-memory，求 union 写入 repo 内 `.claude/auto-memory/`（dry-run / apply） |
+| `memory_junction_setup.py` | Python 脚本 | 备份 + rmtree + `mklink /J` 给 N 账号 memory 建 junction（一次性） |
+| `memory_junction_rollback.py` | Python 脚本 | `os.rmdir` 解 junction（**不是 rmtree**）+ 从备份恢复，可单账号回滚 |
+| `memory_junction_verify.py` | Python 脚本 | 检测 junction 状态 + 端到端写/删传播测试 |
 
 ---
 
@@ -88,6 +93,25 @@ python skills/diagnose_chart_write.py --all
 - 保护用户已微调过的值，不要用模板值覆盖
 
 详细流程、当前已微调 shape 表、单独调试入口说明见文档本体。
+
+---
+
+## 4. `memory-junction-3account.md` + `memory_*.py`（4 脚本套件）
+
+**类型**：规范文档 + Python 脚本套件。
+
+**用途**：解决多个 Claude Pro 账号轮换工作时，每个账号下 `<账号根>/projects/<项目>/memory/` 各自独立漂移的问题。用 NTFS junction 把 N 个账号的 memory 目录物理合一到 repo 内 `.claude/auto-memory/`，进 git，永久杜绝漂移。
+
+**触发场景**：在新项目 / 新机器上想复用本项目的 3 账号 memory 同步方案。
+
+**关键点**：
+- 4 个 Python 脚本**项目无关**——`detect_project_name()` 自动从脚本所在路径推断项目名，复制到新项目无需改代码
+- 账号配置在脚本顶部的 `ACCOUNTS` 字典，账号数 / 别名 / 路径都可改
+- Junction 是 OS 文件系统层重定向，Claude Code 完全无感知，无需改它的默认行为
+- **关键安全规则**：`shutil.rmtree(junction_path)` 会穿透 junction 删 repo 本体；删除时必须用 `os.rmdir`（参考 `claude_migrate.py:_safe_clean_target_project()`）
+- `auto-memory` 进 git 后跨设备自动同步；新机器只需重跑 `memory_junction_setup.py --apply` 重建本机 junction
+
+完整移植清单（新项目 / 新机器 / 不同账号配置）+ 故障恢复表见文档本体。
 
 ---
 

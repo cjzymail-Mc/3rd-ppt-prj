@@ -1,5 +1,7 @@
 .claude/settings.local.json
 .claude/state.json
+.claude/auto-memory/.pre-junction-backup/
+.claude/auto-memory/_test_*.md
 __pycache__/
 【trash-bin】
 

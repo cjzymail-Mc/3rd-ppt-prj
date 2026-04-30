@@ -1,6 +1,8 @@
+import ctypes
 import os
 import re
 import shutil
+import stat
 import time
 import tkinter as tk
 from tkinter import ttk, messagebox
@@ -59,6 +61,43 @@ def get_project_mtime(account_key, project_name):
     return latest_ts, time.strftime("%Y/%m/%d %H:%M", time.localtime(latest_ts))
 
 
+def is_junction(path):
+    """检测路径是否是 NTFS junction / reparse point。
+
+    重要：memory 子目录被 junction 化后，必须跳过 rmtree 和 copytree，
+    否则会穿透 junction 破坏 D 盘 repo 内的物理本体。
+    """
+    if not os.path.isdir(path):
+        return False
+    attrs = ctypes.windll.kernel32.GetFileAttributesW(path)
+    if attrs == 0xFFFFFFFF:
+        return False
+    return bool(attrs & stat.FILE_ATTRIBUTE_REPARSE_POINT)
+
+
+def _ignore_memory_junction(src, names):
+    if "memory" in names and is_junction(os.path.join(src, "memory")):
+        return {"memory"}
+    return set()
+
+
+def _safe_clean_target_project(tgt_project):
+    """清理目标 project 目录但保留 memory junction。"""
+    if not os.path.isdir(tgt_project):
+        return
+    for entry in os.listdir(tgt_project):
+        full = os.path.join(tgt_project, entry)
+        if entry == "memory" and is_junction(full):
+            continue
+        if os.path.isdir(full) and not is_junction(full):
+            shutil.rmtree(full)
+        else:
+            try:
+                os.remove(full)
+            except IsADirectoryError:
+                os.rmdir(full)
+
+
 def next_backup_number(source_dir):
     """扫描 back-up 目录，返回下一个可用的备份编号"""
     backup_base = os.path.join(source_dir, "back-up")
@@ -94,8 +133,13 @@ def run_migration(source_key, target_key, project_name):
 
     try:
         # ---------- 第2步：备份源账户数据 ----------
+        # memory 子目录若是 junction 则跳过备份（避免重复存物理本体；本体已在 repo 内有 git 历史）
         os.makedirs(backup_dir, exist_ok=True)
-        shutil.copytree(src_project, os.path.join(backup_dir, project_name))
+        shutil.copytree(
+            src_project,
+            os.path.join(backup_dir, project_name),
+            ignore=_ignore_memory_junction,
+        )
         if os.path.isfile(src_history):
             shutil.copy2(src_history, os.path.join(backup_dir, "history.jsonl"))
         if os.path.isfile(src_settings):
@@ -106,8 +150,8 @@ def run_migration(source_key, target_key, project_name):
         tgt_history = os.path.join(tgt_dir, "history.jsonl")
         tgt_settings = os.path.join(tgt_dir, "settings.json")
 
-        if os.path.isdir(tgt_project):
-            shutil.rmtree(tgt_project)
+        # 关键：rmtree 会穿透 junction 删 D 盘 repo 本体，必须用 _safe_clean_target_project 保留 memory junction
+        _safe_clean_target_project(tgt_project)
         if os.path.isfile(tgt_history):
             os.remove(tgt_history)
         if os.path.isfile(tgt_settings):
@@ -115,7 +159,12 @@ def run_migration(source_key, target_key, project_name):
 
         # ---------- 第4步：复制到目标账户 ----------
         os.makedirs(os.path.join(tgt_dir, "projects"), exist_ok=True)
-        shutil.copytree(src_project, tgt_project)
+        shutil.copytree(
+            src_project,
+            tgt_project,
+            ignore=_ignore_memory_junction,
+            dirs_exist_ok=True,
+        )
         if os.path.isfile(src_history):
             shutil.copy2(src_history, tgt_history)
         if os.path.isfile(src_settings):
@@ -310,6 +359,7 @@ class MigrateApp:
             ("备份位置：", backup_path),
             ("", ""),
             ("迁移文件：", "① projects/<项目文件夹>"),
+            ("", "   (memory 子目录若 junction 化则自动跳过)"),
             ("", "② history.jsonl"),
             ("", "③ settings.json"),
         ]

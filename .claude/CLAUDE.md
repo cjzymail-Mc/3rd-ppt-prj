@@ -83,25 +83,28 @@
 
 ## 3. 硬规则（反复踩过的坑）
 
+格式：`(YYYY-MM 触发场景) 结论 → 详情位置`
+
+**短规则（独立成立，无外链）**：
 - **OLE 图表粘贴**：`Shapes.Paste()` 后必须 `CutCopyMode = False` 断热链接，否则删行后 PPT 图表失数据
 - **CopyPicture 常量**：xlPicture = **-4147**（矢量 EMF），`4` 是无效值会退化为位图
 - **删行前先 delete chart**：否则 chart 公式引用失效时 Excel 弹"错误公式引用"弹窗
-- **yzr_ppt / zxh_ppt 共享工具**：两文件 95% 重复，工具函数统一放 `src/_ppt_shared.py`，不要在各自文件中复制粘贴
-- **图表两套机制勿混淆**：Pipeline `_write_chart` = 原位注入模板 chart 数据；`Function_030.make_chart*` = Excel 新建 chart → OLE 粘贴，两者解决不同问题
-- **分发场景 chart 强制从零制表**（fix4）：模板 / 代码分发给他人、数据由他人填的场景，chart 必须走 `make_chart_for_{template}` 路线（xlwings 新建 + OLE 粘贴），**禁用** `_write_chart` 原位改。原因：chart 内部状态（IsLinked / embedded workbook / numCache）在分发链路里必然漂移；加密办公环境下 XML surgery 也不可用（CFB 非 zip）。详见 `[feature03-transplant]/fix4（图表路线切换）.md`
-- **xlwings 3D chart 必须显式设置 3D 视图**（fix4）：xlwings 建立的 3D chart 默认 Elevation/Rotation 不等于 PPT 模板期望视角，OLE 粘贴后会视觉漂移。`make_chart_for_{name}` 必须显式设 `Elevation / Rotation / RightAngleAxes / AutoScaling / Perspective / DepthPercent / HeightPercent`。PPT "三维旋转" 面板 ↔ Excel chart API 映射表见 `.claude/memory/feedback_chart_write.md`
-- **`Shapes.Paste()` 返回 ShapeRange，不是 Shape**（2026-04-27）：`mc_shape = mc_slide.Shapes.Paste()` 拿到的是 ShapeRange；`.Left/.Top/.Width/.Height` 会 fan-out 到内部 shape 所以能直接用，但 **`.Chart`/`.HasChart` 不在 fan-out 列表，会抛 `-2147352567 发生意外`**。访问 chart 必须先 `mc_shape.Item(1)` 取真正的 Shape。隐藏 chart 主标题双保险写法：`Item(1).Chart.HasTitle = False` + `Item(1).Chart.SetElement(0)`。详见 `[feature03-transplant]/fix5（chart-title-hide）.md` 假设记录或 `_ppt_shared.py::make_chart_for_yzr`
-- **bar chart 数值轴 max = 量表 max + 1**（2026-04-27）：5 分制 → 6，10 分制 → 11。原因：`MaximumScale = scale_max` 时 score=max 的 bar 末端会被数据标签压住、看不清。已落地 `Function_030.py::make_chart_for_questionnaire`
-- **tk popup HWND 必须用 `wm_frame()`，不是 `winfo_id()`**（2026-04-27）：`winfo_id()` 返回 Tk 子控件 HWND，`SetWindowPos` / `FlashWindowEx` 对它静默失败 —— 这是"任务栏不闪烁/弹窗不居中"的根因。统一用 `_get_toplevel_hwnd(win)`（在 `Function_030.py`）。多显示器居中也别用 `winfo_screenwidth()`，要按光标所在屏 `MonitorFromPoint + GetMonitorInfoW.rcWork`
-- **GPT 输出文本必经 `clamp_text` 自动剔空行**（2026-04-27）：GPT 偶尔在段落间多吐空行，`splitlines` 直接 join 会让 PPT TextFrame 行数翻倍、超出 shape Height。`clamp_text`（`_ppt_shared.py`）入口已内置：剔纯空白行 + 每行 strip。新写 `gpt_prompted` 分支调用 GPT 后**必须**走 `clamp_text`
-- **结论页用 bracket-typed 染色，不要复用 `_apply_keyword_color`**（2026-04-27 todays-task）：6.3 最终结论页有"优点 / 缺点 / 修改建议"三段；GPT 用半角 `<keyword>` 标优点（红+粗）、`[keyword]` 标缺点（蓝+粗）、`(keyword)` 标建议（仅粗），由 `_apply_conclusion_color`（`_ppt_shared.py`）统一处理 + 剥离 ASCII 标记。中文 **【】 保留为 section header 标记**（`_strip_bullet_on_section_headers` 用它识别段头去 ■）。两套染色函数适用场景不同：`_apply_keyword_color` 用 section context（per-shape，yzr/zxh 各 shape 单独标注）；`_apply_conclusion_color` 用 bracket type（单 shape 内多段、多色，结论页专用）。详见 `.claude/memory/feedback_conclusion_coloring.md`
-- **`Result_Bullet` 自动 auto-grow 高度**（2026-04-27）：`Class_030.Text_Box` 不设 `tf.AutoSize=0`，PPT 默认 `msoAutoSizeShapeToFitText` 接管，shape 高度随文字自动撑高。意味着 `clamp_text(max_chars/max_lines)` 可以放心扩量到模板 shape 几何之上（例如 6.3 结论页从 plan4 的 200 字 / 10 行扩到 280 字 / 13 行）；硬上限是 slide 高度，不是 shape 默认高度。**只对 `Result_Bullet` / `Text_Box` 子类成立**；`_write_text` 显式置 `tf.AutoSize=0` 锁定模板几何，写到模板预置 shape 时不要混淆
-- **多阶段 GPT 结论的累积用 `summary_sink: list | None = None` 参数**（2026-04-27 plan4）：当外层（`Main.py` 6.3）需要内层循环（`questionnaire_Excel` 多 runner 循环）每轮的 GPT completion 时，给内层函数加 `summary_sink=None` 可选参数 + 内部 `summary_sink.append(mc_completion)`。优点：不改 return 签名、不破坏既有调用、外部传 list 即可订阅。详见 `.claude/memory/feedback_summary_sink.md`
-- **tk 弹窗样式约定**（2026-04-27）：`_ask_with_countdown` 用 iOS systemGroupedBackground (`#F2F2F7`) 窗口 + 纯白卡片按钮 + `#4A6CF7` Indigo 描边标记默认按钮；字体统一 `Microsoft YaHei UI`；按钮用 `highlightthickness=2` + `highlightbackground` 实现描边而不是 `relief`；自然尺寸用 `winfo_reqwidth/reqheight()` + `width` 入参作下限，不要 hardcode `height = 80 + 60 * len(options)`。**不要尝试 "蓝 header band + solid CTA" 路线**——tk 没圆角和阴影，做出来反而粗糙。详见 `.claude/memory/feedback_popup_ui.md`
-- **`skip` 策略 ≠ 清旧文本**（2026-04-28 apparel-fix1）：`SHAPES` spec 里 `strategy: "skip"` 只表示"代码不写新值"，**不会清除模板里预置的文字**。clone 模板时旧文本会随 shape 一起带过来。所以装饰性 shape（如 apparel 4 个 Oval 虚线圈）想真空：要么改源模板把那 shape 文字清掉（推荐，一次到位），要么显式加 `clear` strategy 在 `_build_content` 返回 `""` 后强制 `tf.TextRange.Text = ""`。今天 Oval 3/13/16/19 误用 `score_category_mean` 写分数被发现，改 skip 后清空模板源 shape 即可永久修复。**新模板移植时检查清单**：所有 `skip` shape 在源模板里也要是空的，否则 clone 会残留
-- **测试者身高/体重单位混淆用 BMI 交叉验证**（2026-04-28 apparel-fix1）：填问卷常见 100 KG 实际是 100 斤、1 CM 实际是 1 m。单一阈值（如 weight > 110 → 斤）会漏掉 100 这种边界值。正确套路：(1) 粗修 m→cm（< 3 视为 m）+ 斤→kg（> 110 视为斤），(2) 算 BMI，越界（不在 [16, 32]）则试 weight ÷ 2，新 BMI 落回区间才采纳。例：(160cm, 100kg) BMI=39 → 试 50kg → BMI=19.5 ✓ → 用 50kg；(180cm, 90kg) BMI=27.8 ✓ → 保留 90kg（不误伤真胖子）。已落地 `apparel_ppt.py::_normalize_person`，prompt 和 fallback 都先洗再喂下游 GPT
-- **chart Copy/Delete 走对象引用，不走 UI Selection**（2026-04-29）：Excel COM 里 chart 有两套访问入口：(A) Selection 路径 `Range.Select() → Selection.Copy`，**强依赖 ActiveWindow + 视口 + 选中状态**；(B) 对象引用路径 `worksheet.charts.add()` 拿到的 xlwings chart 对象，`mc_chart1.api[0].Copy()` / `_tmp_chart.delete()`，**仅依赖 Worksheet 对象本身**，免疫可见性/缩放/滚动。`Function_030.py::make_chart` 走 (A) 所以必须 `Excel_zoom(mc_sht, 30)` 把 chart 缩进视口；`yzr/zxh/apparel_ppt.py::make_chart_for_*` 全部走 (B) 所以无需任何缩放——chart 在不在屏幕上、sheet 切没切到当前页都不影响 Copy/Delete。新写 chart 函数一律走 (B)；`Function_030.make_chart` 是技术债，重构方向是按 (B) 改写后丢弃 `Excel_zoom`。详见 `.claude/memory/feedback_chart_write.md` "对象引用 vs Selection 路径" 节
-- **GPT 风格锚 ≠ fallback，要分两个槽位**（2026-04-29 apparel）：早期 `_build_rich_prompt` 把 `style_anchor` 用 fallback 文本充当——结果 1）GPT 拿到的"风格示例"信息密度不够，2）fallback 失败兜底语义被风格槽污染。正确做法：模块级常量 `_STYLE_REFERENCE_CORPUS`（专业语料）喂给 `style_anchor`；`fallback_map` 只保留作 GPT 失败时的硬编码兜底。两个槽位职责互不干扰。已落地 `apparel_ppt.py:_STYLE_REFERENCE_CORPUS`（13 条"问题 // 优势"对照式参考文本）+ line 613 `style_anchor=_STYLE_REFERENCE_CORPUS`
+- **图表两套机制勿混淆**：Pipeline `_write_chart` = 原位注入模板 chart 数据；`make_chart_for_*` = Excel 新建 chart → OLE 粘贴；两者解决不同问题
+
+**链接到 memory 的详情规则**：
+- `(2026-04 fix4 分发场景)` chart 必须走 `make_chart_for_*`（xlwings + OLE 粘贴），禁 `_write_chart` 原位改 → `[feature03-transplant]/fix4（图表路线切换）.md`
+- `(2026-04 fix4 3D chart)` xlwings 建的 3D chart 默认 Elevation/Rotation 错位，必须显式设 7 个 3D 参数 → `.claude/memory/feedback_chart_write.md`
+- `(2026-04 fix5)` `Shapes.Paste()` 返回 ShapeRange，访问 `.Chart` 必须先 `.Item(1)` 拿真 Shape；隐藏 chart 标题用 `HasTitle=False + SetElement(0)` → `[feature03-transplant]/fix5（chart-title-hide）.md`
+- `(2026-04 tk popup)` HWND 必须用 `wm_frame()`，`winfo_id()` 拿子控件 HWND 让 `SetWindowPos`/`FlashWindowEx` 静默失败；统一 `_get_toplevel_hwnd` → `Function_030.py`
+- `(2026-04 GPT 输出)` 必经 `clamp_text` 剔空行+strip，否则 splitlines+join 让 PPT TextFrame 行数翻倍超 shape 高度 → `src/_ppt_shared.py::clamp_text`
+- `(2026-04 结论页染色)` 用 `_apply_conclusion_color`（`<>`红 / `[]`蓝 / `()`粗），不要复用 `_apply_keyword_color`（后者按 section context per-shape）→ `.claude/memory/feedback_conclusion_coloring.md`
+- `(2026-04 Result_Bullet)` `Class_030.Text_Box` 默认 `msoAutoSizeShapeToFitText`，`clamp_text` 可超模板 shape 几何（硬上限 = slide 高度）；`_write_text` 显式 `AutoSize=0` 锁定 → `src/_ppt_shared.py`
+- `(2026-04 多阶段 GPT 累积)` 用 `summary_sink: list | None = None` 参数订阅内层每轮 completion，不破坏 return 签名 → `.claude/memory/feedback_summary_sink.md`
+- `(2026-04 tk 弹窗样式)` iOS systemGroupedBackground + 白卡片 + Indigo 描边；`highlightthickness` 不用 `relief`；尺寸用 `winfo_reqwidth/reqheight` 不要 hardcode → `.claude/memory/feedback_popup_ui.md`
+- `(2026-04 apparel-fix1 skip)` `SHAPES strategy: "skip"` **不清**模板预置文字，新模板移植必查源 shape 是否预留空 → `.claude/memory/feedback_skip_vs_clear.md`
+- `(2026-04 apparel-fix1 BMI)` 100KG/1cm 等单位混淆，粗修 m→cm + 斤→kg 后用 `BMI∈[16,32]` 交叉验证识别误填 → `.claude/memory/feedback_unit_normalize_bmi.md`
+- `(2026-04 fix4 chart 引用)` Copy/Delete 走 `worksheet.charts.add()` 对象引用，不走 `Range.Select+Selection`；后者强依赖 ActiveWindow/视口/选中态 → `.claude/memory/feedback_chart_write.md`
+- `(2026-04 apparel GPT 槽)` `style_anchor` 用 `_STYLE_REFERENCE_CORPUS`（专业语料）；`fallback_map` 只作 GPT 失败兜底；两槽位职责互不污染 → `src/apparel_ppt.py:_STYLE_REFERENCE_CORPUS`
 
 ---
 
@@ -127,7 +130,7 @@ python src/zxh_ppt.py     # zxh 单页调试（需先打开 Excel）
 | `src/Function_030.py` | 生产核心库（3504行）：GPT_5、问卷、图表、Excel COM |
 | `src/yzr_ppt.py` | 杨祖锐模板：Clone Slide 15（含 `__main__` 单页调试） |
 | `src/zxh_ppt.py` | 之行模板：Clone Slide 17（含 p1p2 模式 + `__main__` 单页调试） |
-| `src/_ppt_shared.py` | 共享工具模块（fix2 计划新建，消除 yzr/zxh 重复） |
+| `src/_ppt_shared.py` | 共享工具模块（已建立，消除 yzr/zxh 重复） |
 | `Main.py` | src/ 生产入口（1055行） |
 
 ---
@@ -144,3 +147,5 @@ python src/zxh_ppt.py     # zxh 单页调试（需先打开 Excel）
 | 手动 Pipeline 命令 + 批注字段 | `.claude/memory/reference_manual_pipeline.md` |
 | 架构修复计划（fix2） | `[feature03-transplant]/fix2（三重混合架构整改）.md` |
 | Shape 微调工作流 + 调试入口 | `skills/fine-tuned-shapes.md` |
+| 3 账号 auto-memory junction 架构 | `.claude/memory/reference_3account_junction.md` |
+| 3 账号 junction 移植方案（新项目/新机器复用） | `skills/memory-junction-3account.md` |
