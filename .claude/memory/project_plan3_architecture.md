@@ -12,7 +12,8 @@ Restructured from global iteration loop (plan2) to local per-step self-check loo
 
 **How to apply:**
 - 3 main agents: step1-analyzer, step2-architect, step3-builder
-- 1 auxiliary: curator (via /curator slash command only)
+- 1 transplant agent: developer (Pipeline → src/ port + bug fix)
+- (curator archived 2026-05-06 — never produced 05-solidification_report.md in practice; archived to .claude/agents/_archive/curator-2026-05.md)
 - Orchestrator is a thin menu + agent dispatcher (~769 lines, down from ~1700)
 - Each agent internally runs: Attempt 1 (Python pipeline) -> self-check -> Attempt 2 (LLM fix)
 - Max 2 attempts per step

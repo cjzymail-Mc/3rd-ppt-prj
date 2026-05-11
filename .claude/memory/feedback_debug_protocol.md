@@ -107,7 +107,7 @@ except Exception as _e:
 4. **第三步**：找不到才说"项目里没现成的，要我写一个吗？"
 5. **绝对禁止**：在 step 1 之前用"默认能力边界"否认
 
-**额外**：跑 Python 脚本输出乱码时（GBK vs UTF-8），加 `PYTHONIOENCODING=utf-8` 重跑。
+**额外**：通过 Bash 工具跑 python 脚本输出中文乱码时，单加 `PYTHONIOENCODING=utf-8` 在某些 git bash 环境下还不够，需要 + `io.TextIOWrapper` 双保险，详见 `feedback_python_stdout_encoding.md`。
 
 ---
 

@@ -85,6 +85,27 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 
 **不需要的东西**：Pipeline Step 1 JSON、shape 重建、字体/颜色重新指定（模板已定义好）
 
+---
+
+#### ⚡ 反射动作 -1：一句话指令的入场动作
+
+当用户只说 **"我已跑完 pipeline，接下来帮我完成移植工作"** 这类**简化指令**时，按以下顺序自动启动，**不要追问**：
+
+1. 验证 `pipeline-progress/` 目录存在；若缺失，提醒用户先跑 `python orchestrator.py`
+2. 自动识别本轮模板名 `{template_name}`：
+   - 优先从 `pipeline-progress/04-fix_ppt.md` 标题/正文中识别
+   - 兜底：检查 `template/` 目录下最近修改的 `empty and standard-{name}.pptx`
+   - 仍无法识别 → 此时才向用户确认模板名
+3. 验证关键产物齐全（缺失任意一项时停下报告，不要硬上）：
+   - `01-shape_detail.xlsx` / `01-shape_detail_com.json`
+   - `02-prompt_specs.json` / `02-readability_budget.json`
+   - `03a-build_shape_content.json`
+   - `04-fix_ppt.md`
+4. 向用户报告识别到的 `{template_name}` 与产物清单，**直接进入下方 Checklist 全流程**
+5. 完成后按文末"## 交付清单"自检并向用户回报 4 件产物
+
+---
+
 **新模板移植 Checklist（按顺序执行）：**
 
 ```
@@ -133,9 +154,17 @@ Developer 工作:
          → 目前仅支持简单柱状/折线，复杂图表需扩展 Function_030
          → 警告：雷达图数据范围形状严格（N 行维度 × M 列系列），注入前校验
   □ 图表方案选择理由（写入代码注释，便于未来维护者判断）
-  □ 接入 Main.py：
-     - ask_template_choice() 增加选项
-     - import + 调用 make_{template}_slide()
+  □ 保留 if __name__ == "__main__": 单页调试入口
+     ─ 参考 src/yzr_ppt.py:651-690（连接 active Excel + PPT 的最简模式）
+     ─ 用户能直接 `python src/{template}_ppt.py` 调试单页 shape 微调
+     ─ 必须支持：从用户屏幕已打开的 Excel/PPT 拿 active workbook/presentation
+     ─ apparel_ppt.py:917-956 / zxh_ppt.py:643-682 也是同模式样板
+  □ 接入 Main.py（具体位置：约第 822-837 行 ask_template_choice 分发块）
+     ─ 在最后的 `else:` 之前插入新 `elif template_choice == "{name}":` 分支
+     ─ 调用签名：make_{name}_slide(mc_sht, mc_ppt, mc_slide, sample_name,
+                                     mc_gpt=mc_gpt, mc_model=mc_model)
+     ─ 同时在 ask_template_choice() 弹窗按钮列表中加入新选项 "{name}"
+     ─ 参考 apparel 接入位置（Main.py:828-832）作为最近模板对照
   □ 跑冒烟测试：python debug/test_src_smoke.py
      → 在 test_src_smoke.py 里为新模板增加 _smoke_{template}()
   □ 语法检查 + 至少 1 次端到端运行验证
@@ -277,3 +306,26 @@ src/
 
 - 修复后的 .py 文件（最小改动）
 - 修复说明（改了什么、为什么改）
+
+---
+
+## 交付清单（移植任务完成后向用户回报前自检）
+
+仅当**移植任务**（场景 2）完成时使用——向用户回报"已交付"之前**必须**确认 4 件产物：
+
+1. ✅ `src/{name}_ppt.py` 已创建：`python -c "import src.{name}_ppt"` 通过（无 ImportError / SyntaxError）
+2. ✅ `Main.py` 按钮分支已接入：第 822-837 行 elif 分支语法正确，`ask_template_choice()` 弹窗含新选项
+3. ✅ `__main__` 调试块存在：独立运行 `python src/{name}_ppt.py`（前提 Excel + PPT 已打开）能启动且不立即崩溃
+4. ✅ 冒烟测试通过：`python debug/test_src_smoke.py` 含 `_smoke_{name}()` 且通过；或一次端到端跑通
+
+**回报格式**（向用户的最后一条消息）：
+
+```
+✅ 移植已完成 —— {template_name}
+   1. src/{name}_ppt.py     已创建（XX 行）
+   2. Main.py               按钮分支 elif 已接入（行 XXX-YYY）
+   3. __main__ 调试入口     已保留，可单独跑
+   4. 冒烟测试               通过
+```
+
+任意一项失败 → 不要回报"已交付"，先报告卡点并停下。

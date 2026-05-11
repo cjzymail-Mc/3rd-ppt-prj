@@ -17,6 +17,8 @@
 - [feedback_shape_finetune.md](feedback_shape_finetune.md) — fine_tuned 四参数完整，基准值从标准模板读取
 - [feedback_skip_vs_clear.md](feedback_skip_vs_clear.md) — SHAPES skip 策略不清模板预置文字；移植新模板必查源 shape 是否预留空（apparel-fix1）
 - [feedback_unit_normalize_bmi.md](feedback_unit_normalize_bmi.md) — 100KG 实为 100 斤等填错，粗修 m→cm + 斤→kg 后 BMI∈[16,32] 交叉验证（apparel-fix1）
+- [feedback_python_stdout_encoding.md](feedback_python_stdout_encoding.md) — Bash 工具跑 python 输出中文要 PYTHONIOENCODING + io.TextIOWrapper 双保险；chcp/set 是 cmd 语法在 git bash 失效
+- [feedback_perf_rewrite_validate.md](feedback_perf_rewrite_validate.md) — 重写老 selection 链路前先 print 边界单元格 diff，end('up'/'down') 在连续非空区会越过表头（test_detail off-by-one 教训）
 
 ## Project
 - [project_4agent_architecture.md](project_4agent_architecture.md) — 4-Agent 混合工作流 + fix_type/output_contract/COM DispatchEx（2026-03-17/19）
@@ -29,3 +31,4 @@
 - [reference_manual_pipeline.md](reference_manual_pipeline.md) — 手动Pipeline命令 + 用户批注字段说明
 - [reference_pipeline_repair.md](reference_pipeline_repair.md) — Pipeline 代码修复指引：文件清单 + fix 类型 + 技术栈约束 + 自检要求
 - [reference_3account_junction.md](reference_3account_junction.md) — 3 账号 auto-memory junction 架构 + 维护警告
+- [reference_agent_memory_design.md](reference_agent_memory_design.md) — Claude Code agent 隔离机制 5 维分析 + per-agent memory 决策档案（不引入）

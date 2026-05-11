@@ -141,7 +141,6 @@ python src/zxh_ppt.py     # zxh 单页调试（需先打开 Excel）
 |------|------|
 | Step1/2/3 Agent 定义 | `.claude/agents/step1-analyzer.md` 等 |
 | Developer 移植规范 + Checklist | `.claude/agents/developer.md` |
-| 知识固化师（Curator） | `.claude/agents/curator.md` |
 | COM 开发规范 | `.claude/memory/feedback_com_constraints.md` |
 | 混合工作流 Pipeline→LLM | `.claude/memory/feedback_hybrid_workflow.md` |
 | 手动 Pipeline 命令 + 批注字段 | `.claude/memory/reference_manual_pipeline.md` |

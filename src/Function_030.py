@@ -1857,31 +1857,30 @@ def test_detail(mc_book):
 
     mc_sht0 = mc_book.sheets['基础信息']
 
-    # 定位 "测试列表" 标题 → offset 后 selection = (表头行, 测试列表列)
+    # search 已带 offset(1,1)：返回的是【表头下一行 + 测试列表右一列】，即 (第一数据行, 测试项目列)
     start_cell = search(mc_sht0, '测试列表', row_offset=1, column_offset=1)
     if start_cell is None:
         return '', [], [], [], []
 
-    header_row = start_cell.row       # 原 test_start；表头行（含列标题）
-    col_list   = start_cell.column    # 【+1】测试列表 列
-    col_marker = col_list - 1         # 【+0】标记列（非空=该行选中）
+    first_data_row = start_cell.row       # 第一条数据行（不是表头行；老版用 end('up') 隐式回到这里）
+    col_item       = start_cell.column    # 【测试项目】列（测试名所在列，连续非空，用来定位 test_end）
+    col_marker     = col_item - 1         # 【测试列表】列（✔ 标记，非空=该行选中）
 
     # 用 range.end('down') 替代 selection 操作，找到最后数据行
-    test_end = mc_sht0.range((header_row, col_list)).end('down').row
+    test_end = mc_sht0.range((first_data_row, col_item)).end('down').row
 
-    data_start = header_row + 1       # 真实数据从表头下一行开始
-    if data_start > test_end:
+    if first_data_row > test_end:
         return '', [], [], [], []
 
-    # 整块读取：(data_start, col_marker) ~ (test_end, col_marker+6)
-    # 原来每行 7 次 COM 调用，现在合并成 1 次，速度提升 ~7N 倍
+    # 整块读取：(first_data_row, col_marker) ~ (test_end, col_marker+6)
+    # 原来每行 ~9 次 COM 调用，现在合并成 1 次（老旧机器上 COM 开销显著）
     raw = mc_sht0.range(
-        (data_start, col_marker),
-        (test_end,   col_marker + 6)
+        (first_data_row, col_marker),
+        (test_end,       col_marker + 6)
     ).value
 
     # xlwings 单行时返回 list（非 list-of-list），统一格式
-    if test_end == data_start:
+    if test_end == first_data_row:
         raw = [raw]
 
     test_list     = []   #【+1】测试项目
@@ -1891,15 +1890,15 @@ def test_detail(mc_book):
     test_result   = []   #【+5】参考文本（原 测试结论）
 
     for idx, row in enumerate(raw):
-        if row is None or row[0] is None:   # 标记列为空 → 未选中，跳过
+        if row is None or row[0] is None:   # 标记列（测试列表 ✔）为空 → 未选中，跳过
             continue
 
-        actual_row = data_start + idx
+        actual_row = first_data_row + idx
 
-        test_list.append(row[1])                               # 测试列表
-        detail = row[2] if row[2] is not None else ''          # 测试详情（健壮性：防 None 拼接报错）
-        test_standard.append(row[4])                           # 测试标准
-        test_result.append(row[5])                             # 参考文本
+        test_list.append(row[1])                               # 测试项目（测试名）
+        detail = row[2] if row[2] is not None else ''          # 测试方法描述（健壮性：防 None 拼接报错）
+        test_standard.append(row[4])                           # 测试评价标准
+        test_result.append(row[5])                             # 示范文本
         pic_list.append(mc_sht0.range((actual_row, col_marker + 6)))   # 图片单元格（显式绑定 sheet）
 
         temp_text += detail + '\r'
