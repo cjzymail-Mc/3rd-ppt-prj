@@ -52,7 +52,7 @@ type: feedback
 | 用户用"我们之前约定"开头 | **立刻问"这个约定是在什么假设下达成的？当前场景假设还成立吗？"** |
 | 同一方案连续失败 2 次 | **停下来写 3 个候选路线，不是继续第 3 次尝试** |
 | 写 `try/except` 包裹关键操作 | **success 路径必须也打 print**，不能只在 except 里打——否则 except 静默吞错时，看日志根本不知道操作没执行（详见下方"silent except 反模式"） |
-| 用户提"我选中的 / 我当前打开的 / 屏幕上的 X" | **先 `Glob skills/read_* debug/read_*`** 找现成桥接工具，禁止凭"默认 Claude 能力"先否认（详见下方"默认能力假设反模式"） |
+| 用户提"我选中的 / 我当前打开的 / 屏幕上的 X" | **先 `Glob skills/read_*`** 找现成桥接工具，禁止凭"默认 Claude 能力"先否认（详见下方"默认能力假设反模式"） |
 
 ---
 
@@ -102,7 +102,7 @@ except Exception as _e:
 
 **正确反射**：
 1. **触发词**：消息里出现"我选中的"、"我当前的"、"刚才那个"、"屏幕上的"、"打开的"
-2. **第一步**：`Glob skills/read_* debug/read_*` + `Grep "GetActiveObject\|active\|选中"`
+2. **第一步**：`Glob skills/read_*` + `Grep "GetActiveObject\|active\|选中"`
 3. **第二步**：找到对应脚本就直接 `python skills/xxx.py`，输出贴回对话
 4. **第三步**：找不到才说"项目里没现成的，要我写一个吗？"
 5. **绝对禁止**：在 step 1 之前用"默认能力边界"否认
@@ -115,5 +115,5 @@ except Exception as _e:
 
 - `[feature03-transplant]/fix3（图表写入诊断）.md` —— 绕弯路的全过程档案（7 个踩过的坑）
 - `[feature03-transplant]/fix4（图表路线切换）.md` —— 路线切换后的决策与落地
-- `debug/Mc-debug-4.md` line 1775-1827 —— 用户给出技术证据（make_chart 稳跑）但我没接住的现场
+- `【Mc-debug】/Mc-debug-4.md` line 1775-1827 —— 用户给出技术证据（make_chart 稳跑）但我没接住的现场
 - `[feature03-transplant-II Apparel]/fix2（GPT语料库 + 死代码清理）.md` —— 2026-04-29 默认能力假设反模式现场记录

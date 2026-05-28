@@ -19,6 +19,7 @@
 - [feedback_unit_normalize_bmi.md](feedback_unit_normalize_bmi.md) — 100KG 实为 100 斤等填错，粗修 m→cm + 斤→kg 后 BMI∈[16,32] 交叉验证（apparel-fix1）
 - [feedback_python_stdout_encoding.md](feedback_python_stdout_encoding.md) — Bash 工具跑 python 输出中文要 PYTHONIOENCODING + io.TextIOWrapper 双保险；chcp/set 是 cmd 语法在 git bash 失效
 - [feedback_perf_rewrite_validate.md](feedback_perf_rewrite_validate.md) — 重写老 selection 链路前先 print 边界单元格 diff，end('up'/'down') 在连续非空区会越过表头（test_detail off-by-one 教训）
+- [feedback_acceptance_gate.md](feedback_acceptance_gate.md) — PPT 交付必过 ppt-acceptance-check（L0+L1+L4）；**责任分离（2026-05-27）**：developer 只落 trace + 契约就绪，主 Claude 编排者跑验收 + 判读 report（防自审绕道）
 
 ## Project
 - [project_4agent_architecture.md](project_4agent_architecture.md) — 4-Agent 混合工作流 + fix_type/output_contract/COM DispatchEx（2026-03-17/19）

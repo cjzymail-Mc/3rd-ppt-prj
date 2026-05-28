@@ -91,7 +91,7 @@ dic_matrix = get_value('dic_matrix')
 
 
 # global 参数统一修改
-main_model = "openai/gpt-5.4"    #2026-03-11 更新  https://openrouter.ai/openai
+main_model = "openai/gpt-5.4"    #2026-03-11 更新  https://openrouter.ai/openai /// 2026-4-24 GPT-5.5 已上线，待启用
 mini_model = "openai/gpt-5-mini"
 
 
@@ -1416,6 +1416,71 @@ def questionnaire_ppt(mc_ppt,mc_slide):
 
 # 将main中的【问卷生成ppt】函数挪到这里试试看   # 挪动后结果发现需要不断新增参数，因为发生了嵌套。。。
 
+def _clear_residual_outside_valid_region(mc_sht, mc_cell0):
+    """问卷处理入口清残留：保留 mc_cell0.CurrentRegion（有效数据区），清掉
+    used_range 范围内、有效区外的所有 cell 内容（用 clear_contents，保留格式）。
+
+    背景（2026-05-25 用户提）：每次重跑 Main.py 时，Excel sheet 里残留上次跑
+    剩下的 questionnaire 临时数据（mc_cell0+i+20 起的 2 行×N 列块 ×9 runner）
+    + apparel chart anchor 临时数据（offset 50 起的 2 列 × 6/3/4/4 行）。
+    这些残留会让本次 chart `set_source_data` 的 CurrentRegion/expand 抓错
+    range（fix3 bonus-1/3/4 系列 bug 的源头）。
+
+    本 helper 在 questionnaire_Excel 入口调用，只清"上次跑残留"（本次跑的
+    临时数据由各模块运行期自己管理）。
+
+    范围（保留 = mc_cell0.CurrentRegion）：
+      - 下方残留：row > (mc_cell0.row + cr.rows - 1)
+      - 右侧残留：col > (mc_cell0.column + cr.cols - 1)，row 1~valid_last_row
+    """
+    try:
+        cr = mc_cell0.api.CurrentRegion
+        valid_last_row = mc_cell0.row + cr.Rows.Count - 1
+        valid_last_col = mc_cell0.column + cr.Columns.Count - 1
+    except Exception as _e:
+        print(f"  [clear-residual] 定位有效数据区失败，跳过清理: {_e}")
+        return
+
+    try:
+        used = mc_sht.used_range
+        used_last_row = used.last_cell.row
+        used_last_col = used.last_cell.column
+    except Exception as _e:
+        print(f"  [clear-residual] 读 used_range 失败，跳过清理: {_e}")
+        return
+
+    cleared_rows = 0
+    cleared_cols = 0
+
+    # 下方残留：row > valid_last_row
+    if used_last_row > valid_last_row:
+        try:
+            mc_sht.range(
+                (valid_last_row + 1, 1),
+                (used_last_row, max(used_last_col, valid_last_col)),
+            ).clear_contents()
+            cleared_rows = used_last_row - valid_last_row
+        except Exception as _e:
+            print(f"  [clear-residual] 清下方失败: {_e}")
+
+    # 右侧残留：col > valid_last_col（行 1~valid_last_row 区间）
+    if used_last_col > valid_last_col:
+        try:
+            mc_sht.range(
+                (1, valid_last_col + 1),
+                (valid_last_row, used_last_col),
+            ).clear_contents()
+            cleared_cols = used_last_col - valid_last_col
+        except Exception as _e:
+            print(f"  [clear-residual] 清右侧失败: {_e}")
+
+    if cleared_rows or cleared_cols:
+        print(f"  [clear-residual] 已清残留：下方 {cleared_rows} 行 / 右侧 {cleared_cols} 列  "
+              f"（保留有效区 row 1~{valid_last_row}, col 1~{valid_last_col}）")
+    else:
+        print(f"  [clear-residual] 无残留，已跳过（有效区 row 1~{valid_last_row}, col 1~{valid_last_col}）")
+
+
 def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_gpt="y", summary_sink=None):
 
     #  这部分一空就是好多年。。  2025终于开动了，感谢AI时代。。
@@ -1448,6 +1513,11 @@ def questionnaire_Excel(mc_sht, mc_ppt, mc_slide, mc_model, sample_name="", mc_g
         # 找到问卷数据区域 /  定位行列，就知道有几个人（多少行）数据了
 
         mc_cell0 = get_range(mc_sht)
+
+        # 入口清残留（2026-05-25 用户提）：清掉上次跑剩下的 questionnaire/apparel
+        # 临时数据，避免污染本次 chart `set_source_data` 的 CurrentRegion/expand。
+        # 详见 _clear_residual_outside_valid_region docstring。
+        _clear_residual_outside_valid_region(mc_sht, mc_cell0)
 
         i0 = mc_cell0.api.CurrentRegion.Row
 
@@ -2308,10 +2378,19 @@ def make_chart_for_questionnaire(mc_cell, mc_slide, Left=26, Top=168, Width=250,
     mc_cell.select()
     mc_book = mc_sht.book
 
-    i0 = mc_cell.api.CurrentRegion.Row
-    i = mc_cell.api.CurrentRegion.Rows.Count
-    j0 = mc_cell.api.CurrentRegion.Column
-    j = mc_cell.api.CurrentRegion.Columns.Count
+    # fix3-bonus-3（questionnaire chart 污染修复）：不走 mc_cell.api.CurrentRegion
+    # 取 source range —— 跟 apparel chart 同一类 bug：CurrentRegion 会被旁边/下方
+    # 残留数据撑大，导致 set_source_data 抓到 17 列错位数据，series.name 变跑者名。
+    # questionnaire 数据 schema 固定：2 行（title + 1 runner）× N 列（指标数）。
+    # 写死 i=2，j 沿 mc_cell 同行 expand("right") 探宽（比 CurrentRegion 更窄）。
+    i0 = mc_cell.row
+    j0 = mc_cell.column
+    i = 2  # title + 1 runner，questionnaire 固定不变
+    try:
+        j = mc_cell.expand("right").last_cell.column - j0 + 1
+    except Exception:
+        j = mc_cell.api.CurrentRegion.Columns.Count  # 兜底
+    print(f'  [questionnaire-chart] explicit source range: i0={i0} j0={j0} i={i} j={j}')
 
     chart_left = mc_sht.cells(i0 + i - 2, j0+3 ).left    # 往右上角移动（2，3）单元格
     chart_top = mc_sht.cells(i0 + i - 2, j0+3 ).top
@@ -2406,6 +2485,18 @@ def make_chart_for_questionnaire(mc_cell, mc_slide, Left=26, Top=168, Width=250,
         xlwings.apps.active.api.CutCopyMode = False
     except Exception:
         pass
+
+    # fix3-bonus-3：显式 BreakLink，把外部 Excel range 的数据 embed 到 PPT chart
+    # 内置 workbook，让 chart 完全独立。否则后续 questionnaire 循环写其他 runner
+    # 数据、或 apparel 写自己的 anchor 区域，都可能改 chart 显示（dump 实测看到
+    # 周敏 chart 显示 apparel 面料 mean 值，就是 source range 被后续写入污染）。
+    # 必须先 .Item(1) 拿真 Shape，ShapeRange.Chart 会抛 COM 错（apparel fix5 经验）。
+    try:
+        _shape_one = mc_shape.Item(1) if hasattr(mc_shape, "Item") else mc_shape
+        _shape_one.Chart.ChartData.BreakLink()
+        print('  [questionnaire-chart] ChartData.BreakLink 完成（chart 与 Excel range 已解绑）')
+    except Exception as _e:
+        print(f'  [questionnaire-chart] BreakLink 失败（{_e!r}），chart 可能仍是 linked')
 
     # 位置暂时先用这个，手工排版的
 

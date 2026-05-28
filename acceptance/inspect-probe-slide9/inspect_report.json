@@ -1,0 +1,356 @@
+{
+  "pptx": {
+    "path": "D:\\Technique Support\\Claude Code Learning\\3rd-ppt-prj\\2026-05-28 【飞影服装试穿反馈】测试报告v 1.0.pptx",
+    "mode": "active",
+    "slides_filter": [
+      9
+    ],
+    "slide_count": 13,
+    "slides": [
+      {
+        "slide_index": 9,
+        "shape_count": 24,
+        "shapes": [
+          {
+            "shape_index": 1,
+            "name": "Chart 63",
+            "type": 3,
+            "geometry": {
+              "L": 163.1,
+              "T": 410.2,
+              "W": 427.0,
+              "H": 113.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 2,
+            "name": "Straight Connector 4",
+            "type": 9,
+            "geometry": {
+              "L": 339.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 3,
+            "name": "Straight Connector 5",
+            "type": 9,
+            "geometry": {
+              "L": 54.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 4,
+            "name": "TextBox 1",
+            "type": 17,
+            "geometry": {
+              "L": 43.0,
+              "T": 53.0,
+              "W": 250.0,
+              "H": 31.5
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "服装试穿反馈结果"
+          },
+          {
+            "shape_index": 5,
+            "name": "Oval 3",
+            "type": 1,
+            "geometry": {
+              "L": 35.7,
+              "T": 102.2,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 6,
+            "name": "TextBox 6",
+            "type": 17,
+            "geometry": {
+              "L": 29.6,
+              "T": 122.4,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "版型↵4.25 / 5"
+          },
+          {
+            "shape_index": 7,
+            "name": "Oval 13",
+            "type": 1,
+            "geometry": {
+              "L": 331.5,
+              "T": 106.8,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 8,
+            "name": "TextBox 14",
+            "type": 17,
+            "geometry": {
+              "L": 327.4,
+              "T": 125.2,
+              "W": 125.0,
+              "H": 69.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "面料↵4.69 / 5"
+          },
+          {
+            "shape_index": 9,
+            "name": "Oval 16",
+            "type": 1,
+            "geometry": {
+              "L": 35.7,
+              "T": 260.3,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 10,
+            "name": "TextBox 17",
+            "type": 17,
+            "geometry": {
+              "L": 30.2,
+              "T": 282.3,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "吸湿排汗↵4.33 / 5"
+          },
+          {
+            "shape_index": 11,
+            "name": "Oval 19",
+            "type": 1,
+            "geometry": {
+              "L": 327.7,
+              "T": 260.3,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 12,
+            "name": "TextBox 20",
+            "type": 17,
+            "geometry": {
+              "L": 326.6,
+              "T": 280.4,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "速干↵4.42 / 5"
+          },
+          {
+            "shape_index": 13,
+            "name": "TextBox 24",
+            "type": 17,
+            "geometry": {
+              "L": 831.2,
+              "T": 53.5,
+              "W": 125.1,
+              "H": 148.4
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "受试者信息 Information↵A: 167CM / 53 KG↵B: 166CM / 54 KG↵C: 167CM / 54 KG↵D: 172CM / 64 KG"
+          },
+          {
+            "shape_index": 14,
+            "name": "TextBox 32",
+            "type": 17,
+            "geometry": {
+              "L": 20.7,
+              "T": 9.0,
+              "W": 578.4,
+              "H": 29.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "试穿反馈【 Athletes’ Feedback】"
+          },
+          {
+            "shape_index": 15,
+            "name": "Oval 49",
+            "type": 1,
+            "geometry": {
+              "L": 33.7,
+              "T": 401.8,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 16,
+            "name": "TextBox 50",
+            "type": 17,
+            "geometry": {
+              "L": 26.5,
+              "T": 422.0,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "适宜温度↵15℃~25℃"
+          },
+          {
+            "shape_index": 17,
+            "name": "Rounded Rectangle 53",
+            "type": 1,
+            "geometry": {
+              "L": 847.7,
+              "T": 227.3,
+              "W": 92.0,
+              "H": 55.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "累计跑量km↵465"
+          },
+          {
+            "shape_index": 18,
+            "name": "Rounded Rectangle 55",
+            "type": 1,
+            "geometry": {
+              "L": 848.8,
+              "T": 308.6,
+              "W": 92.0,
+              "H": 55.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "定位日常训练4/4"
+          },
+          {
+            "shape_index": 19,
+            "name": "Chart 8",
+            "type": 3,
+            "geometry": {
+              "L": 125.7,
+              "T": 84.2,
+              "W": 190.0,
+              "H": 150.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 20,
+            "name": "Chart 12",
+            "type": 3,
+            "geometry": {
+              "L": 405.7,
+              "T": 106.3,
+              "W": 224.1,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 21,
+            "name": "Chart 15",
+            "type": 3,
+            "geometry": {
+              "L": 145.2,
+              "T": 271.1,
+              "W": 190.0,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 22,
+            "name": "Chart 18",
+            "type": 3,
+            "geometry": {
+              "L": 435.9,
+              "T": 267.7,
+              "W": 190.0,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 23,
+            "name": "Rounded Rectangle 2",
+            "type": 1,
+            "geometry": {
+              "L": 735.1,
+              "T": 230.1,
+              "W": 92.0,
+              "H": 55.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "累计跑量km↵671"
+          },
+          {
+            "shape_index": 24,
+            "name": "Rounded Rectangle 7",
+            "type": 1,
+            "geometry": {
+              "L": 736.2,
+              "T": 311.4,
+              "W": 92.0,
+              "H": 55.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "定位日常训练7/9"
+          }
+        ]
+      }
+    ],
+    "slide_masters": [],
+    "custom_layouts": []
+  }
+}

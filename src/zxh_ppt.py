@@ -97,7 +97,8 @@ ZXH_SHAPES = [
         "name": "TextBox 15",
         "strategy": "gpt_prompted",
         "params": {"source": "补充说明", "filter": ""},
-        "budget": {"max_chars": 159, "max_lines": 9},
+        # +30% on 2026-05-12: GPT 输出"优势+问题"两段，原 159 字常截掉"问题"段
+        "budget": {"max_chars": 207, "max_lines": 12},
         "template_text": (
             "优势\r包裹性表现较好，鞋脚一体性明显 \r支撑与刚性在线，实战稳定性较好 "
             "\r整体舒适度不错\r\r问题\r抓地不足（4/7）：木地板、急停、横移时更明显 "

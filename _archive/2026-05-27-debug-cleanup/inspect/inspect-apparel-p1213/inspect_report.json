@@ -1,0 +1,749 @@
+{
+  "docx": null,
+  "pptx": {
+    "path": "D:\\Technique Support\\Claude Code Learning\\3rd-ppt-prj\\2026-05-25 【飞影服装试穿反馈】测试报告v 1.4.pptx",
+    "mode": "active",
+    "slides_filter": [
+      12,
+      13,
+      14
+    ],
+    "slide_count": 17,
+    "slides": [
+      {
+        "slide_index": 12,
+        "shape_count": 22,
+        "shapes": [
+          {
+            "shape_index": 1,
+            "name": "Straight Connector 4",
+            "type": 9,
+            "geometry": {
+              "L": 339.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 2,
+            "name": "Straight Connector 5",
+            "type": 9,
+            "geometry": {
+              "L": 54.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 3,
+            "name": "TextBox 1",
+            "type": 17,
+            "geometry": {
+              "L": 43.0,
+              "T": 53.0,
+              "W": 250.0,
+              "H": 31.5
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "服装试穿反馈结果"
+          },
+          {
+            "shape_index": 4,
+            "name": "Oval 3",
+            "type": 1,
+            "geometry": {
+              "L": 38.0,
+              "T": 98.0,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 5,
+            "name": "TextBox 6",
+            "type": 17,
+            "geometry": {
+              "L": 33.0,
+              "T": 138.0,
+              "W": 125.0,
+              "H": 32.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "版型"
+          },
+          {
+            "shape_index": 6,
+            "name": "Oval 13",
+            "type": 1,
+            "geometry": {
+              "L": 330.0,
+              "T": 98.0,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 7,
+            "name": "TextBox 14",
+            "type": 17,
+            "geometry": {
+              "L": 325.0,
+              "T": 138.0,
+              "W": 125.0,
+              "H": 32.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "面料"
+          },
+          {
+            "shape_index": 8,
+            "name": "Oval 16",
+            "type": 1,
+            "geometry": {
+              "L": 38.0,
+              "T": 230.3,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 9,
+            "name": "TextBox 17",
+            "type": 17,
+            "geometry": {
+              "L": 33.0,
+              "T": 270.3,
+              "W": 125.0,
+              "H": 32.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "吸湿排汗"
+          },
+          {
+            "shape_index": 10,
+            "name": "Oval 19",
+            "type": 1,
+            "geometry": {
+              "L": 330.0,
+              "T": 230.3,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 11,
+            "name": "TextBox 20",
+            "type": 17,
+            "geometry": {
+              "L": 325.0,
+              "T": 270.3,
+              "W": 125.0,
+              "H": 32.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "速干"
+          },
+          {
+            "shape_index": 12,
+            "name": "TextBox 23",
+            "type": 17,
+            "geometry": {
+              "L": 20.7,
+              "T": 358.2,
+              "W": 442.3,
+              "H": 153.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "优点 strengths"
+          },
+          {
+            "shape_index": 13,
+            "name": "TextBox 24",
+            "type": 17,
+            "geometry": {
+              "L": 831.2,
+              "T": 53.5,
+              "W": 125.1,
+              "H": 148.4
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "受试者信息 Information↵A: 162CM / 53 KG↵B: 161CM / 53 KG↵C: 170CM / 56 KG↵D: 156CM / 45 KG↵E: 168CM / 60 KG↵F: 163CM / 55 KG↵..."
+          },
+          {
+            "shape_index": 14,
+            "name": "TextBox 26",
+            "type": 17,
+            "geometry": {
+              "L": 480.0,
+              "T": 358.2,
+              "W": 348.7,
+              "H": 153.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "缺点 drawbacks"
+          },
+          {
+            "shape_index": 15,
+            "name": "TextBox 32",
+            "type": 17,
+            "geometry": {
+              "L": 20.7,
+              "T": 9.0,
+              "W": 578.4,
+              "H": 29.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "试穿反馈【 Athletes’ Feedback】"
+          },
+          {
+            "shape_index": 16,
+            "name": "TextBox 8",
+            "type": 17,
+            "geometry": {
+              "L": 28.8,
+              "T": 388.9,
+              "W": 426.1,
+              "H": 106.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "本次9名样本反馈，版型整体多为合身显身材、动作较自如（8/9）；支撑可覆盖中高强度训练，竞速适配有认可（5/9）。"
+          },
+          {
+            "shape_index": 17,
+            "name": "TextBox 22",
+            "type": 17,
+            "geometry": {
+              "L": 481.8,
+              "T": 388.9,
+              "W": 338.3,
+              "H": 106.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "本次9名样本反馈，摩擦腋下/胸下/副乳处长距离易磨或硌（5/9），厚闷前胸或整体偏厚、透气排汗不足（5/9）。"
+          },
+          {
+            "shape_index": 18,
+            "name": "Rectangle 25",
+            "type": 1,
+            "geometry": {
+              "L": 343.9,
+              "T": 12.2,
+              "W": 266.5,
+              "H": 24.2
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "I  <面料信息>"
+          },
+          {
+            "shape_index": 19,
+            "name": "Chart 7",
+            "type": 3,
+            "geometry": {
+              "L": 128.0,
+              "T": 80.0,
+              "W": 190.0,
+              "H": 150.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 20,
+            "name": "Chart 9",
+            "type": 3,
+            "geometry": {
+              "L": 420.0,
+              "T": 102.7,
+              "W": 190.0,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 21,
+            "name": "Chart 10",
+            "type": 3,
+            "geometry": {
+              "L": 128.0,
+              "T": 240.7,
+              "W": 190.0,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 22,
+            "name": "Chart 11",
+            "type": 3,
+            "geometry": {
+              "L": 420.0,
+              "T": 240.7,
+              "W": 190.0,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          }
+        ]
+      },
+      {
+        "slide_index": 13,
+        "shape_count": 22,
+        "shapes": [
+          {
+            "shape_index": 1,
+            "name": "Chart 63",
+            "type": 3,
+            "geometry": {
+              "L": 163.1,
+              "T": 410.2,
+              "W": 427.0,
+              "H": 113.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 2,
+            "name": "Straight Connector 4",
+            "type": 9,
+            "geometry": {
+              "L": 339.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 3,
+            "name": "Straight Connector 5",
+            "type": 9,
+            "geometry": {
+              "L": 54.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 4,
+            "name": "TextBox 1",
+            "type": 17,
+            "geometry": {
+              "L": 43.0,
+              "T": 53.0,
+              "W": 250.0,
+              "H": 31.5
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "服装试穿反馈结果"
+          },
+          {
+            "shape_index": 5,
+            "name": "Oval 3",
+            "type": 1,
+            "geometry": {
+              "L": 35.7,
+              "T": 102.2,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 6,
+            "name": "TextBox 6",
+            "type": 17,
+            "geometry": {
+              "L": 29.6,
+              "T": 122.4,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "版型↵3.98 / 5"
+          },
+          {
+            "shape_index": 7,
+            "name": "Oval 13",
+            "type": 1,
+            "geometry": {
+              "L": 331.5,
+              "T": 106.8,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 8,
+            "name": "TextBox 14",
+            "type": 17,
+            "geometry": {
+              "L": 327.4,
+              "T": 125.2,
+              "W": 125.0,
+              "H": 69.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "面料↵3.96 / 5"
+          },
+          {
+            "shape_index": 9,
+            "name": "Oval 16",
+            "type": 1,
+            "geometry": {
+              "L": 35.7,
+              "T": 260.3,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 10,
+            "name": "TextBox 17",
+            "type": 17,
+            "geometry": {
+              "L": 30.2,
+              "T": 282.3,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "吸湿排汗↵3.61 / 5"
+          },
+          {
+            "shape_index": 11,
+            "name": "Oval 19",
+            "type": 1,
+            "geometry": {
+              "L": 327.7,
+              "T": 260.3,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 12,
+            "name": "TextBox 20",
+            "type": 17,
+            "geometry": {
+              "L": 326.6,
+              "T": 280.4,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "速干↵3.52 / 5"
+          },
+          {
+            "shape_index": 13,
+            "name": "TextBox 24",
+            "type": 17,
+            "geometry": {
+              "L": 831.2,
+              "T": 53.5,
+              "W": 125.1,
+              "H": 148.4
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "受试者信息 Information↵A: 162CM / 53 KG↵B: 161CM / 53 KG↵C: 170CM / 56 KG↵D: 156CM / 45 KG↵E: 168CM / 60 KG↵F: 163CM / 55 KG↵..."
+          },
+          {
+            "shape_index": 14,
+            "name": "TextBox 32",
+            "type": 17,
+            "geometry": {
+              "L": 20.7,
+              "T": 9.0,
+              "W": 578.4,
+              "H": 29.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "试穿反馈【 Athletes’ Feedback】"
+          },
+          {
+            "shape_index": 15,
+            "name": "Chart 7",
+            "type": 3,
+            "geometry": {
+              "L": 125.7,
+              "T": 84.2,
+              "W": 190.0,
+              "H": 150.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 16,
+            "name": "Chart 9",
+            "type": 3,
+            "geometry": {
+              "L": 405.7,
+              "T": 106.3,
+              "W": 224.1,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 17,
+            "name": "Chart 10",
+            "type": 3,
+            "geometry": {
+              "L": 145.2,
+              "T": 271.1,
+              "W": 190.0,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 18,
+            "name": "Chart 11",
+            "type": 3,
+            "geometry": {
+              "L": 435.9,
+              "T": 267.7,
+              "W": 190.0,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 19,
+            "name": "Oval 49",
+            "type": 1,
+            "geometry": {
+              "L": 33.7,
+              "T": 401.8,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 20,
+            "name": "TextBox 50",
+            "type": 17,
+            "geometry": {
+              "L": 26.5,
+              "T": 422.0,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "适宜温度↵15~25℃"
+          },
+          {
+            "shape_index": 21,
+            "name": "Rounded Rectangle 53",
+            "type": 1,
+            "geometry": {
+              "L": 847.7,
+              "T": 227.3,
+              "W": 92.0,
+              "H": 55.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "累计跑量km↵671"
+          },
+          {
+            "shape_index": 22,
+            "name": "Rounded Rectangle 55",
+            "type": 1,
+            "geometry": {
+              "L": 848.8,
+              "T": 308.6,
+              "W": 92.0,
+              "H": 55.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "定位日常训练7/9"
+          }
+        ]
+      },
+      {
+        "slide_index": 14,
+        "shape_count": 7,
+        "shapes": [
+          {
+            "shape_index": 1,
+            "name": "Straight Connector 4",
+            "type": 9,
+            "geometry": {
+              "L": 339.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 2,
+            "name": "Straight Connector 5",
+            "type": 9,
+            "geometry": {
+              "L": 54.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 3,
+            "name": "TextBox 1",
+            "type": 17,
+            "geometry": {
+              "L": 43.0,
+              "T": 53.0,
+              "W": 250.0,
+              "H": 31.5
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "服装试穿反馈结果"
+          },
+          {
+            "shape_index": 4,
+            "name": "TextBox 23",
+            "type": 17,
+            "geometry": {
+              "L": 33.6,
+              "T": 128.2,
+              "W": 555.5,
+              "H": 134.5
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "优点 strengths↵整体版型合身、修身显身材，上身贴合，动作舒展不受限（9/9）。↵具备一定支撑性，覆盖中低到高强度训练（7/9）。↵面料有亲肤性与一定耐用性，多名反馈不起球不勾丝↵短距离及日常训练场景下舒适性评价较好。"
+          },
+          {
+            "shape_index": 5,
+            "name": "TextBox 24",
+            "type": 17,
+            "geometry": {
+              "L": 831.2,
+              "T": 53.5,
+              "W": 125.1,
+              "H": 148.4
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "受试者信息 Information↵A: 162CM / 53 KG↵B: 161CM / 53 KG↵C: 170CM / 56 KG↵D: 156CM / 45 KG↵E: 168CM / 60 KG↵F: 163CM / 55 KG↵..."
+          },
+          {
+            "shape_index": 6,
+            "name": "TextBox 26",
+            "type": 17,
+            "geometry": {
+              "L": 34.9,
+              "T": 306.3,
+              "W": 554.3,
+              "H": 189.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "缺点 drawbacks↵面料弹性不够（2/9）↵前胸闷热、面料偏厚（4/9）↵腋下摩擦、副乳硌感、胸下磨皮较集中，长距离或出汗后更明显（8/9）。↵透气排汗不足较突出，局部有只吸不排、贴身感，速干较差（6/9）。↵后背口袋不便，补给袋定位..."
+          },
+          {
+            "shape_index": 7,
+            "name": "TextBox 32",
+            "type": 17,
+            "geometry": {
+              "L": 20.7,
+              "T": 9.0,
+              "W": 578.4,
+              "H": 29.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "试穿反馈【 Athletes’ Feedback】"
+          }
+        ]
+      }
+    ],
+    "slide_masters": [],
+    "custom_layouts": []
+  }
+}

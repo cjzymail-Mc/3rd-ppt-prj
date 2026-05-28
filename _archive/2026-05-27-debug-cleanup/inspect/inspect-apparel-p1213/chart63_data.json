@@ -1,0 +1,49 @@
+{
+  "shape_name": "Chart 63",
+  "L": 163.10235595703125,
+  "T": 410.15875244140625,
+  "W": 427.00189208984375,
+  "H": 113.0,
+  "chart_type": 58,
+  "has_title": false,
+  "title": null,
+  "series": [
+    {
+      "index": 1,
+      "name": "起点（占位）",
+      "x_values": [
+        "体感适宜区间",
+        "实际穿着区间"
+      ],
+      "y_values": [
+        5.0,
+        15.0
+      ]
+    },
+    {
+      "index": 2,
+      "name": "温度区间（℃）",
+      "x_values": [
+        "体感适宜区间",
+        "实际穿着区间"
+      ],
+      "y_values": [
+        20.0,
+        17.0
+      ]
+    },
+    {
+      "index": 3,
+      "name": "终点（占位）",
+      "x_values": [
+        "体感适宜区间",
+        "实际穿着区间"
+      ],
+      "y_values": [
+        10.0,
+        3.0
+      ]
+    }
+  ],
+  "chart_data_activated_at_dump": false
+}

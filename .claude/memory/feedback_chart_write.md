@@ -139,3 +139,58 @@ Excel COM 里 chart 操作有两套完全不同的访问路径，**决定了是�
 5. 自动免疫缩放——可以丢弃 `Excel_zoom`
 
 短期不改也行（A 在配 zoom 后是有效的折中），但欠债已记。
+
+---
+
+## chart set_source_data range 禁用 CurrentRegion / expand（2026-05-25 fix3 bonus-1/3/4）
+
+**结论**：chart `set_source_data(mc_sht.range(...))` 的 range 计算 **禁用**
+`mc_cell.api.CurrentRegion` / `mc_cell.expand("table"|"down"|"right")`。多模块
+共享同一 sheet 时（如 questionnaire + apparel 都往同一 mc_sht 写临时数据），
+这些 API 必被残留数据污染。**必须用显式 size**，由 caller 把 `n_rows` /
+`n_cols` 传进 chart helper。
+
+**Why（fix3 三连踩，全是同一根因变体）**：
+
+1. **bonus-1**（`make_chart_for_apparel` 原版）：用 `mc_cell.api.CurrentRegion`
+   取 source。诊断实测 anchor=A61 时 CurrentRegion=A61:R68（**8 行 × 18 列**，
+   预期只 7 × 2），因 col B~R 有 questionnaire 残留 → set_source_data 抓 18
+   列 → series.name 变跑者名 'Alisa'、Values 变 17 项错位数据。
+
+2. **bonus-3**（`make_chart_for_questionnaire` 同源 bug）：同样用 CurrentRegion，
+   叠加 OLE linked 特性 → 后续跑 apparel 写新 anchor 数据反向污染已粘贴的
+   questionnaire chart（实测：周敏 chart 显示 apparel 面料 mean 值，因为
+   chart link 到的 range 被 apparel anchor=A72 覆盖）。修法叠加显式
+   `ChartData.BreakLink()` 切外部链接。
+
+3. **bonus-4**（bonus-1 第二版用 `expand("down")` 替代）：`expand("down")` 是
+   ctrl+方向键模拟，**遇空 cell 才停**。apparel 版型 anchor=A61 写 row 61-67，
+   row 68 是 questionnaire runner 8 的 'Alisa' name（在 apparel clear 范围外）
+   → expand 从 A61 走到 A68 才停 → 多吃 1 行 → 版型 chart 多出一条
+   "Alisa: 4" bar。
+
+**How to apply**：
+
+- chart helper 接受可选 `n_rows` / `n_cols` 参数（向后兼容用 default None）
+- caller 端 `_prepare_*_chart_data` 写完后**显式返回** `(anchor, n_rows)` tuple，
+  chart helper 内 `if n_rows is not None: i = n_rows`，不再 expand
+- 列数若固定（apparel 永远 2 列 / questionnaire 永远 2 行）直接 hardcode，
+  比 expand 稳
+- 写入前 `.clear_contents()` 仅作辅助保险（清自己 footprint + 适度 buffer），
+  不能依赖 clear 解决全部残留——根本解还是显式 size
+- 一旦走 OLE 粘贴（多 chart 共享 sheet），加 `chart.ChartData.BreakLink()`：
+  让 chart 内置 workbook embed 数据副本，后续 sheet 任何变化都不影响 chart
+
+**反例 / 不要做的事**：
+
+- ❌ 以为 `expand("down")` 比 `CurrentRegion` 安全 —— 一样会吃残留（bonus-4）
+- ❌ 以为 `CutCopyMode = False` 等同于 `BreakLink` —— 前者只断 Excel 剪贴板
+  状态，不断 chart 与外部 range 的链接；fn030 questionnaire 调了 CutCopyMode=False
+  但 chart 仍 IsLinked=True 就是因为这个混淆
+- ❌ 多 chart 顺序生成时只清 anchor 自己 footprint —— footprint 紧邻的下一行
+  /下一列残留会让 expand 多吃；要么用显式 size，要么 clear 适度扩大
+
+**实战参考**：`src/apparel_ppt.py::_prepare_apparel_chart_data` / `make_chart_for_apparel`
+（返回 tuple + 接受 n_rows 参数）、`src/Function_030.py::make_chart_for_questionnaire`
+（i=2 hardcode + BreakLink）。详细诊断过程见 `[feature03-transplant-II Apparel]/
+fix3（新问卷10人+适配）.md` §7-10。

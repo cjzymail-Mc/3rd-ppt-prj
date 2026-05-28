@@ -1,0 +1,1664 @@
+{
+  "verdict": "FAIL",
+  "mode": "production",
+  "contract": "D:/Technique Support/Claude Code Learning/3rd-ppt-prj/acceptance/apparel.json",
+  "slide_pairs": [
+    "12:13",
+    "13:14"
+  ],
+  "summary": {
+    "must_fix": 4,
+    "warn": 14,
+    "tolerated": 0
+  },
+  "args": {
+    "new": "D:/Technique Support/Claude Code Learning/3rd-ppt-prj/2026-05-26 【飞影服装试穿反馈】测试报告v 1.0.pptx",
+    "template": "D:/Technique Support/Claude Code Learning/3rd-ppt-prj/template/apparel-page13-14-template.pptx",
+    "layers": [
+      "L0",
+      "L1",
+      "L2",
+      "L3",
+      "L4",
+      "L5"
+    ],
+    "pipeline_trace": "D:/Technique Support/Claude Code Learning/3rd-ppt-prj/debug/apparel_trace.jsonl"
+  },
+  "layers": [
+    {
+      "layer": "L0",
+      "passed": 29,
+      "warnings": 0,
+      "tolerated": 0,
+      "must_fix_violations": 0,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [],
+      "findings": [
+        {
+          "rule_id": "L0_pair_Chart 63",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 63",
+          "slide": 13,
+          "message": "Chart 63 ↔ Chart 63 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Straight Connector 4",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 4",
+          "slide": 13,
+          "message": "Straight Connector 4 ↔ Straight Connector 4 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Straight Connector 5",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 5",
+          "slide": 13,
+          "message": "Straight Connector 5 ↔ Straight Connector 5 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 1",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 1",
+          "slide": 13,
+          "message": "TextBox 1 ↔ TextBox 1 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 3",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 3",
+          "slide": 13,
+          "message": "Oval 3 ↔ Oval 3 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 6",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 6",
+          "slide": 13,
+          "message": "TextBox 6 ↔ TextBox 6 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 13",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 13",
+          "slide": 13,
+          "message": "Oval 13 ↔ Oval 13 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 14",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 14",
+          "slide": 13,
+          "message": "TextBox 14 ↔ TextBox 14 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 16",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 16",
+          "slide": 13,
+          "message": "Oval 16 ↔ Oval 16 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 17",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 17",
+          "slide": 13,
+          "message": "TextBox 17 ↔ TextBox 17 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 19",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 19",
+          "slide": 13,
+          "message": "Oval 19 ↔ Oval 19 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 20",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 20",
+          "slide": 13,
+          "message": "TextBox 20 ↔ TextBox 20 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 24",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 24",
+          "slide": 13,
+          "message": "TextBox 24 ↔ TextBox 24 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 32",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 32",
+          "slide": 13,
+          "message": "TextBox 32 ↔ TextBox 32 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 49",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 49",
+          "slide": 13,
+          "message": "Oval 49 ↔ Oval 49 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 50",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 50",
+          "slide": 13,
+          "message": "TextBox 50 ↔ TextBox 50 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Rounded Rectangle 53",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Rounded Rectangle 53",
+          "slide": 13,
+          "message": "Rounded Rectangle 53 ↔ Rounded Rectangle 53 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Rounded Rectangle 55",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Rounded Rectangle 55",
+          "slide": 13,
+          "message": "Rounded Rectangle 55 ↔ Rounded Rectangle 55 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 8",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 8",
+          "slide": 13,
+          "message": "Chart 8 ↔ Chart 7 via ignore_chart_auto_renumber(dist=0.0)",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 12",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 12",
+          "slide": 13,
+          "message": "Chart 12 ↔ Chart 9 via ignore_chart_auto_renumber(dist=0.0)",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 15",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 15",
+          "slide": 13,
+          "message": "Chart 15 ↔ Chart 10 via ignore_chart_auto_renumber(dist=0.0)",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 18",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 18",
+          "slide": 13,
+          "message": "Chart 18 ↔ Chart 11 via ignore_chart_auto_renumber(dist=0.0)",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Straight Connector 4",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 4",
+          "slide": 14,
+          "message": "Straight Connector 4 ↔ Straight Connector 4 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Straight Connector 5",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 5",
+          "slide": 14,
+          "message": "Straight Connector 5 ↔ Straight Connector 5 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 1",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 1",
+          "slide": 14,
+          "message": "TextBox 1 ↔ TextBox 1 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 23",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 23",
+          "slide": 14,
+          "message": "TextBox 23 ↔ TextBox 23 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 24",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 24",
+          "slide": 14,
+          "message": "TextBox 24 ↔ TextBox 24 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 26",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 26",
+          "slide": 14,
+          "message": "TextBox 26 ↔ TextBox 26 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 32",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 32",
+          "slide": 14,
+          "message": "TextBox 32 ↔ TextBox 32 via exact",
+          "detail": {}
+        }
+      ]
+    },
+    {
+      "layer": "L1",
+      "passed": 2,
+      "warnings": 0,
+      "tolerated": 0,
+      "must_fix_violations": 1,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [],
+      "findings": [
+        {
+          "rule_id": "p13_chart63_temp_range",
+          "layer": "L1",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 63",
+          "slide": 13,
+          "message": "chart_series_differs_from_template: series 与模板不同（写入有效） | tpl=[[5.0, 15.0], [20.0, 17.0], [10.0, 3.0]] actual=[[10.0, 10.0], [10.0, 10.0], [15.0, 15.0]]",
+          "detail": {
+            "actual": [
+              [
+                10.0,
+                10.0
+              ],
+              [
+                10.0,
+                10.0
+              ],
+              [
+                15.0,
+                15.0
+              ]
+            ],
+            "template": [
+              [
+                5.0,
+                15.0
+              ],
+              [
+                20.0,
+                17.0
+              ],
+              [
+                10.0,
+                3.0
+              ]
+            ],
+            "same": false
+          }
+        },
+        {
+          "rule_id": "p13_temp_mode_label",
+          "layer": "L1",
+          "severity": "must_fix",
+          "passed": false,
+          "shape": "TextBox 50",
+          "slide": 13,
+          "message": "text contains '5℃~15℃': False (actual snippet='适宜温度\\r—')",
+          "detail": {}
+        },
+        {
+          "rule_id": "p13_total_km_label",
+          "layer": "L1",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Rounded Rectangle 53",
+          "slide": 13,
+          "message": "text contains '': True (actual snippet='累计跑量km\\r0')",
+          "detail": {}
+        }
+      ]
+    },
+    {
+      "layer": "L2",
+      "passed": 38,
+      "warnings": 9,
+      "tolerated": 0,
+      "must_fix_violations": 2,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [
+        "L2: 无契约规则，已应用默认 geometry + autosize"
+      ],
+      "findings": [
+        {
+          "rule_id": "geometry_global::Chart 63",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 63",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 163.10235595703125,
+              "top": 410.15875244140625,
+              "width": 427.00189208984375,
+              "height": 113.0
+            },
+            "template": {
+              "left": 163.10235595703125,
+              "top": 410.15875244140625,
+              "width": 427.00189208984375,
+              "height": 113.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Straight Connector 4",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 4",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 339.6033935546875,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "template": {
+              "left": 339.6033935546875,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Straight Connector 5",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 5",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 54.619998931884766,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "template": {
+              "left": 54.619998931884766,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 1",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 1",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 43.0,
+              "top": 53.0,
+              "width": 250.0,
+              "height": 31.504566192626953
+            },
+            "template": {
+              "left": 43.0,
+              "top": 53.0,
+              "width": 250.0,
+              "height": 31.504566192626953
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Oval 3",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 3",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 35.736297607421875,
+              "top": 102.24464416503906,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "template": {
+              "left": 35.736297607421875,
+              "top": 102.24464416503906,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 6",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 6",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 29.570236206054688,
+              "top": 122.39315032958984,
+              "width": 125.0,
+              "height": 72.70299530029297
+            },
+            "template": {
+              "left": 29.570236206054688,
+              "top": 122.39315032958984,
+              "width": 125.0,
+              "height": 72.70299530029297
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Oval 13",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 13",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 331.5263671875,
+              "top": 106.80747985839844,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "template": {
+              "left": 331.5263671875,
+              "top": 106.80747985839844,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 14",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 14",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 327.44622802734375,
+              "top": 125.1755142211914,
+              "width": 125.0,
+              "height": 69.06779479980469
+            },
+            "template": {
+              "left": 327.44622802734375,
+              "top": 125.1755142211914,
+              "width": 125.0,
+              "height": 69.06779479980469
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Oval 16",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 16",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 35.736297607421875,
+              "top": 260.3336181640625,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "template": {
+              "left": 35.736297607421875,
+              "top": 260.3336181640625,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 17",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 17",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 30.205432891845703,
+              "top": 282.2536315917969,
+              "width": 125.0,
+              "height": 72.70299530029297
+            },
+            "template": {
+              "left": 30.205432891845703,
+              "top": 282.2536315917969,
+              "width": 125.0,
+              "height": 72.70299530029297
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Oval 19",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 19",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 327.7362976074219,
+              "top": 260.3336181640625,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "template": {
+              "left": 327.7362976074219,
+              "top": 260.3336181640625,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 20",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 20",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 326.6396789550781,
+              "top": 280.3804016113281,
+              "width": 125.0,
+              "height": 72.70299530029297
+            },
+            "template": {
+              "left": 326.6396789550781,
+              "top": 280.3804016113281,
+              "width": 125.0,
+              "height": 72.70299530029297
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 24",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": false,
+          "shape": "TextBox 24",
+          "slide": 13,
+          "message": "geom diff worst=height=98.96 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 831.1573486328125,
+              "top": 53.46929168701172,
+              "width": 125.12299346923828,
+              "height": 247.39212036132812
+            },
+            "template": {
+              "left": 831.1573486328125,
+              "top": 53.46929168701172,
+              "width": 125.12299346923828,
+              "height": 148.43527221679688
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 98.95684814453125
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 32",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 32",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 20.705591201782227,
+              "top": 8.97220516204834,
+              "width": 578.3627319335938,
+              "height": 29.081260681152344
+            },
+            "template": {
+              "left": 20.705591201782227,
+              "top": 8.97220516204834,
+              "width": 578.3627319335938,
+              "height": 29.081260681152344
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Oval 49",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 49",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 33.652992248535156,
+              "top": 401.8171691894531,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "template": {
+              "left": 33.652992248535156,
+              "top": 401.8171691894531,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 50",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 50",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 26.499134063720703,
+              "top": 421.9656677246094,
+              "width": 125.0,
+              "height": 72.70299530029297
+            },
+            "template": {
+              "left": 26.499134063720703,
+              "top": 421.9656677246094,
+              "width": 125.0,
+              "height": 72.70299530029297
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Rounded Rectangle 53",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Rounded Rectangle 53",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 847.7199096679688,
+              "top": 227.28819274902344,
+              "width": 91.99771881103516,
+              "height": 54.965431213378906
+            },
+            "template": {
+              "left": 847.7199096679688,
+              "top": 227.28819274902344,
+              "width": 91.99771881103516,
+              "height": 54.965431213378906
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Rounded Rectangle 55",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Rounded Rectangle 55",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 848.771240234375,
+              "top": 308.597412109375,
+              "width": 91.99771881103516,
+              "height": 54.965431213378906
+            },
+            "template": {
+              "left": 848.771240234375,
+              "top": 308.597412109375,
+              "width": 91.99771881103516,
+              "height": 54.965431213378906
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Chart 8",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 8",
+          "slide": 13,
+          "message": "geom diff worst=top=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 125.73629760742188,
+              "top": 84.24449157714844,
+              "width": 190.0,
+              "height": 150.0
+            },
+            "template": {
+              "left": 125.73629760742188,
+              "top": 84.24456787109375,
+              "width": 190.0,
+              "height": 150.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 7.62939453125e-05,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Chart 12",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 12",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 405.7362976074219,
+              "top": 106.3216552734375,
+              "width": 224.0665283203125,
+              "height": 98.03874206542969
+            },
+            "template": {
+              "left": 405.7362976074219,
+              "top": 106.3216552734375,
+              "width": 224.0665283203125,
+              "height": 98.03874206542969
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Chart 15",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 15",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 145.2208709716797,
+              "top": 271.0696716308594,
+              "width": 190.0,
+              "height": 98.03905487060547
+            },
+            "template": {
+              "left": 145.2208709716797,
+              "top": 271.0696716308594,
+              "width": 190.0,
+              "height": 98.03905487060547
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Chart 18",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 18",
+          "slide": 13,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 435.91748046875,
+              "top": 267.7123718261719,
+              "width": 190.0,
+              "height": 98.03905487060547
+            },
+            "template": {
+              "left": 435.91748046875,
+              "top": 267.7123718261719,
+              "width": 190.0,
+              "height": 98.03905487060547
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Straight Connector 4",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 4",
+          "slide": 14,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 339.6033935546875,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "template": {
+              "left": 339.6033935546875,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Straight Connector 5",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 5",
+          "slide": 14,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 54.619998931884766,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "template": {
+              "left": 54.619998931884766,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 1",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 1",
+          "slide": 14,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 43.0,
+              "top": 53.0,
+              "width": 250.0,
+              "height": 31.504566192626953
+            },
+            "template": {
+              "left": 43.0,
+              "top": 53.0,
+              "width": 250.0,
+              "height": 31.504566192626953
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 23",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 23",
+          "slide": 14,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 33.61614227294922,
+              "top": 128.15786743164062,
+              "width": 555.527099609375,
+              "height": 134.50062561035156
+            },
+            "template": {
+              "left": 33.61614227294922,
+              "top": 128.15786743164062,
+              "width": 555.527099609375,
+              "height": 134.50062561035156
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 24",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": false,
+          "shape": "TextBox 24",
+          "slide": 14,
+          "message": "geom diff worst=height=98.96 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 831.1573486328125,
+              "top": 53.46929168701172,
+              "width": 125.12299346923828,
+              "height": 247.39212036132812
+            },
+            "template": {
+              "left": 831.1573486328125,
+              "top": 53.46929168701172,
+              "width": 125.12299346923828,
+              "height": 148.43527221679688
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 98.95684814453125
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 26",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 26",
+          "slide": 14,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 34.856693267822266,
+              "top": 306.3117980957031,
+              "width": 554.2865600585938,
+              "height": 189.0279541015625
+            },
+            "template": {
+              "left": 34.856693267822266,
+              "top": 306.3117980957031,
+              "width": 554.2865600585938,
+              "height": 189.0279541015625
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 32",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 32",
+          "slide": 14,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 20.705591201782227,
+              "top": 8.97220516204834,
+              "width": 578.3627319335938,
+              "height": 29.081260681152344
+            },
+            "template": {
+              "left": 20.705591201782227,
+              "top": 8.97220516204834,
+              "width": 578.3627319335938,
+              "height": 29.081260681152344
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 1",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 1",
+          "slide": 13,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Oval 3",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "Oval 3",
+          "slide": 13,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 6",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": false,
+          "shape": "TextBox 6",
+          "slide": 13,
+          "message": "autosize: new=0 template=1",
+          "detail": {
+            "new": 0,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Oval 13",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "Oval 13",
+          "slide": 13,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 14",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": false,
+          "shape": "TextBox 14",
+          "slide": 13,
+          "message": "autosize: new=0 template=1",
+          "detail": {
+            "new": 0,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Oval 16",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "Oval 16",
+          "slide": 13,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 17",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": false,
+          "shape": "TextBox 17",
+          "slide": 13,
+          "message": "autosize: new=0 template=1",
+          "detail": {
+            "new": 0,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Oval 19",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "Oval 19",
+          "slide": 13,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 20",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": false,
+          "shape": "TextBox 20",
+          "slide": 13,
+          "message": "autosize: new=0 template=1",
+          "detail": {
+            "new": 0,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 24",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 24",
+          "slide": 13,
+          "message": "autosize: new=0 template=0",
+          "detail": {
+            "new": 0,
+            "template": 0
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 32",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 32",
+          "slide": 13,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Oval 49",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "Oval 49",
+          "slide": 13,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 50",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": false,
+          "shape": "TextBox 50",
+          "slide": 13,
+          "message": "autosize: new=0 template=1",
+          "detail": {
+            "new": 0,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Rounded Rectangle 53",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": false,
+          "shape": "Rounded Rectangle 53",
+          "slide": 13,
+          "message": "autosize: new=0 template=1",
+          "detail": {
+            "new": 0,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Rounded Rectangle 55",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": false,
+          "shape": "Rounded Rectangle 55",
+          "slide": 13,
+          "message": "autosize: new=0 template=1",
+          "detail": {
+            "new": 0,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 1",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 1",
+          "slide": 14,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 23",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": false,
+          "shape": "TextBox 23",
+          "slide": 14,
+          "message": "autosize: new=0 template=1",
+          "detail": {
+            "new": 0,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 24",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 24",
+          "slide": 14,
+          "message": "autosize: new=0 template=0",
+          "detail": {
+            "new": 0,
+            "template": 0
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 26",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": false,
+          "shape": "TextBox 26",
+          "slide": 14,
+          "message": "autosize: new=0 template=1",
+          "detail": {
+            "new": 0,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 32",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 32",
+          "slide": 14,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        }
+      ]
+    },
+    {
+      "layer": "L3",
+      "passed": 0,
+      "warnings": 0,
+      "tolerated": 0,
+      "must_fix_violations": 0,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [
+        "L3: no rules in contract"
+      ],
+      "findings": []
+    },
+    {
+      "layer": "L4",
+      "passed": 0,
+      "warnings": 5,
+      "tolerated": 0,
+      "must_fix_violations": 0,
+      "degraded": true,
+      "degraded_reason": "无 pipeline trace（path='D:/Technique Support/Claude Code Learning/3rd-ppt-prj/debug/apparel_trace.jsonl'）；L4 规则全部降级为 warn，无法验证 COM 失败 / GPT 调用类暗坑。",
+      "notes": [],
+      "findings": [
+        {
+          "rule_id": "no_silent_com_failure",
+          "layer": "L4",
+          "severity": "warn",
+          "passed": false,
+          "shape": null,
+          "slide": null,
+          "message": "trace 缺失，无法验证 forbidden=['com_api_failed_but_continued']",
+          "detail": {}
+        },
+        {
+          "rule_id": "p14_gpt_strengths_called",
+          "layer": "L4",
+          "severity": "warn",
+          "passed": false,
+          "shape": null,
+          "slide": null,
+          "message": "trace 缺失，无法验证 ['gpt_strengths']",
+          "detail": {}
+        },
+        {
+          "rule_id": "p14_gpt_drawbacks_called",
+          "layer": "L4",
+          "severity": "warn",
+          "passed": false,
+          "shape": null,
+          "slide": null,
+          "message": "trace 缺失，无法验证 ['gpt_drawbacks']",
+          "detail": {}
+        },
+        {
+          "rule_id": "gpt_respondent_info_called",
+          "layer": "L4",
+          "severity": "warn",
+          "passed": false,
+          "shape": null,
+          "slide": null,
+          "message": "trace 缺失，无法验证 gpt_respondent_info 计数",
+          "detail": {}
+        },
+        {
+          "rule_id": "chart63_write_ok",
+          "layer": "L4",
+          "severity": "warn",
+          "passed": false,
+          "shape": null,
+          "slide": null,
+          "message": "trace 缺失，无法验证 ['chart63_write_ok']",
+          "detail": {}
+        }
+      ]
+    },
+    {
+      "layer": "L5",
+      "passed": 1,
+      "warnings": 0,
+      "tolerated": 0,
+      "must_fix_violations": 1,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [],
+      "findings": [
+        {
+          "rule_id": "L5_ssim_p13",
+          "layer": "L5",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": null,
+          "slide": 13,
+          "message": "SSIM=0.9438 (threshold=0.85)",
+          "detail": {
+            "ssim": 0.9437958897063314,
+            "threshold": 0.85,
+            "png_new": "D:\\Technique Support\\Claude Code Learning\\3rd-ppt-prj\\debug\\acceptance-apparel-current-ppt-validate\\visual\\new_012.png",
+            "png_template": "D:\\Technique Support\\Claude Code Learning\\3rd-ppt-prj\\debug\\acceptance-apparel-current-ppt-validate\\visual\\template_013.png"
+          }
+        },
+        {
+          "rule_id": "L5_ssim_p14",
+          "layer": "L5",
+          "severity": "must_fix",
+          "passed": false,
+          "shape": null,
+          "slide": 14,
+          "message": "SSIM=0.6714 (threshold=0.85)",
+          "detail": {
+            "ssim": 0.6713628788120888,
+            "threshold": 0.85,
+            "png_new": "D:\\Technique Support\\Claude Code Learning\\3rd-ppt-prj\\debug\\acceptance-apparel-current-ppt-validate\\visual\\new_013.png",
+            "png_template": "D:\\Technique Support\\Claude Code Learning\\3rd-ppt-prj\\debug\\acceptance-apparel-current-ppt-validate\\visual\\template_014.png"
+          }
+        }
+      ]
+    }
+  ]
+}

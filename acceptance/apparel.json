@@ -1,0 +1,228 @@
+{
+  "_comment_purpose": "apparel 双页（p13/p14）移植后的 PPT 验收契约。由 ppt-acceptance-check skill 消费。规则来源：2026-05-26 apparel-fix4（Chart 63 静默失败 + TextBox 50 mode 取错 + smoke 模式 GPT 漏调）。",
+  "_comment_invocation": "python C:/Users/$USER/.claude/skills/ppt-acceptance-check/ppt_acceptance_check.py --active-new --template template/apparel-page13-14-template.pptx --slide-pairs 12:13,13:14 --contract acceptance/apparel.json --pipeline-trace acceptance/apparel_trace.jsonl --out-dir acceptance/acceptance-apparel/",
+  "_comment_slide_pairs": "Main.py 实际输出位于当前 PPT 第 12/13 页（5-27 实测：当前 PPT 16 页布局，apparel 输出在 12/13；template 快照保留原页号 13/14）。如果 Main.py 流程变更，重新 probe 当前 PPT 确认 apparel 实际页号。",
+  "_comment_trace": "TraceLogger 以 append 模式开 jsonl；跑 acceptance 前先 'Remove-Item acceptance/apparel_trace.jsonl -ErrorAction SilentlyContinue' 清空，否则历史事件会污染 L4 断言。",
+
+  "version": 1,
+
+  "_comment_data_sources": "acceptance/data-apparel.xlsx 是从用户桌面的工作 Excel（20260521 服装试穿报告  紧身背心 2025 数据 v2.2.xlsx）的『服装试穿问卷--紧身背心』sheet 另存出来的单 sheet 快照（acceptance/export_active_sheet.py）。固定路径让 acceptance 不依赖用户桌面文件位置，也避免 skill 误关用户 active workbook。数据更新时重新导出覆盖即可。",
+  "data_sources": {
+    "excel": "acceptance/data-apparel.xlsx"
+  },
+
+  "shape_pairing": {
+    "rules": ["strip_clone_suffix", "ignore_chart_auto_renumber"],
+    "manual_overrides": {}
+  },
+
+  "tolerances": {
+    "geometry_px": 2.0,
+    "ssim_threshold": 0.85,
+    "font_size_pt": 1.0
+  },
+
+  "rules": [
+    {
+      "_comment": "L1 — Chart 63 温度区间 stacked bar 3 系列值必须等于 _calc_chart63_data() 从 Excel 算出的值。fix6-a（2026-05-27）从 chart_series_differs_from_template 切到 chart_series_values + inline expected：当前 data-apparel.xlsx 的 AD/AE 温度列计算恰好等于模板默认 [[5,15],[20,17],[10,3]]，差异检查会误报。inline expected 用 debug/probe_chart63_expected.py 从 data-apparel.xlsx 重算（Excel 变更时重跑）。注意：因 Excel 恰好等于模板默认，此 check 单独无法证明 _write_chart63 真持久化——配套 src 端用 ChartData.Workbook 直写 + cell 回读保证持久化，trace event 'chart63_write_ok' 现在只在 Workbook 回读通过时 emit。",
+      "id": "p13_chart63_temp_range",
+      "shape": "Chart 63",
+      "layer": "L1",
+      "slide": 13,
+      "check": "chart_series_values",
+      "expected": [[5, 15], [20, 17], [10, 3]],
+      "severity": "must_fix"
+    },
+    {
+      "_comment": "L1 — TextBox 50 适宜温度 mode bin 应等于 Excel 列 AD 众数。覆盖 apparel-fix4 第 2 大坑。slide=13 限定只检查 p13。",
+      "id": "p13_temp_mode_label",
+      "shape": "TextBox 50",
+      "layer": "L1",
+      "slide": 13,
+      "check": "text_contains",
+      "expected_from": "excel:服装试穿问卷:AD:mode",
+      "severity": "must_fix"
+    },
+    {
+      "_comment": "L1 — Rounded Rectangle 53 累计跑量 = Excel 列 G 求和。slide=13 限定只检查 p13。",
+      "id": "p13_total_km_label",
+      "shape": "Rounded Rectangle 53",
+      "layer": "L1",
+      "slide": 13,
+      "check": "text_contains",
+      "expected_from": "excel:服装试穿问卷:G:sum",
+      "severity": "must_fix"
+    },
+
+    {
+      "_comment": "L2 — geometry 全局检查，但豁免 TextBox 24（apparel 受试者数>5 时按比例拉长 height，by design；src/apparel_ppt.py:1715-1722）。fix6-c (2026-05-27) 扩 skill 加 excludes 支持。",
+      "id": "geometry_global_apparel",
+      "shape": "*",
+      "layer": "L2",
+      "check": "geometry_within_tolerance",
+      "excludes": ["TextBox 24"],
+      "severity": "must_fix"
+    },
+    {
+      "_comment": "L2 — TextBox 24 几何放宽 tolerance 200px + warn severity（仍然报，但不阻断）。supports 拉长机制 的 visibility。",
+      "id": "p13_textbox24_geometry_relaxed",
+      "shape": "TextBox 24",
+      "layer": "L2",
+      "check": "geometry_within_tolerance",
+      "tolerance": 200,
+      "severity": "warn"
+    },
+    {
+      "_comment": "L2 — autosize 全局检查，默认行为。",
+      "id": "autosize_global_apparel",
+      "shape": "*",
+      "layer": "L2",
+      "check": "autosize_matches_template",
+      "severity": "warn"
+    },
+
+    {
+      "_comment": "L4 — 任何 chart/GPT 写入函数不允许 try/except pass 静默吞错误。这条规则是 apparel-fix4 第 3 大坑（_write_chart63 三次 Activate 失败但代码继续走，series 没写进去）的兜底。",
+      "id": "no_silent_com_failure",
+      "layer": "L4",
+      "check": "no_trace_event",
+      "forbidden_events": ["com_api_failed_but_continued"],
+      "severity": "must_fix"
+    },
+    {
+      "_comment": "L4 — p14 GPT strengths bullet 必须被调用（生产模式）。smoke 模式下 mc_gpt=n 走 fallback，由 modes.smoke.rule_overrides 豁免。",
+      "id": "p14_gpt_strengths_called",
+      "layer": "L4",
+      "check": "trace_event_present",
+      "expected_events": ["gpt_strengths"],
+      "severity": "must_fix"
+    },
+    {
+      "_comment": "L4 — p14 GPT drawbacks bullet 同上。",
+      "id": "p14_gpt_drawbacks_called",
+      "layer": "L4",
+      "check": "trace_event_present",
+      "expected_events": ["gpt_drawbacks"],
+      "severity": "must_fix"
+    },
+    {
+      "_comment": "L4 — p13/p14 共享的 GPT 受试者信息槽。允许 p14 复用 p13 已生成的 shared_info（只调一次），但至少要调一次。",
+      "id": "gpt_respondent_info_called",
+      "layer": "L4",
+      "check": "trace_event_count",
+      "event": "gpt_respondent_info",
+      "min_count": 1,
+      "max_count": 2,
+      "severity": "must_fix"
+    },
+    {
+      "_comment": "L4 — Chart 63 写入应该全程成功 (shape_write_end ok=true)，没有 com_api_failed_but_continued。这条与 no_silent_com_failure 协同：前者全局禁、后者补充正面要求。",
+      "id": "chart63_write_ok",
+      "layer": "L4",
+      "check": "trace_event_present",
+      "expected_events": ["chart63_write_ok"],
+      "severity": "must_fix"
+    },
+
+    {
+      "_comment": "L3 — 评分标签 TextBox 6/14/17/20/50 模板格式：2-run（标题黑 size20 / 数值红 0xff size16 or 14）。v3 退化成 1-run 全黑 size20 说明 _write_text 没用模板原 run 结构。这 5 条用 runs_match_template + 默认 dims=(rgb,bold,size) 严格对照。",
+      "id": "p13_textbox6_runs",
+      "shape": "TextBox 6",
+      "layer": "L3",
+      "slide": 13,
+      "check": "runs_match_template",
+      "severity": "must_fix"
+    },
+    {
+      "id": "p13_textbox14_runs",
+      "shape": "TextBox 14",
+      "layer": "L3",
+      "slide": 13,
+      "check": "runs_match_template",
+      "severity": "must_fix"
+    },
+    {
+      "id": "p13_textbox17_runs",
+      "shape": "TextBox 17",
+      "layer": "L3",
+      "slide": 13,
+      "check": "runs_match_template",
+      "severity": "must_fix"
+    },
+    {
+      "id": "p13_textbox20_runs",
+      "shape": "TextBox 20",
+      "layer": "L3",
+      "slide": 13,
+      "check": "runs_match_template",
+      "severity": "must_fix"
+    },
+    {
+      "id": "p13_textbox50_runs",
+      "shape": "TextBox 50",
+      "layer": "L3",
+      "slide": 13,
+      "check": "runs_match_template",
+      "severity": "must_fix"
+    },
+
+    {
+      "_comment": "L3 — RR 53/55 今日（2026-05-28）视觉升级：同 shape 多字号 + 多颜色，由 _write_two_run_label 落实。**不能用 runs_match_template**：模板 RR 53/55 仍是旧样式（20pt 黑 + 16pt 红 / 20pt 黑单段），与目标态不同；template 比对会把'代码根本没调 _write_two_run_label'和'代码改对了'都算 PASS（即'shape 名错位'类暗坑——契约盲区）。用 runs_match_signature 显式声明升级后期望（11pt 白 + 24pt 白，bold=-1）。dims=[rgb,bold,size]，ignore_whitespace_runs=true（过滤跨段 \\r 字符）。如果 apparel_ppt.py 没跑 / 没改 / shape 名错位 → 实际 size 不会是 11+24 → 必修挂红。",
+      "id": "p13_rr53_two_run_signature",
+      "shape": "Rounded Rectangle 53",
+      "layer": "L3",
+      "slide": 13,
+      "check": "runs_match_signature",
+      "expected_runs": [
+        {"rgb": 16777215, "bold": -1, "size": 11.0},
+        {"rgb": 16777215, "bold": -1, "size": 24.0}
+      ],
+      "severity": "must_fix"
+    },
+    {
+      "_comment": "L3 — RR 55 同段 2-run 升级（11pt 白 + 24pt 白）。与 RR 53 区别是单段落（PARAGRAPHS=1），_walk_runs 按 size 切出 2 个 run，签名一致。RR 55 旧版同段 2 run **同样式**能蒙过 runs_match_template（模板也是同样式），这条签名是唯一抓手。",
+      "id": "p13_rr55_two_run_signature",
+      "shape": "Rounded Rectangle 55",
+      "layer": "L3",
+      "slide": 13,
+      "check": "runs_match_signature",
+      "expected_runs": [
+        {"rgb": 16777215, "bold": -1, "size": 11.0},
+        {"rgb": 16777215, "bold": -1, "size": 24.0}
+      ],
+      "severity": "must_fix"
+    },
+
+    {
+      "_comment": "L3 — p14 GPT bullet 模板格式：3 种 rgb（标题深色 + 正文黑 + 关键词色），关键词 bold。fix5 抓出 _apply_keyword_color 的 bold/title 色 bug，已修。fix6 现在剩下的 diff 是 GPT 输出的【】关键词数量浮动导致 run 总数与模板不严格一致——这是 free-form GPT 内容的固有变异，rgb/bold/size pattern 仍是正确的，因此 must_fix → warn（结构性 bug 已抓完，count 差异留作可见 warn 但不阻断）。smoke 模式仍豁免。",
+      "id": "p14_textbox23_runs",
+      "shape": "TextBox 23",
+      "layer": "L3",
+      "slide": 14,
+      "check": "runs_match_template",
+      "severity": "warn"
+    },
+    {
+      "_comment": "L3 — TextBox 26 同上，且模板末尾'建议改为...'句子是 size 16 结构性强调。fix6-b 在 _apply_apparel_bullet_color 加 bump_last_para_size=16；GPT 输出最后一行 size 16 已生效。剩余 run 数差异同样来自 GPT 关键词数量浮动，warn。",
+      "id": "p14_textbox26_runs",
+      "shape": "TextBox 26",
+      "layer": "L3",
+      "slide": 14,
+      "check": "runs_match_template",
+      "severity": "warn"
+    }
+  ],
+
+  "modes": {
+    "smoke": {
+      "_comment": "smoke 模式（mc_gpt=n）下 GPT 槽位本来就走 fallback，不算 bug，全部豁免。L3 run 结构也豁免，因为 fallback 文本不会被 _apply_keyword_color 染色。",
+      "rule_overrides": {
+        "p14_gpt_strengths_called": "tolerate",
+        "p14_gpt_drawbacks_called": "tolerate",
+        "gpt_respondent_info_called": "tolerate",
+        "p14_textbox23_runs": "tolerate",
+        "p14_textbox26_runs": "tolerate"
+      }
+    }
+  }
+}

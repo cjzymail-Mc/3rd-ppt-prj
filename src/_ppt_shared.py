@@ -88,18 +88,26 @@ def _find_col(headers: List[str], keywords: List[str]) -> Optional[str]:
     return None
 
 
-def _classify_columns(headers: List[str], rows: List[List[Any]]
+def _classify_columns(headers: List[str], rows: List[List[Any]],
+                      extra_skip_keywords: Optional[List[str]] = None,
                       ) -> Tuple[List[str], List[str]]:
     """Dynamically classify columns into score (numeric) and text (feedback).
 
     Score columns: >70% of data rows have numeric values in 0-10 range.
     Text columns:  >30% of data rows have string values longer than 5 chars.
+
+    Args:
+        extra_skip_keywords: per-template additional skip keywords; merged into
+            the default _SKIP_KEYWORDS set. Used by apparel to filter new
+            metadata cols (data_id / 提交时间 / 三围 / 温度...) that would
+            otherwise be misclassified as text feedback. See fix3.
     """
     name_col = _find_col(headers, _NAME_KEYWORDS)
     weight_col = _find_col(headers, _WEIGHT_KEYWORDS)
+    extra = list(extra_skip_keywords or [])
     skip_cols = {name_col, weight_col} | {
         h for h in headers
-        if any(kw in h for kw in _SKIP_KEYWORDS)
+        if any(kw in h for kw in (_SKIP_KEYWORDS + extra))
     }
 
     score_cols, text_cols = [], []

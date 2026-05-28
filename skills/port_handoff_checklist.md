@@ -109,8 +109,8 @@ def _build_rich_prompt(...):
 ### 验证
 - [ ] `python -c "import ast; ast.parse(open('src/{template}_ppt.py').read())"` 语法通过
 - [ ] `python src/{template}_ppt.py` 单页调试跑通（需先打开 Excel）
-- [ ] 在 `debug/test_src_smoke.py` 加 `_smoke_{template}()` 函数
-- [ ] 跑 `python debug/test_src_smoke.py` 全通
+- [ ] 在 `src/{template}_ppt.py` `__main__` 块加单页 smoke
+- [ ] 跑 `python src/{template}_ppt.py` 全通（需 Excel + PPT 打开）
 
 ---
 

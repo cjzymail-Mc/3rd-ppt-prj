@@ -1,0 +1,601 @@
+{
+  "verdict": "PASS",
+  "mode": "production",
+  "contract": "acceptance/apparel.json",
+  "slide_pairs": [
+    "9:13"
+  ],
+  "summary": {
+    "must_fix": 0,
+    "warn": 2,
+    "tolerated": 0
+  },
+  "args": {
+    "new": "<active>",
+    "template": "template/apparel-page13-14-template.pptx",
+    "layers": [
+      "L0",
+      "L3"
+    ],
+    "pipeline_trace": ""
+  },
+  "layers": [
+    {
+      "layer": "L0",
+      "passed": 22,
+      "warnings": 2,
+      "tolerated": 0,
+      "must_fix_violations": 0,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [],
+      "findings": [
+        {
+          "rule_id": "L0_pair_Chart 63",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 63",
+          "slide": 13,
+          "message": "Chart 63 ↔ Chart 63 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Straight Connector 4",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 4",
+          "slide": 13,
+          "message": "Straight Connector 4 ↔ Straight Connector 4 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Straight Connector 5",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 5",
+          "slide": 13,
+          "message": "Straight Connector 5 ↔ Straight Connector 5 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 1",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 1",
+          "slide": 13,
+          "message": "TextBox 1 ↔ TextBox 1 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 3",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 3",
+          "slide": 13,
+          "message": "Oval 3 ↔ Oval 3 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 6",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 6",
+          "slide": 13,
+          "message": "TextBox 6 ↔ TextBox 6 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 13",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 13",
+          "slide": 13,
+          "message": "Oval 13 ↔ Oval 13 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 14",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 14",
+          "slide": 13,
+          "message": "TextBox 14 ↔ TextBox 14 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 16",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 16",
+          "slide": 13,
+          "message": "Oval 16 ↔ Oval 16 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 17",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 17",
+          "slide": 13,
+          "message": "TextBox 17 ↔ TextBox 17 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 19",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 19",
+          "slide": 13,
+          "message": "Oval 19 ↔ Oval 19 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 20",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 20",
+          "slide": 13,
+          "message": "TextBox 20 ↔ TextBox 20 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 24",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 24",
+          "slide": 13,
+          "message": "TextBox 24 ↔ TextBox 24 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 32",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 32",
+          "slide": 13,
+          "message": "TextBox 32 ↔ TextBox 32 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 49",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 49",
+          "slide": 13,
+          "message": "Oval 49 ↔ Oval 49 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 50",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 50",
+          "slide": 13,
+          "message": "TextBox 50 ↔ TextBox 50 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Rounded Rectangle 53",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Rounded Rectangle 53",
+          "slide": 13,
+          "message": "Rounded Rectangle 53 ↔ Rounded Rectangle 53 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Rounded Rectangle 55",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Rounded Rectangle 55",
+          "slide": 13,
+          "message": "Rounded Rectangle 55 ↔ Rounded Rectangle 55 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 8",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 8",
+          "slide": 13,
+          "message": "Chart 8 ↔ Chart 7 via ignore_chart_auto_renumber(dist=0.0)",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 12",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 12",
+          "slide": 13,
+          "message": "Chart 12 ↔ Chart 9 via ignore_chart_auto_renumber(dist=0.0)",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 15",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 15",
+          "slide": 13,
+          "message": "Chart 15 ↔ Chart 10 via ignore_chart_auto_renumber(dist=0.0)",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 18",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 18",
+          "slide": 13,
+          "message": "Chart 18 ↔ Chart 11 via ignore_chart_auto_renumber(dist=0.0)",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_only_new_Rounded Rectangle 2",
+          "layer": "L0",
+          "severity": "warn",
+          "passed": false,
+          "shape": "Rounded Rectangle 2",
+          "slide": 13,
+          "message": "仅在 new 中：Rounded Rectangle 2（template 无对应 shape）",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_only_new_Rounded Rectangle 7",
+          "layer": "L0",
+          "severity": "warn",
+          "passed": false,
+          "shape": "Rounded Rectangle 7",
+          "slide": 13,
+          "message": "仅在 new 中：Rounded Rectangle 7（template 无对应 shape）",
+          "detail": {}
+        }
+      ]
+    },
+    {
+      "layer": "L3",
+      "passed": 7,
+      "warnings": 0,
+      "tolerated": 0,
+      "must_fix_violations": 0,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [],
+      "findings": [
+        {
+          "rule_id": "p13_textbox6_runs::TextBox 6",
+          "layer": "L3",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 6",
+          "slide": 13,
+          "message": "runs structure (dims=['rgb', 'bold', 'italic', 'size']): new=2 runs vs template=2 runs",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "italic",
+              "size"
+            ],
+            "new_seq": [
+              [
+                0,
+                -1,
+                0,
+                20.0
+              ],
+              [
+                255,
+                -1,
+                0,
+                16.0
+              ]
+            ],
+            "template_seq": [
+              [
+                0,
+                -1,
+                0,
+                20.0
+              ],
+              [
+                255,
+                -1,
+                0,
+                16.0
+              ]
+            ]
+          }
+        },
+        {
+          "rule_id": "p13_textbox14_runs::TextBox 14",
+          "layer": "L3",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 14",
+          "slide": 13,
+          "message": "runs structure (dims=['rgb', 'bold', 'italic', 'size']): new=2 runs vs template=2 runs",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "italic",
+              "size"
+            ],
+            "new_seq": [
+              [
+                0,
+                -1,
+                0,
+                20.0
+              ],
+              [
+                255,
+                -1,
+                0,
+                14.0
+              ]
+            ],
+            "template_seq": [
+              [
+                0,
+                -1,
+                0,
+                20.0
+              ],
+              [
+                255,
+                -1,
+                0,
+                14.0
+              ]
+            ]
+          }
+        },
+        {
+          "rule_id": "p13_textbox17_runs::TextBox 17",
+          "layer": "L3",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 17",
+          "slide": 13,
+          "message": "runs structure (dims=['rgb', 'bold', 'italic', 'size']): new=2 runs vs template=2 runs",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "italic",
+              "size"
+            ],
+            "new_seq": [
+              [
+                0,
+                -1,
+                0,
+                20.0
+              ],
+              [
+                255,
+                -1,
+                0,
+                16.0
+              ]
+            ],
+            "template_seq": [
+              [
+                0,
+                -1,
+                0,
+                20.0
+              ],
+              [
+                255,
+                -1,
+                0,
+                16.0
+              ]
+            ]
+          }
+        },
+        {
+          "rule_id": "p13_textbox20_runs::TextBox 20",
+          "layer": "L3",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 20",
+          "slide": 13,
+          "message": "runs structure (dims=['rgb', 'bold', 'italic', 'size']): new=2 runs vs template=2 runs",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "italic",
+              "size"
+            ],
+            "new_seq": [
+              [
+                0,
+                -1,
+                0,
+                20.0
+              ],
+              [
+                255,
+                -1,
+                0,
+                16.0
+              ]
+            ],
+            "template_seq": [
+              [
+                0,
+                -1,
+                0,
+                20.0
+              ],
+              [
+                255,
+                -1,
+                0,
+                16.0
+              ]
+            ]
+          }
+        },
+        {
+          "rule_id": "p13_textbox50_runs::TextBox 50",
+          "layer": "L3",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 50",
+          "slide": 13,
+          "message": "runs structure (dims=['rgb', 'bold', 'italic', 'size']): new=2 runs vs template=2 runs",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "italic",
+              "size"
+            ],
+            "new_seq": [
+              [
+                0,
+                -1,
+                0,
+                20.0
+              ],
+              [
+                255,
+                -1,
+                0,
+                16.0
+              ]
+            ],
+            "template_seq": [
+              [
+                0,
+                -1,
+                0,
+                20.0
+              ],
+              [
+                255,
+                -1,
+                0,
+                16.0
+              ]
+            ]
+          }
+        },
+        {
+          "rule_id": "p13_rr53_two_run_signature::Rounded Rectangle 53",
+          "layer": "L3",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Rounded Rectangle 53",
+          "slide": 13,
+          "message": "runs signature (dims=['rgb', 'bold', 'size'], ignore_ws=True): new=2 runs vs expected=2 runs",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "new_seq": [
+              [
+                16777215,
+                -1,
+                11.0
+              ],
+              [
+                16777215,
+                -1,
+                24.0
+              ]
+            ],
+            "expected_seq": [
+              [
+                16777215,
+                -1,
+                11.0
+              ],
+              [
+                16777215,
+                -1,
+                24.0
+              ]
+            ],
+            "new_runs_text": [
+              "累计跑量km\r",
+              "465"
+            ]
+          }
+        },
+        {
+          "rule_id": "p13_rr55_two_run_signature::Rounded Rectangle 55",
+          "layer": "L3",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Rounded Rectangle 55",
+          "slide": 13,
+          "message": "runs signature (dims=['rgb', 'bold', 'size'], ignore_ws=True): new=2 runs vs expected=2 runs",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "new_seq": [
+              [
+                16777215,
+                -1,
+                11.0
+              ],
+              [
+                16777215,
+                -1,
+                24.0
+              ]
+            ],
+            "expected_seq": [
+              [
+                16777215,
+                -1,
+                11.0
+              ],
+              [
+                16777215,
+                -1,
+                24.0
+              ]
+            ],
+            "new_runs_text": [
+              "定位日常训练",
+              "4/4"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

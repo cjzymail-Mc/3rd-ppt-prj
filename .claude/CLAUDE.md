@@ -1,5 +1,8 @@
 # CLAUDE.md - PPT Pipeline 项目规范
 
+> 📌 项目状态 / 变更日志 / 当前 feature 进度 / 近期决定 → 见 [STATE.md](../STATE.md)。
+> 本文件 = 不可变契约（硬规则 / 目录骨架 / 命令表 / 跨场景约束），章节号 §0-§6 稳定不变。
+
 ## 0. 防卡顿规范
 
 - 同一方案连续失败 2 次 → 停下来说明原因，提出替代方案
@@ -13,7 +16,7 @@
 | 接到涉及 COM / OLE / 模板 / 分发的 bug | **第一步 grep 项目看有没有已解决同类问题的生产代码**，不是第一步改代码 |
 | 用户用"我们之前约定"开头 | **立刻问"这个约定是在什么假设下达成的？当前场景假设还成立吗？"**——区分偏好 vs 硬需求 |
 | 同一技术类别连续失败 2 次 | **停下来写 3 个候选路线**，不要再换变体继续第 3 次尝试 |
-| 用户提"我选中的 / 我当前打开的 / 屏幕上的 X" | **先 `Glob skills/read_* debug/read_*`**，找现成桥接工具直接跑（如 `skills/read_selected_shape.py`），**禁止凭"默认 Claude 能力边界"先否认**。本项目通过 win32com `GetActiveObject` 桥接到正在运行的 Office，是有完整能力读取实时状态的 |
+| 用户提"我选中的 / 我当前打开的 / 屏幕上的 X" | **先 `Glob skills/read_*`**，找现成桥接工具直接跑（如 `skills/read_selected_shape.py`），**禁止凭"默认 Claude 能力边界"先否认**。本项目通过 win32com `GetActiveObject` 桥接到正在运行的 Office，是有完整能力读取实时状态的 |
 
 详见 `.claude/memory/feedback_debug_protocol.md`（7 步流程 + 4 条具体错误复盘）。
 
@@ -105,6 +108,9 @@
 - `(2026-04 apparel-fix1 BMI)` 100KG/1cm 等单位混淆，粗修 m→cm + 斤→kg 后用 `BMI∈[16,32]` 交叉验证识别误填 → `.claude/memory/feedback_unit_normalize_bmi.md`
 - `(2026-04 fix4 chart 引用)` Copy/Delete 走 `worksheet.charts.add()` 对象引用，不走 `Range.Select+Selection`；后者强依赖 ActiveWindow/视口/选中态 → `.claude/memory/feedback_chart_write.md`
 - `(2026-04 apparel GPT 槽)` `style_anchor` 用 `_STYLE_REFERENCE_CORPUS`（专业语料）；`fallback_map` 只作 GPT 失败兜底；两槽位职责互不污染 → `src/apparel_ppt.py:_STYLE_REFERENCE_CORPUS`
+- `(2026-05 fix3 chart 三连)` chart `set_source_data` range **禁用** `mc_cell.api.CurrentRegion` / `expand("table"|"down"|"right")`（多模块共享 sheet 时被残留数据污染：series.name 变跑者名 / 多吃一条 "Alisa: 4" bar）；用显式 size，caller 传 `n_rows`/`n_cols`；OLE 粘贴后加 `chart.ChartData.BreakLink()`（≠ `CutCopyMode=False`）→ `.claude/memory/feedback_chart_write.md` + `[feature03-transplant-II Apparel]/fix3（新问卷10人+适配）.md` §7-10
+- `(2026-05 apparel-fix4 复盘 / 2026-05-27 责任拆分 + 首战)` developer agent 涉及 PPT 输出形态的移植 / 修复，**developer 负责落前置**（接 `TraceLogger` 标准 event 名 → `acceptance/{name}_trace.jsonl`、确认 `acceptance/{name}.json` 存在、PPT 开着、smoke 前清 trace），**主 Claude 编排者负责跑验收**（Bash 跑 `ppt-acceptance-check` skill L0+L1+L3+L4 + 判读 report + must_fix=0 才放行）。结构性 4 件清单（import / Main.py / smoke / `__main__`）查不到 chart silent failure / TextBox 取错 / GPT 漏调。**developer 4 禁**：①不跑 acceptance-check ②不改 contract ③不自创 trace event 名 ④不 hardcode 期望值"回读自证"（5-27 下午首战发现红旗 4：回读 `series.Values[0] == hardcode 5.0` 恰好等于模板默认值伪装通过）。**主 Claude 反射**：L4 类 `*_write_ok` PASS 必须用 L1 `chart_series_differs_from_template` / `text_contains expected_from: excel:` 交叉验证；developer 第二轮回报后必 `git diff` 看新增"验证"逻辑里有没有 hardcode 常量。详细路线见 `plan-acceptance-gate-split-2026-05-27.md` → `.claude/memory/feedback_acceptance_gate.md`
+- `(2026-05-28 acceptance 盲区 红旗 5)` `runs_match_template` 在"模板=旧 / 代码=新"场景假 PASS（把"代码没动 shape"和"代码改对了"都算过）；同 shape 多字号/多颜色这类视觉升级类断言改用 `runs_match_signature` + 内嵌 `expected_runs`；`expected_runs` 取数走 `inspect-ppt-template --active --slides N --full`，禁代码内 hardcode 回读自证 → `.claude/memory/feedback_acceptance_gate.md`
 
 ---
 
@@ -132,6 +138,7 @@ python src/zxh_ppt.py     # zxh 单页调试（需先打开 Excel）
 | `src/zxh_ppt.py` | 之行模板：Clone Slide 17（含 p1p2 模式 + `__main__` 单页调试） |
 | `src/_ppt_shared.py` | 共享工具模块（已建立，消除 yzr/zxh 重复） |
 | `Main.py` | src/ 生产入口（1055行） |
+| `acceptance/{name}.json` | PPT 自动验收契约（ppt-acceptance-check skill 消费；apparel 范式见 `acceptance/apparel.json`） |
 
 ---
 
@@ -139,6 +146,7 @@ python src/zxh_ppt.py     # zxh 单页调试（需先打开 Excel）
 
 | 主题 | 位置 |
 |------|------|
+| 项目状态 / 变更日志 / 近期决定 | [STATE.md](../STATE.md) |
 | Step1/2/3 Agent 定义 | `.claude/agents/step1-analyzer.md` 等 |
 | Developer 移植规范 + Checklist | `.claude/agents/developer.md` |
 | COM 开发规范 | `.claude/memory/feedback_com_constraints.md` |
@@ -148,3 +156,7 @@ python src/zxh_ppt.py     # zxh 单页调试（需先打开 Excel）
 | Shape 微调工作流 + 调试入口 | `skills/fine-tuned-shapes.md` |
 | 3 账号 auto-memory junction 架构 | `.claude/memory/reference_3account_junction.md` |
 | 3 账号 junction 移植方案（新项目/新机器复用） | `skills/memory-junction-3account.md` |
+
+---
+
+> 🔗 **历史档案旧引用兜底**：debug-*/plan-*/fix-* 等凝固态档案里出现的 `CLAUDE.md §N 变更记录` / `CLAUDE.md §5 变更记录加 1 行` 这类指令，自 2026-05-26 起统一重定向到 [STATE.md §1 变更日志](../STATE.md#1-变更日志)。§0-§6 章节号本身未动。

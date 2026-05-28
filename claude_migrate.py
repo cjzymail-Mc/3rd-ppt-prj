@@ -33,9 +33,13 @@ ACCOUNTS = {
 # 工具函数
 # ============================================================
 def detect_project_name():
-    """根据脚本所在目录自动推断 Claude 项目文件夹名称"""
+    """根据脚本所在目录自动推断 Claude 项目文件夹名称。
+
+    Claude Code 把所有非 [A-Za-z0-9-] 的字符（含 : \\ / 空格 [ ] + 等）替换成 `-`，
+    连续特殊字符会变成多个连续短横线（如 `]-` → `--`）。
+    """
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    name = script_dir.replace(":", "-").replace("\\", "-").replace("/", "-").replace(" ", "-")
+    name = re.sub(r"[^A-Za-z0-9-]", "-", script_dir)
     return name.rstrip("-")
 
 

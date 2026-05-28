@@ -47,7 +47,7 @@ Last updated: 2026-04-16
 - 确认 clone 页码 + shape清单
 - 复用 Pipeline prompt 结果，不手工散落重写
 - `Main.py` 中接入模板选择与调用
-- 至少跑一次 `debug/test_src_smoke.py`（如存在）+ 端到端验证
+- 至少跑一次 `python src/{name}_ppt.py`（__main__ 入口）+ 端到端验证
 
 ## 6. fix2 执行优先级（精简）
 1. 先清理陈旧引用（`codex_ppt.py -> yzr_ppt.py`）

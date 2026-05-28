@@ -119,7 +119,8 @@ from src.Class_030 import *
 from src.Function_030 import *
 from src.yzr_ppt import make_codex_slide
 from src.zxh_ppt import make_zxh_slide
-from src.apparel_ppt import make_apparel_slide
+from src.apparel_ppt import make_apparel_slide  # DEPRECATED 2026-05-26：旧 12 页布局
+from src.apparel_ppt import make_apparel_p13_slide, make_apparel_p14_slide
 # plan4 + todays-task：6.3 结论页所需共享工具
 #   - _apply_conclusion_color：按 <>/[]/() 括号类型染色（优点红 / 缺点蓝 / 建议仅粗体）
 #   - _strip_bullet_on_section_headers：段头【XX】去 ■ bullet
@@ -146,6 +147,8 @@ mc_model = ask_gpt_model()
 
 if mc_model !='n':
     mc_gpt = 'y'   #如果选择了模型，那么就启用 GPT
+else:
+    mc_gpt = 'n'   # 不启用 GPT，后续所有 GPT 分析步骤跳过
 
 
 delay = 2
@@ -818,7 +821,8 @@ if mc_gpt == 'y' and mc_sht is not None:
 
 
 # 【5.6】Claude / Codex 移植模板 —— —— —— 分析页：高保真评测汇总
-if mc_sht is not None:
+# 不启用 GPT 时跳过整段（分析页依赖 GPT，无 GPT 也就无需弹窗选模板）
+if mc_sht is not None and mc_gpt == 'y':
     template_choice = ask_template_choice()
     if template_choice == "zxh":
         mc_slide = make_zxh_slide(
@@ -826,7 +830,12 @@ if mc_sht is not None:
             mc_gpt=mc_gpt, mc_model=mc_model,
         )
     elif template_choice == "apparel":
-        mc_slide = make_apparel_slide(
+        # 双页移植 2026-05-26：生成 page 13（数据图表型）+ page 14（文字 bullet 型）
+        mc_slide = make_apparel_p13_slide(
+            mc_sht, mc_ppt, mc_slide, sample_name,
+            mc_gpt=mc_gpt, mc_model=mc_model,
+        )
+        mc_slide = make_apparel_p14_slide(
             mc_sht, mc_ppt, mc_slide, sample_name,
             mc_gpt=mc_gpt, mc_model=mc_model,
         )

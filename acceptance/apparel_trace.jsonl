@@ -1,0 +1,4 @@
+{"ts": "2026-05-28T10:45:43", "event": "p13_rewrite_start", "slide_index": 9, "sample": "跑步服装试穿问卷——下装 梭织短裤", "gpt_enabled": false}
+{"ts": "2026-05-28T10:45:44", "event": "gpt_respondent_info", "called": false, "reason": "mc_gpt=n"}
+{"ts": "2026-05-28T10:45:46", "event": "chart63_write_ok", "shape": "Chart 63", "s1": [5, 15], "s2": [20, 15], "s3": [10, 5]}
+{"ts": "2026-05-28T10:45:47", "event": "p13_end", "slide_index": 9}

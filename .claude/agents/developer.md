@@ -17,6 +17,13 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 **条件触发**：当 Reviewer 诊断出 `fix_type: code` 时介入，修复 pipeline Python 代码。
 也可由用户直接指定执行移植/嵌入任务。
 
+**职责边界（2026-05-27 调整，避免自审利益冲突）**：
+- ✅ 改代码 / 移植 / 接 Main.py / 跑 smoke / 落 trace（`acceptance/{name}_trace.jsonl`）
+- ❌ **不跑 `ppt-acceptance-check` 验收**：把控制权交回主 Claude（编排者），由主 Claude 自己 Bash 跑 skill + 判读 report
+- ❌ **不改 `acceptance/*.json` 契约**：契约由主 Claude 维护；如发现契约本身有 bug，停下报告，不要顺手改
+
+为什么这样切：2026-05-26 apparel-fix4 实战中，developer 自跑自审通过了 must_fix=0，但用了「contract hardcode 模板默认值 + trace event 改名绕开 forbidden_events」两种绕道手段。skill 层无防自审护栏（详见根目录 `plan-acceptance-gate-split-2026-05-27.md`），所以验收必须由「不写代码的人」执行。
+
 ## 触发场景
 
 ### 场景 1: 修复 pipeline 代码缺陷
@@ -165,8 +172,8 @@ Developer 工作:
                                      mc_gpt=mc_gpt, mc_model=mc_model)
      ─ 同时在 ask_template_choice() 弹窗按钮列表中加入新选项 "{name}"
      ─ 参考 apparel 接入位置（Main.py:828-832）作为最近模板对照
-  □ 跑冒烟测试：python debug/test_src_smoke.py
-     → 在 test_src_smoke.py 里为新模板增加 _smoke_{template}()
+  □ 跑冒烟测试：python src/{name}_ppt.py（__main__ 入口，需 Excel + PPT 打开）
+     → 单页跑通 + acceptance/{name}_trace.jsonl 落盘新事件
   □ 语法检查 + 至少 1 次端到端运行验证
 
 不需要 Developer 做:
@@ -309,23 +316,68 @@ src/
 
 ---
 
+## Trace 落盘要求（验收前置依赖，必须做）
+
+> **本节是 2026-05-27 拆分后 developer 的唯一验收相关责任**：你**不跑** acceptance-check，但你必须把验收所需的 trace 数据落到 `acceptance/{name}_trace.jsonl`，让主 Claude 跑 skill 时有素材可读。2026-05-26 apparel 双页移植事故复盘——4 件产物清单全部通过（import OK / Main.py 接入 / smoke 跑通），但 Chart 63 `ChartData.Activate` 失败 3 次代码继续走，series 留模板默认值；TextBox 50 温度 mode 取错；smoke 用 `mc_gpt=n` 走 fallback 又掩盖了 GPT 槽位的真实表现。这些暗坑在 trace 里都有迹可循，前提是你把 trace 接对了。
+
+### 触发条件
+
+| 任务类型 | 是否必须接 trace |
+|---|---|
+| 场景 2 新模板移植 | ✅ 必须 |
+| 场景 1 修复且改动了 SHAPES 列表 / `_write_*` / `_calc_*` / prompt / Main.py 接入分支 | ✅ 必须 |
+| 场景 1 修复但只动 `Function_030.py` 的非 PPT 输出路径（如 GPT 重试、Excel 列名容错） | ✗ 可豁免 |
+| 场景 1 修复但只动 `_ppt_shared.py` 的工具函数且不影响输出形态 | ✗ 可豁免 |
+
+判断标准一句话：**这次改动有没有可能让 PPT 输出的 L1 数据 / L4 行为 / L5 视觉发生变化？** 有 → 必须接 trace。
+
+### Trace 接法（参照 apparel 范式）
+
+所有 chart 写入函数、所有 GPT 调用必须用 `office-com-helpers.TraceLogger` 落 jsonl：
+
+- 模块顶部：`_TRACE = None`（默认 no-op）；提供 `_trace_event(name, **fields)` helper
+- 公开 API（如 `make_apparel_p13_slide`）加 `trace_path: str | None = None` kwarg；非 None 时初始化 TraceLogger
+- 关键事件**用标准名**（不要自创）：
+  - `com_api_failed_but_continued` — chart Activate / 任何 COM 调用静默失败时
+  - `{shape_or_role}_write_ok` — 写入成功
+  - `gpt_{role}` — GPT 调用（role 如 strengths/drawbacks/respondent_info）
+- 参考实现：`src/apparel_ppt.py` 的 `_TRACE` / `_call_gpt` / `_write_chart63`
+
+⚠️ **不准擅自给 event 改名以"让规则过"**——event 名是契约的一部分，由主 Claude 维护。若你认为现有 event 名不准确，停下报告，让主 Claude 决定是否更新契约。
+
+### 交付前你要落的 3 件准备（给主 Claude 验收用）
+
+| # | 产物 | 你的责任 |
+|---|---|---|
+| 1 | `acceptance/{name}_trace.jsonl` 接通 | 在 `_write_*` / `_call_gpt` 里加 `_trace_event(...)` 调用；测一遍单页跑能落出 jsonl |
+| 2 | `acceptance/{name}.json` 契约存在 | 已有就用；新模板第一次跑且契约不存在 → **停下报告**，让主 Claude 起最小契约，不要自己造 |
+| 3 | PPT 已生成一份（开着） | `python Main.py` 全流程 / `__main__` 单页 / `mc_gpt=y` 真调（要测 L4 GPT 槽位）—— 任一即可 |
+
+完成上述 3 件 → 在回报里告诉主 Claude「trace 已落到 X 路径，PPT 还开着，acceptance 你跑」，**不要自己 Bash 跑 `ppt-acceptance-check.py`**。
+
+---
+
 ## 交付清单（移植任务完成后向用户回报前自检）
 
-仅当**移植任务**（场景 2）完成时使用——向用户回报"已交付"之前**必须**确认 4 件产物：
+仅当**移植任务**（场景 2）完成时使用——向用户回报"已交付"之前**必须**确认 5 件产物（其中第 5 件是验收**前置**，不是验收**通过**）：
 
 1. ✅ `src/{name}_ppt.py` 已创建：`python -c "import src.{name}_ppt"` 通过（无 ImportError / SyntaxError）
 2. ✅ `Main.py` 按钮分支已接入：第 822-837 行 elif 分支语法正确，`ask_template_choice()` 弹窗含新选项
 3. ✅ `__main__` 调试块存在：独立运行 `python src/{name}_ppt.py`（前提 Excel + PPT 已打开）能启动且不立即崩溃
-4. ✅ 冒烟测试通过：`python debug/test_src_smoke.py` 含 `_smoke_{name}()` 且通过；或一次端到端跑通
+4. ✅ 冒烟测试通过：`python src/{name}_ppt.py`（__main__ 入口）跑通 + trace 落盘；或一次端到端 `python Main.py` 跑通
+5. ✅ **验收前置已就绪**：`acceptance/{name}.json` 契约存在 + `acceptance/{name}_trace.jsonl` 已落盘（**不**自跑 ppt-acceptance-check —— 由主 Claude 编排者执行）
 
-**回报格式**（向用户的最后一条消息）：
+**回报格式**（向用户/主 Claude 的最后一条消息）：
 
 ```
-✅ 移植已完成 —— {template_name}
+✅ 移植已完成 —— {template_name}（验收前置已就绪，待主 Claude 跑 acceptance）
    1. src/{name}_ppt.py     已创建（XX 行）
    2. Main.py               按钮分支 elif 已接入（行 XXX-YYY）
    3. __main__ 调试入口     已保留，可单独跑
    4. 冒烟测试               通过
+   5. trace + contract 就绪  acceptance/{name}_trace.jsonl（XX 个事件） + acceptance/{name}.json
+   → 请主 Claude 跑：python C:\Users\$env:USERNAME\.claude\skills\ppt-acceptance-check\ppt_acceptance_check.py ...
 ```
 
-任意一项失败 → 不要回报"已交付"，先报告卡点并停下。
+任意 1-4 项失败 → 不要回报"已交付"，先报告卡点并停下。
+第 5 项缺失 → 报告卡点说明缺哪个（trace 没接 / 契约不存在），等主 Claude 决策，**不要顺手造一个**。
