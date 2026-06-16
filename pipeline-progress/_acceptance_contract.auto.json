@@ -1,0 +1,296 @@
+{
+  "version": 1,
+  "shape_pairing": {
+    "rules": [
+      "strip_clone_suffix"
+    ],
+    "manual_overrides": {}
+  },
+  "tolerances": {
+    "geometry_px": 2.0,
+    "ssim_threshold": 0.85,
+    "font_size_pt": 1.0
+  },
+  "rules": [
+    {
+      "_comment": "AUTO-DRAFT by Step1 — 草稿需人审：① severity（升级类 shape 期望值可能是模板旧态，要用外部真相覆盖，护栏#2）② 自由文本类应降 warn 或删，禁刚性 run 数断言（护栏#4）",
+      "id": "TextBox_6_paras",
+      "shape": "TextBox 6",
+      "layer": "L3",
+      "slide": 2,
+      "check": "paragraphs_match_signature",
+      "expected_paragraphs": [
+        {
+          "alignment": 2,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": -1,
+              "size": 20.0
+            }
+          ]
+        }
+      ],
+      "severity": "warn"
+    },
+    {
+      "_comment": "AUTO-DRAFT by Step1 — 草稿需人审：① severity（升级类 shape 期望值可能是模板旧态，要用外部真相覆盖，护栏#2）② 自由文本类应降 warn 或删，禁刚性 run 数断言（护栏#4）",
+      "id": "TextBox_14_paras",
+      "shape": "TextBox 14",
+      "layer": "L3",
+      "slide": 2,
+      "check": "paragraphs_match_signature",
+      "expected_paragraphs": [
+        {
+          "alignment": 2,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": -1,
+              "size": 20.0
+            }
+          ]
+        }
+      ],
+      "severity": "warn"
+    },
+    {
+      "_comment": "AUTO-DRAFT by Step1 — 草稿需人审：① severity（升级类 shape 期望值可能是模板旧态，要用外部真相覆盖，护栏#2）② 自由文本类应降 warn 或删，禁刚性 run 数断言（护栏#4）",
+      "id": "TextBox_17_paras",
+      "shape": "TextBox 17",
+      "layer": "L3",
+      "slide": 2,
+      "check": "paragraphs_match_signature",
+      "expected_paragraphs": [
+        {
+          "alignment": 2,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": -1,
+              "size": 20.0
+            }
+          ]
+        }
+      ],
+      "severity": "warn"
+    },
+    {
+      "_comment": "AUTO-DRAFT by Step1 — 草稿需人审：① severity（升级类 shape 期望值可能是模板旧态，要用外部真相覆盖，护栏#2）② 自由文本类应降 warn 或删，禁刚性 run 数断言（护栏#4）",
+      "id": "TextBox_20_paras",
+      "shape": "TextBox 20",
+      "layer": "L3",
+      "slide": 2,
+      "check": "paragraphs_match_signature",
+      "expected_paragraphs": [
+        {
+          "alignment": 2,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": -1,
+              "size": 20.0
+            }
+          ]
+        }
+      ],
+      "severity": "warn"
+    },
+    {
+      "_comment": "AUTO-DRAFT by Step1 — 草稿需人审：① severity（升级类 shape 期望值可能是模板旧态，要用外部真相覆盖，护栏#2）② 自由文本类应降 warn 或删，禁刚性 run 数断言（护栏#4）",
+      "id": "TextBox_23_paras",
+      "shape": "TextBox 23",
+      "layer": "L3",
+      "slide": 2,
+      "check": "paragraphs_match_signature",
+      "expected_paragraphs": [
+        {
+          "alignment": 2,
+          "runs": [
+            {
+              "rgb": 192,
+              "bold": -1,
+              "size": 14.0
+            }
+          ]
+        }
+      ],
+      "severity": "warn"
+    },
+    {
+      "_comment": "AUTO-DRAFT by Step1 — 草稿需人审：① severity（升级类 shape 期望值可能是模板旧态，要用外部真相覆盖，护栏#2）② 自由文本类应降 warn 或删，禁刚性 run 数断言（护栏#4）",
+      "id": "TextBox_24_paras",
+      "shape": "TextBox 24",
+      "layer": "L3",
+      "slide": 2,
+      "check": "paragraphs_match_signature",
+      "expected_paragraphs": [
+        {
+          "alignment": 2,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": -1,
+              "size": 9.0
+            }
+          ]
+        },
+        {
+          "alignment": 2,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 9.0
+            }
+          ]
+        },
+        {
+          "alignment": 2,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 9.0
+            }
+          ]
+        },
+        {
+          "alignment": 2,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 9.0
+            }
+          ]
+        },
+        {
+          "alignment": 2,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 9.0
+            }
+          ]
+        }
+      ],
+      "severity": "warn"
+    },
+    {
+      "_comment": "AUTO-DRAFT by Step1 — 草稿需人审：① severity（升级类 shape 期望值可能是模板旧态，要用外部真相覆盖，护栏#2）② 自由文本类应降 warn 或删，禁刚性 run 数断言（护栏#4）",
+      "id": "TextBox_26_paras",
+      "shape": "TextBox 26",
+      "layer": "L3",
+      "slide": 2,
+      "check": "paragraphs_match_signature",
+      "expected_paragraphs": [
+        {
+          "alignment": 2,
+          "runs": [
+            {
+              "rgb": 12611584,
+              "bold": -1,
+              "size": 14.0
+            }
+          ]
+        }
+      ],
+      "severity": "warn"
+    },
+    {
+      "_comment": "AUTO-DRAFT by Step1 — 草稿需人审：① severity（升级类 shape 期望值可能是模板旧态，要用外部真相覆盖，护栏#2）② 自由文本类应降 warn 或删，禁刚性 run 数断言（护栏#4）",
+      "id": "TextBox_8_paras",
+      "shape": "TextBox 8",
+      "layer": "L3",
+      "slide": 2,
+      "check": "paragraphs_match_signature",
+      "expected_paragraphs": [
+        {
+          "alignment": 1,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 14.0
+            }
+          ]
+        },
+        {
+          "alignment": 1,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 14.0
+            }
+          ]
+        },
+        {
+          "alignment": 1,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 14.0
+            }
+          ]
+        }
+      ],
+      "severity": "warn"
+    },
+    {
+      "_comment": "AUTO-DRAFT by Step1 — 草稿需人审：① severity（升级类 shape 期望值可能是模板旧态，要用外部真相覆盖，护栏#2）② 自由文本类应降 warn 或删，禁刚性 run 数断言（护栏#4）",
+      "id": "TextBox_22_paras",
+      "shape": "TextBox 22",
+      "layer": "L3",
+      "slide": 2,
+      "check": "paragraphs_match_signature",
+      "expected_paragraphs": [
+        {
+          "alignment": 1,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 14.0
+            }
+          ]
+        },
+        {
+          "alignment": 1,
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 14.0
+            }
+          ]
+        }
+      ],
+      "severity": "warn"
+    },
+    {
+      "_comment": "AUTO-DRAFT by Step1 — 草稿需人审：① severity（升级类 shape 期望值可能是模板旧态，要用外部真相覆盖，护栏#2）② 自由文本类应降 warn 或删，禁刚性 run 数断言（护栏#4）",
+      "id": "Rectangle_25_paras",
+      "shape": "Rectangle 25",
+      "layer": "L3",
+      "slide": 2,
+      "check": "paragraphs_match_signature",
+      "expected_paragraphs": [
+        {
+          "alignment": 1,
+          "runs": [
+            {
+              "rgb": 16777215,
+              "bold": -1,
+              "size": 14.0
+            }
+          ]
+        }
+      ],
+      "severity": "warn"
+    }
+  ]
+}

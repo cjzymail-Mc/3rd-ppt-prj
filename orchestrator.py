@@ -540,6 +540,115 @@ class PPTOrchestrator:
         return f"{idx // 10}.{idx % 10}"
 
     # ------------------------------------------------------------------
+    # Acceptance gate helpers (Step 3 post-run)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _wrap_draft_contract(draft_path: Path, out_path: Path) -> dict:
+        """Wrap a Step1 acceptance draft (rules-only fragment) into a full contract dict.
+
+        Writes the result to out_path and also returns it.
+        Used when acceptance/pipeline.json does not yet exist.
+        """
+        draft = json.loads(draft_path.read_text(encoding="utf-8"))
+        contract = {
+            "version": 1,
+            "shape_pairing": {"rules": ["strip_clone_suffix"], "manual_overrides": {}},
+            "tolerances": {"geometry_px": 2.0, "ssim_threshold": 0.85, "font_size_pt": 1.0},
+            "rules": draft.get("rules", []),
+        }
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(contract, ensure_ascii=False, indent=2), encoding="utf-8")
+        return contract
+
+    def _run_acceptance_gate(self, next_ver: str) -> None:
+        """Run ppt-acceptance-check after Step 3.  Never raises; prints results.
+
+        MVP: always returns without failing orchestrator (return True, "" is unaffected).
+        """
+        skill_dir = Path.home() / ".claude" / "skills" / "ppt-acceptance-check"
+        skill_py = skill_dir / "ppt_acceptance_check.py"
+        if not skill_py.exists():
+            print(f"[GATE] skipped: ppt-acceptance-check skill not found at {skill_py}", flush=True)
+            return
+
+        try:
+            # Resolve contract: prefer acceptance/pipeline.json, fall back to draft
+            contract_path = self.project_root / "acceptance" / "pipeline.json"
+            if not contract_path.exists():
+                draft_path = self.project_root / "pipeline-progress" / "01-acceptance_draft.json"
+                if not draft_path.exists():
+                    print("[GATE] skipped: no contract (acceptance/pipeline.json) and no draft (pipeline-progress/01-acceptance_draft.json)", flush=True)
+                    return
+                auto_contract = self.project_root / "pipeline-progress" / "_acceptance_contract.auto.json"
+                self._wrap_draft_contract(draft_path, auto_contract)
+                contract_path = auto_contract
+
+            # New PPT path
+            output_dir = self.project_root / "pipeline-output"
+            new_ppt = output_dir / f"claude-ppt {next_ver}.pptx"
+            if not new_ppt.exists():
+                print(f"[GATE] skipped: output PPT not found at {new_ppt}", flush=True)
+                return
+
+            # Template path from env (set by setup_environment before orchestrator runs)
+            template_path_str = os.environ.get("PPT_TEMPLATE_PATH", "")
+            if not template_path_str:
+                print("[GATE] skipped: PPT_TEMPLATE_PATH env not set, cannot resolve template", flush=True)
+                return
+            template_path = Path(template_path_str)
+
+            # Trace path
+            trace_path = self.project_root / "pipeline-progress" / "03b_pipeline_trace.jsonl"
+
+            # Acceptance output dir
+            acc_out = self.project_root / "pipeline-progress" / "acceptance-out"
+            acc_out.mkdir(parents=True, exist_ok=True)
+
+            cmd = [
+                sys.executable,
+                str(skill_py),
+                "--new", str(new_ppt.resolve()),
+                "--template", str(template_path.resolve()),
+                "--slide-pairs", "1:2",
+                "--contract", str(contract_path.resolve()),
+                "--out-dir", str(acc_out.resolve()),
+            ]
+            if trace_path.exists():
+                cmd += ["--pipeline-trace", str(trace_path.resolve())]
+
+            print(f"[GATE] running ppt-acceptance-check for {new_ppt.name} ...", flush=True)
+            proc = subprocess.run(
+                cmd,
+                cwd=str(self.project_root),
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=120,
+            )
+
+            # Print tail of stdout (contains must_fix / warn / passed counts)
+            tail = "\n".join(proc.stdout.splitlines()[-40:])
+            print(f"[GATE] acceptance-check exit={proc.returncode}", flush=True)
+            print(tail, flush=True)
+
+            # Locate report file (skill writes summary*.md or report*.md inside out_dir)
+            report_files = sorted(acc_out.glob("*.md"), key=lambda p: p.stat().st_mtime, reverse=True)
+            report_hint = str(report_files[0]) if report_files else str(acc_out)
+
+            # Must-fix gate (informational only — does not fail orchestrator in MVP)
+            m = re.search(r"must.fix[^0-9]*(\d+)", proc.stdout, re.IGNORECASE)
+            must_fix_count = int(m.group(1)) if m else (1 if proc.returncode == 1 else 0)
+            if must_fix_count > 0:
+                print(f"[GATE] FAIL: {must_fix_count} must_fix issues — see {report_hint}", flush=True)
+            else:
+                print(f"[GATE] PASS — see {report_hint}", flush=True)
+
+        except Exception as exc:
+            print(f"[GATE] skipped: unexpected error — {exc}", flush=True)
+
+    # ------------------------------------------------------------------
     # Pipeline-first execution (plan4: fast path)
     # ------------------------------------------------------------------
 
@@ -571,6 +680,16 @@ class PPTOrchestrator:
         env = os.environ.copy()
         env['ORCHESTRATOR_RUNNING'] = 'true'
 
+        # Step 3: inject trace path into env; clear stale trace file before 03b runs
+        if step == 3:
+            trace_path = (self.project_root / "pipeline-progress" / "03b_pipeline_trace.jsonl").resolve()
+            env['PPT_PIPELINE_TRACE'] = str(trace_path)
+            if trace_path.exists():
+                try:
+                    trace_path.unlink()
+                except OSError:
+                    pass  # non-fatal; stale events may appear in L4 report
+
         for i, cmd in enumerate(scripts):
             label = " ".join(cmd[1:])
             print(f"  [PIPELINE] {label} ...", flush=True)
@@ -601,6 +720,10 @@ class PPTOrchestrator:
             # Step 2: after --assemble-only, re-apply saved structural constraints
             if step == 2 and "--assemble-only" in cmd:
                 self._reapply_saved_constraints()
+
+        # Step 3: run acceptance gate after 03b completes (MVP: informational only)
+        if step == 3:
+            self._run_acceptance_gate(next_ver)
 
         return True, ""
 

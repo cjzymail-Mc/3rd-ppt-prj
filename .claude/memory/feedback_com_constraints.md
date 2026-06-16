@@ -15,7 +15,7 @@ Excel/PPT 读写必须用 `win32com.client` COM 接口。
 | 场景 | 错误做法 | 正确做法 |
 |------|---------|---------|
 | 读COM属性 | `getattr(shp,"X",None)` | `try: shp.X except: None` |
-| 多步骤开Excel | `Dispatch` 复用实例 | `DispatchEx` + `sleep(0.5)` 强制新进程 |
+| Excel/PowerPoint 批量自动化（分析/生成类脚本） | `Dispatch` 复用实例 → attach 到用户活 Office + `.Quit()` 把它一起关（2026-05-28 实际丢用户未保存内容） | `DispatchEx` 强制独立进程（详见下方"Dispatch vs DispatchEx 雷区"）|
 | 写图表数据 | `ChartData.Workbook` | `SeriesCollection(1).Values/XValues` |
 | 插入图片 | `AddPicture(W=w,H=h)` | 先`-1/-1`取原始尺寸,再等比缩放 |
 | Clone幻灯片 | 不加sleep | `Copy→sleep(1.5)→Paste(X)→sleep(1.0)` |
@@ -29,3 +29,18 @@ Excel/PPT 读写必须用 `win32com.client` COM 接口。
 | PPT 文本换行符 | `content` 含 `\n` 直接写入 → 整段变 1 段 | `content.replace("\n", "\r")` 再写；TextRange.Text 用 `\r` 分段 |
 | PNG 截图（系统加密 Office 输出环境） | `slide.Export("PNG")` / `SaveAs(PDF)` 输出被 DLP 加密，Pillow 读不了 | `slide.Copy()` → `PIL.ImageGrab.grabclipboard()` → `img.save()`（剪贴板数据由 Python 写出，不加密） |
 | 写入文本后字体 | 默认接管为系统默认字体（非模板字体） | `_write_text()` 后显式 `tr.Font.Name = "微软雅黑"` |
+
+## Dispatch vs DispatchEx 雷区（2026-05-28 实战补充）
+
+**事故**：跑 `pipeline/01_shape_detail.py` 时 `generate_shape_detail_xlsx` 用 `Dispatch("Excel.Application")` + `app.Visible=False` + finally `excel.Quit()`。`Dispatch` attach 到用户**正在编辑**的 Excel 实例 → 设 `Visible=False` 时被拒（"Property 'Excel.Application.Visible' can not be set"）→ 异常传播到 finally → `excel.Quit()` 把用户的 Excel 整个关掉。用户来不及保存，被迫选"未保存"丢内容。同类雷在 PowerPoint 侧也存在（`Dispatch("PowerPoint.Application")` + `app.Quit()` 同样关用户活 PPT）。
+
+**判据：用 `Dispatch` 还是 `DispatchEx`？看脚本意图**
+
+| 脚本类型 | 选谁 | 例 |
+|---|---|---|
+| **批量分析 / 批量生成**（开模板/Excel 读数据 → 产单独输出文件 → 退出）| `DispatchEx` 独立进程 | `pipeline/01_shape_detail.py`、`pipeline/03b_build_ppt_com.py`、`pipeline/ppt_pipeline_common.py::{load_excel_rows, generate_shape_detail_xlsx, create_iteration_sheet}`、`skills/inspect-*-template/*.py` |
+| **驱动用户活 Office**（往用户开着的 PPT 里写、读用户当前选中 shape）| `Dispatch` 共享实例 | `Main.py`、`src/*_ppt.py` 生产流程、`skills/read_selected_shape.py` |
+
+**规范化收益**：把所有"批量类"脚本里的 `Dispatch("Excel.Application")` / `Dispatch("PowerPoint.Application")` 全部改成 `DispatchEx`——独立进程不会 attach 用户实例，`.Quit()` 也只关自己开的那个进程。
+
+**只读类还可叠加 `Open(ReadOnly=True, WithWindow=False)`**（镜像 `inspect-ppt-template` 的安全开法，保证脚本绝不修改模板、且不弹窗）。详见 Step1 PowerPoint 隔离改动：`pipeline/01_shape_detail.py` line ~165。

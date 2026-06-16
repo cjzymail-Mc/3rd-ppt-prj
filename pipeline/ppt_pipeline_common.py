@@ -197,7 +197,7 @@ def load_excel_rows(sheet_name: str = "问卷sheet") -> Tuple[List[List[Any]], s
     import win32com.client
 
     notes: List[str] = []
-    excel = win32com.client.Dispatch("Excel.Application")
+    excel = win32com.client.DispatchEx("Excel.Application")
     excel.Visible = False
     excel.DisplayAlerts = False
 
@@ -431,7 +431,7 @@ def generate_shape_detail_xlsx(
     existing_annos = existing_annos or {}
     xlsx_path = str(SHAPE_DETAIL_XLSX.resolve())
 
-    excel = win32com.client.Dispatch("Excel.Application")
+    excel = win32com.client.DispatchEx("Excel.Application")
     excel.Visible = False
     excel.DisplayAlerts = False
 
@@ -843,7 +843,7 @@ def create_iteration_sheet(new_sheet_name: str) -> str:
 
     import win32com.client
 
-    excel = win32com.client.Dispatch("Excel.Application")
+    excel = win32com.client.DispatchEx("Excel.Application")
     excel.Visible = False
     excel.DisplayAlerts = False
 

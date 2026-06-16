@@ -1,0 +1,1672 @@
+{
+  "pptx": {
+    "path": "D:\\Technique Support\\Claude Code Learning\\3rd-ppt-prj\\template\\apparel-page13-14-template.pptx",
+    "mode": "open",
+    "slides_filter": [
+      13,
+      14
+    ],
+    "with_runs": true,
+    "slide_count": 17,
+    "slides": [
+      {
+        "slide_index": 13,
+        "shape_count": 22,
+        "shapes": [
+          {
+            "shape_index": 1,
+            "name": "Chart 63",
+            "type": 3,
+            "geometry": {
+              "L": 163.1,
+              "T": 410.2,
+              "W": 427.0,
+              "H": 113.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 2,
+            "name": "Straight Connector 4",
+            "type": 9,
+            "geometry": {
+              "L": 339.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 3,
+            "name": "Straight Connector 5",
+            "type": 9,
+            "geometry": {
+              "L": 54.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 4,
+            "name": "TextBox 1",
+            "type": 17,
+            "geometry": {
+              "L": 43.0,
+              "T": 53.0,
+              "W": 250.0,
+              "H": 31.5
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "服装试穿反馈结果",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "服装试穿反馈结果",
+                "alignment": 1,
+                "runs": [
+                  {
+                    "text": "服装试穿反馈结果",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 5,
+            "name": "Oval 3",
+            "type": 1,
+            "geometry": {
+              "L": 35.7,
+              "T": 102.2,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "",
+            "paragraphs": []
+          },
+          {
+            "shape_index": 6,
+            "name": "TextBox 6",
+            "type": 17,
+            "geometry": {
+              "L": 29.6,
+              "T": 122.4,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "版型↵3.98 / 5",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "版型",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "版型",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "\r",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              },
+              {
+                "index": 2,
+                "text": "3.98 / 5",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "3.98 / 5",
+                    "size": 16.0,
+                    "rgb": 255,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 7,
+            "name": "Oval 13",
+            "type": 1,
+            "geometry": {
+              "L": 331.5,
+              "T": 106.8,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "",
+            "paragraphs": []
+          },
+          {
+            "shape_index": 8,
+            "name": "TextBox 14",
+            "type": 17,
+            "geometry": {
+              "L": 327.4,
+              "T": 125.2,
+              "W": 125.0,
+              "H": 69.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "面料↵3.96 / 5",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "面料",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "面料",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "\r",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              },
+              {
+                "index": 2,
+                "text": "3.96 / 5",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "3.96 / 5",
+                    "size": 14.0,
+                    "rgb": 255,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 9,
+            "name": "Oval 16",
+            "type": 1,
+            "geometry": {
+              "L": 35.7,
+              "T": 260.3,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "",
+            "paragraphs": []
+          },
+          {
+            "shape_index": 10,
+            "name": "TextBox 17",
+            "type": 17,
+            "geometry": {
+              "L": 30.2,
+              "T": 282.3,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "吸湿排汗↵3.61 / 5",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "吸湿排汗",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "吸湿排汗",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "\r",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              },
+              {
+                "index": 2,
+                "text": "3.61 / 5",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "3.61 / 5",
+                    "size": 16.0,
+                    "rgb": 255,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 11,
+            "name": "Oval 19",
+            "type": 1,
+            "geometry": {
+              "L": 327.7,
+              "T": 260.3,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "",
+            "paragraphs": []
+          },
+          {
+            "shape_index": 12,
+            "name": "TextBox 20",
+            "type": 17,
+            "geometry": {
+              "L": 326.6,
+              "T": 280.4,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "速干↵3.52 / 5",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "速干",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "速干",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "\r",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              },
+              {
+                "index": 2,
+                "text": "3.52 / 5",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "3.52 / 5",
+                    "size": 16.0,
+                    "rgb": 255,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 13,
+            "name": "TextBox 24",
+            "type": 17,
+            "geometry": {
+              "L": 831.2,
+              "T": 53.5,
+              "W": 125.1,
+              "H": 148.4
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "受试者信息 Information↵A: 162CM / 53 KG↵B: 161CM / 53 KG↵C: 170CM / 56 KG↵D: 156CM / 45 KG↵E: 168CM / 60 KG↵F: 163CM / 55 KG↵...",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "受试者信息 Information",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "受试者信息 ",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": "Information\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 2,
+                "text": "A: 162CM / 53 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "A: 162CM / 53 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 3,
+                "text": "B: 161CM / 53 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "B: 161CM / 53 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 4,
+                "text": "C: 170CM / 56 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "C: 170CM / 56 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 5,
+                "text": "D: 156CM / 45 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "D: 156CM / 45 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 6,
+                "text": "E: 168CM / 60 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "E: 168CM / 60 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 7,
+                "text": "F: 163CM / 55 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "F: 163CM / 55 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 8,
+                "text": "G: 160CM / 50 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "G: 160CM / 50 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 9,
+                "text": "H: 160CM / 50 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "H: 160CM / 50 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 10,
+                "text": "I: 162CM / 58 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "I: 162CM / 58 KG",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 14,
+            "name": "TextBox 32",
+            "type": 17,
+            "geometry": {
+              "L": 20.7,
+              "T": 9.0,
+              "W": 578.4,
+              "H": 29.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "试穿反馈【 Athletes’ Feedback】",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "试穿反馈【 Athletes’ Feedback】",
+                "alignment": 1,
+                "runs": [
+                  {
+                    "text": "试穿反馈",
+                    "size": 18.0,
+                    "rgb": 16777215,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": "【",
+                    "size": 14.0,
+                    "rgb": 49407,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": " ",
+                    "size": 14.0,
+                    "rgb": 16777215,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Helvetica"
+                  },
+                  {
+                    "text": "Athletes’ Feedback】",
+                    "size": 14.0,
+                    "rgb": 49407,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 15,
+            "name": "Chart 7",
+            "type": 3,
+            "geometry": {
+              "L": 125.7,
+              "T": 84.2,
+              "W": 190.0,
+              "H": 150.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 16,
+            "name": "Chart 9",
+            "type": 3,
+            "geometry": {
+              "L": 405.7,
+              "T": 106.3,
+              "W": 224.1,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 17,
+            "name": "Chart 10",
+            "type": 3,
+            "geometry": {
+              "L": 145.2,
+              "T": 271.1,
+              "W": 190.0,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 18,
+            "name": "Chart 11",
+            "type": 3,
+            "geometry": {
+              "L": 435.9,
+              "T": 267.7,
+              "W": 190.0,
+              "H": 98.0
+            },
+            "has_text_frame": false,
+            "has_chart": true,
+            "text": ""
+          },
+          {
+            "shape_index": 19,
+            "name": "Oval 49",
+            "type": 1,
+            "geometry": {
+              "L": 33.7,
+              "T": 401.8,
+              "W": 113.0,
+              "H": 113.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "",
+            "paragraphs": []
+          },
+          {
+            "shape_index": 20,
+            "name": "TextBox 50",
+            "type": 17,
+            "geometry": {
+              "L": 26.5,
+              "T": 422.0,
+              "W": 125.0,
+              "H": 72.7
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "适宜温度↵15~25℃",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "适宜温度",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "适宜温度",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "\r",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              },
+              {
+                "index": 2,
+                "text": "15~25℃",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "15~25",
+                    "size": 16.0,
+                    "rgb": 255,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "℃",
+                    "size": 16.0,
+                    "rgb": 255,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 21,
+            "name": "Rounded Rectangle 53",
+            "type": 1,
+            "geometry": {
+              "L": 847.7,
+              "T": 227.3,
+              "W": 92.0,
+              "H": 55.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "累计跑量km↵671",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "累计跑量km",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "累计跑量",
+                    "size": 11.0,
+                    "rgb": 16777215,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "km\r",
+                    "size": 11.0,
+                    "rgb": 16777215,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              },
+              {
+                "index": 2,
+                "text": "671",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "671",
+                    "size": 24.0,
+                    "rgb": 16777215,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 22,
+            "name": "Rounded Rectangle 55",
+            "type": 1,
+            "geometry": {
+              "L": 848.8,
+              "T": 308.6,
+              "W": 92.0,
+              "H": 55.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "定位日常训练7/9",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "定位日常训练7/9",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "定位日常训练",
+                    "size": 11.0,
+                    "rgb": 16777215,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "7/9",
+                    "size": 24.0,
+                    "rgb": 16777215,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "slide_index": 14,
+        "shape_count": 7,
+        "shapes": [
+          {
+            "shape_index": 1,
+            "name": "Straight Connector 4",
+            "type": 9,
+            "geometry": {
+              "L": 339.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 2,
+            "name": "Straight Connector 5",
+            "type": 9,
+            "geometry": {
+              "L": 54.6,
+              "T": 87.2,
+              "W": 285.0,
+              "H": 0.0
+            },
+            "has_text_frame": false,
+            "has_chart": false,
+            "text": ""
+          },
+          {
+            "shape_index": 3,
+            "name": "TextBox 1",
+            "type": 17,
+            "geometry": {
+              "L": 43.0,
+              "T": 53.0,
+              "W": 250.0,
+              "H": 31.5
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "服装试穿反馈结果",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "服装试穿反馈结果",
+                "alignment": 1,
+                "runs": [
+                  {
+                    "text": "服装试穿反馈结果",
+                    "size": 20.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 4,
+            "name": "TextBox 23",
+            "type": 17,
+            "geometry": {
+              "L": 33.6,
+              "T": 128.2,
+              "W": 555.5,
+              "H": 134.5
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "优点 strengths↵整体版型合身、修身显身材，上身贴合，动作舒展不受限（9/9）。↵具备一定支撑性，覆盖中低到高强度训练（7/9）。↵面料有亲肤性与一定耐用性，多名反馈不起球不勾丝↵短距离及日常训练场景下舒适性评价较好。",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "优点 strengths",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "优点 ",
+                    "size": 14.0,
+                    "rgb": 192,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": "strengths\r",
+                    "size": 14.0,
+                    "rgb": 192,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 2,
+                "text": "整体版型合身、修身显身材，上身贴合，动作舒展不受限（9/9）。\n具备一定支撑性，覆盖中低到高强度训练（7/9）。\n面料有亲肤性与一定耐用性，多名反馈不起球不勾丝",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "整体",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "版型合身",
+                    "size": 14.0,
+                    "rgb": 255,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "、",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "修身显身材",
+                    "size": 14.0,
+                    "rgb": 255,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "，上身贴合，动作舒展不受限（",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "9/9",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "）。\n具备一定",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "支撑性",
+                    "size": 14.0,
+                    "rgb": 255,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "，覆盖中低到高强度训练（",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "7/9",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "）。\n面料有",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "亲肤性",
+                    "size": 14.0,
+                    "rgb": 255,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "与一定",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "耐用性",
+                    "size": 14.0,
+                    "rgb": 255,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "，多名反馈不起球不勾丝",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "\r",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              },
+              {
+                "index": 3,
+                "text": "短距离及日常训练场景下舒适性评价较好。",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "短距离及日常训练场景下舒适性评价较好。",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 5,
+            "name": "TextBox 24",
+            "type": 17,
+            "geometry": {
+              "L": 831.2,
+              "T": 53.5,
+              "W": 125.1,
+              "H": 148.4
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "受试者信息 Information↵A: 162CM / 53 KG↵B: 161CM / 53 KG↵C: 170CM / 56 KG↵D: 156CM / 45 KG↵E: 168CM / 60 KG↵F: 163CM / 55 KG↵...",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "受试者信息 Information",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "受试者信息 ",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": "Information\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 2,
+                "text": "A: 162CM / 53 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "A: 162CM / 53 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 3,
+                "text": "B: 161CM / 53 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "B: 161CM / 53 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 4,
+                "text": "C: 170CM / 56 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "C: 170CM / 56 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 5,
+                "text": "D: 156CM / 45 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "D: 156CM / 45 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 6,
+                "text": "E: 168CM / 60 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "E: 168CM / 60 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 7,
+                "text": "F: 163CM / 55 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "F: 163CM / 55 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 8,
+                "text": "G: 160CM / 50 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "G: 160CM / 50 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 9,
+                "text": "H: 160CM / 50 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "H: 160CM / 50 KG\r",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 10,
+                "text": "I: 162CM / 58 KG",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "I: 162CM / 58 KG",
+                    "size": 9.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 6,
+            "name": "TextBox 26",
+            "type": 17,
+            "geometry": {
+              "L": 34.9,
+              "T": 306.3,
+              "W": 554.3,
+              "H": 189.0
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "缺点 drawbacks↵面料弹性不够（2/9）↵前胸闷热、面料偏厚（4/9）↵腋下摩擦、副乳硌感、胸下磨皮较集中，长距离或出汗后更明显（8/9）。↵透气排汗不足较突出，局部有只吸不排、贴身感，速干较差（6/9）。↵后背口袋不便，补给袋定位...",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "缺点 drawbacks",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "缺点 ",
+                    "size": 14.0,
+                    "rgb": 12611584,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": "drawbacks\r",
+                    "size": 14.0,
+                    "rgb": 12611584,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              },
+              {
+                "index": 2,
+                "text": "面料弹性不够（2/9）",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "面料",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "弹性不够（",
+                    "size": 14.0,
+                    "rgb": 15773696,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "2/9",
+                    "size": 14.0,
+                    "rgb": 15773696,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "）",
+                    "size": 14.0,
+                    "rgb": 15773696,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "\r",
+                    "size": 14.0,
+                    "rgb": 15773696,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              },
+              {
+                "index": 3,
+                "text": "前胸闷热、面料偏厚（4/9）",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "前胸",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "闷热",
+                    "size": 14.0,
+                    "rgb": 15773696,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "、",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "面料偏厚",
+                    "size": 14.0,
+                    "rgb": 15773696,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "（",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "4/9",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "）",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "\r",
+                    "size": 14.0,
+                    "rgb": 15773696,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              },
+              {
+                "index": 4,
+                "text": "腋下摩擦、副乳硌感、胸下磨皮较集中，长距离或出汗后更明显（8/9）。\n透气排汗不足较突出，局部有只吸不排、贴身感，速干较差（6/9）。\n后背口袋不便，补给袋定位与开口方向影响取用（4/9）；",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "腋下",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "摩擦",
+                    "size": 14.0,
+                    "rgb": 15773696,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "、",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "副乳硌感",
+                    "size": 14.0,
+                    "rgb": 15773696,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "、",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "胸下磨皮",
+                    "size": 14.0,
+                    "rgb": 15773696,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "较集中，长距离或出汗后更明显（",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "8/9",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "）。",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "\n",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "透气",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "排汗不足",
+                    "size": 14.0,
+                    "rgb": 15773696,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "较突出，局部有只吸不排、贴身感，速干较差（",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "6/9",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "）。\n后背口袋不便，补给袋定位与开口方向影响取用（",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "4/9",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "）；",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "\r",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  }
+                ]
+              },
+              {
+                "index": 5,
+                "text": "建议改为侧向开口/更低位置设计。",
+                "alignment": 2,
+                "runs": [
+                  {
+                    "text": "建议",
+                    "size": 14.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "Arial"
+                  },
+                  {
+                    "text": "改为",
+                    "size": 16.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": "侧向开口",
+                    "size": 16.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": "/",
+                    "size": 16.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": "更低位置",
+                    "size": 16.0,
+                    "rgb": 0,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": "设计。",
+                    "size": 16.0,
+                    "rgb": 0,
+                    "bold": 0,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "shape_index": 7,
+            "name": "TextBox 32",
+            "type": 17,
+            "geometry": {
+              "L": 20.7,
+              "T": 9.0,
+              "W": 578.4,
+              "H": 29.1
+            },
+            "has_text_frame": true,
+            "has_chart": false,
+            "text": "试穿反馈【 Athletes’ Feedback】",
+            "paragraphs": [
+              {
+                "index": 1,
+                "text": "试穿反馈【 Athletes’ Feedback】",
+                "alignment": 1,
+                "runs": [
+                  {
+                    "text": "试穿反馈",
+                    "size": 18.0,
+                    "rgb": 16777215,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": "【",
+                    "size": 14.0,
+                    "rgb": 49407,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  },
+                  {
+                    "text": " ",
+                    "size": 14.0,
+                    "rgb": 16777215,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "Helvetica"
+                  },
+                  {
+                    "text": "Athletes’ Feedback】",
+                    "size": 14.0,
+                    "rgb": 49407,
+                    "bold": -1,
+                    "italic": 0,
+                    "font_name": "微软雅黑"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "slide_masters": [],
+    "custom_layouts": []
+  }
+}

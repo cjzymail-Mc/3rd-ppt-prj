@@ -1,0 +1,563 @@
+{
+  "status": "ok",
+  "generated_at": "2026-05-28T16:34:05",
+  "template_slide": 2,
+  "blank_slide": 1,
+  "blank_shape_count": 7,
+  "std_shape_count": 22,
+  "new_shapes": [
+    {
+      "slide_index": 2,
+      "name": "Oval 3",
+      "left": 38.0,
+      "top": 98.0,
+      "width": 113.0,
+      "height": 113.0,
+      "shape_type": 1,
+      "text": "",
+      "font_name": "Arial",
+      "font_size": 18.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 4,
+      "paragraphs": []
+    },
+    {
+      "slide_index": 2,
+      "name": "TextBox 6",
+      "left": 33.0,
+      "top": 138.0,
+      "width": 125.0,
+      "height": 32.0,
+      "shape_type": 17,
+      "text": "版型",
+      "font_name": "Arial",
+      "font_size": 20.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 5,
+      "paragraphs": [
+        {
+          "para_idx": 1,
+          "alignment": 2,
+          "text": "版型",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": -1,
+              "size": 20.0,
+              "italic": 0,
+              "font_name": "Arial",
+              "text": "版型"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slide_index": 2,
+      "name": "Chart 12",
+      "left": 128.0,
+      "top": 80.0,
+      "width": 190.0,
+      "height": 150.0,
+      "shape_type": 3,
+      "text": "",
+      "font_name": "",
+      "font_size": 0.0,
+      "has_chart": true,
+      "in_group": false,
+      "z_order": 6,
+      "paragraphs": []
+    },
+    {
+      "slide_index": 2,
+      "name": "Oval 13",
+      "left": 330.0,
+      "top": 98.0,
+      "width": 113.0,
+      "height": 113.0,
+      "shape_type": 1,
+      "text": "",
+      "font_name": "Arial",
+      "font_size": 18.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 7,
+      "paragraphs": []
+    },
+    {
+      "slide_index": 2,
+      "name": "TextBox 14",
+      "left": 325.0,
+      "top": 138.0,
+      "width": 125.0,
+      "height": 32.0,
+      "shape_type": 17,
+      "text": "面料",
+      "font_name": "Arial",
+      "font_size": 20.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 8,
+      "paragraphs": [
+        {
+          "para_idx": 1,
+          "alignment": 2,
+          "text": "面料",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": -1,
+              "size": 20.0,
+              "italic": 0,
+              "font_name": "Arial",
+              "text": "面料"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slide_index": 2,
+      "name": "Chart 15",
+      "left": 420.0,
+      "top": 102.6796875,
+      "width": 190.0,
+      "height": 98.03874206542969,
+      "shape_type": 3,
+      "text": "",
+      "font_name": "",
+      "font_size": 0.0,
+      "has_chart": true,
+      "in_group": false,
+      "z_order": 9,
+      "paragraphs": []
+    },
+    {
+      "slide_index": 2,
+      "name": "Oval 16",
+      "left": 38.0,
+      "top": 230.310546875,
+      "width": 113.0,
+      "height": 113.0,
+      "shape_type": 1,
+      "text": "",
+      "font_name": "Arial",
+      "font_size": 18.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 10,
+      "paragraphs": []
+    },
+    {
+      "slide_index": 2,
+      "name": "TextBox 17",
+      "left": 33.0,
+      "top": 270.310546875,
+      "width": 125.0,
+      "height": 32.0,
+      "shape_type": 17,
+      "text": "吸湿排汗",
+      "font_name": "Arial",
+      "font_size": 20.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 11,
+      "paragraphs": [
+        {
+          "para_idx": 1,
+          "alignment": 2,
+          "text": "吸湿排汗",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": -1,
+              "size": 20.0,
+              "italic": 0,
+              "font_name": "Arial",
+              "text": "吸湿排汗"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slide_index": 2,
+      "name": "Chart 18",
+      "left": 128.0,
+      "top": 240.66015625,
+      "width": 190.0,
+      "height": 98.03905487060547,
+      "shape_type": 3,
+      "text": "",
+      "font_name": "",
+      "font_size": 0.0,
+      "has_chart": true,
+      "in_group": false,
+      "z_order": 12,
+      "paragraphs": []
+    },
+    {
+      "slide_index": 2,
+      "name": "Oval 19",
+      "left": 330.0,
+      "top": 230.310546875,
+      "width": 113.0,
+      "height": 113.0,
+      "shape_type": 1,
+      "text": "",
+      "font_name": "Arial",
+      "font_size": 18.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 13,
+      "paragraphs": []
+    },
+    {
+      "slide_index": 2,
+      "name": "TextBox 20",
+      "left": 325.0,
+      "top": 270.310546875,
+      "width": 125.0,
+      "height": 32.0,
+      "shape_type": 17,
+      "text": "速干",
+      "font_name": "Arial",
+      "font_size": 20.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 14,
+      "paragraphs": [
+        {
+          "para_idx": 1,
+          "alignment": 2,
+          "text": "速干",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": -1,
+              "size": 20.0,
+              "italic": 0,
+              "font_name": "Arial",
+              "text": "速干"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slide_index": 2,
+      "name": "Chart 21",
+      "left": 420.0,
+      "top": 240.66015625,
+      "width": 190.0,
+      "height": 98.03905487060547,
+      "shape_type": 3,
+      "text": "",
+      "font_name": "",
+      "font_size": 0.0,
+      "has_chart": true,
+      "in_group": false,
+      "z_order": 15,
+      "paragraphs": []
+    },
+    {
+      "slide_index": 2,
+      "name": "TextBox 23",
+      "left": 20.705591201782227,
+      "top": 358.1748046875,
+      "width": 442.2846374511719,
+      "height": 153.07086181640625,
+      "shape_type": 17,
+      "text": "优点 strengths",
+      "font_name": "微软雅黑",
+      "font_size": 14.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 16,
+      "paragraphs": [
+        {
+          "para_idx": 1,
+          "alignment": 2,
+          "text": "优点 strengths",
+          "runs": [
+            {
+              "rgb": 192,
+              "bold": -1,
+              "size": 14.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "优点 strengths"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slide_index": 2,
+      "name": "TextBox 24",
+      "left": 831.1573486328125,
+      "top": 53.4693717956543,
+      "width": 125.12299346923828,
+      "height": 89.0611801147461,
+      "shape_type": 17,
+      "text": "受试者信息 Information\rA: 160CM / 50 KG\rB: 165CM / 52 KG\rC: 162CM / 58 KG\rD: 168CM / 60 KG",
+      "font_name": "微软雅黑",
+      "font_size": 9.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 17,
+      "paragraphs": [
+        {
+          "para_idx": 1,
+          "alignment": 2,
+          "text": "受试者信息 Information",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": -1,
+              "size": 9.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "受试者信息 Information\r"
+            }
+          ]
+        },
+        {
+          "para_idx": 2,
+          "alignment": 2,
+          "text": "A: 160CM / 50 KG",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 9.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "A: 160CM / 50 KG\r"
+            }
+          ]
+        },
+        {
+          "para_idx": 3,
+          "alignment": 2,
+          "text": "B: 165CM / 52 KG",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 9.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "B: 165CM / 52 KG\r"
+            }
+          ]
+        },
+        {
+          "para_idx": 4,
+          "alignment": 2,
+          "text": "C: 162CM / 58 KG",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 9.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "C: 162CM / 58 KG\r"
+            }
+          ]
+        },
+        {
+          "para_idx": 5,
+          "alignment": 2,
+          "text": "D: 168CM / 60 KG",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 9.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "D: 168CM / 60 KG"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slide_index": 2,
+      "name": "TextBox 26",
+      "left": 480.0,
+      "top": 358.1748046875,
+      "width": 348.708740234375,
+      "height": 153.07086181640625,
+      "shape_type": 17,
+      "text": "缺点 drawbacks",
+      "font_name": "微软雅黑",
+      "font_size": 14.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 18,
+      "paragraphs": [
+        {
+          "para_idx": 1,
+          "alignment": 2,
+          "text": "缺点 drawbacks",
+          "runs": [
+            {
+              "rgb": 12611584,
+              "bold": -1,
+              "size": 14.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "缺点 drawbacks"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slide_index": 2,
+      "name": "TextBox 8",
+      "left": 28.777873992919922,
+      "top": 388.8932189941406,
+      "width": 426.1400146484375,
+      "height": 106.05567169189453,
+      "shape_type": 17,
+      "text": "轻薄透气，舒适不闷热（4/4）\r吸湿排汗性能好，汗湿后衣服不会黏在身上（4/4）；\r速干性能极好（4/4）大部分时间都很干爽（1/4）几乎感受不到身上有汗（1/4）；",
+      "font_name": "微软雅黑",
+      "font_size": 14.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 20,
+      "paragraphs": [
+        {
+          "para_idx": 1,
+          "alignment": 1,
+          "text": "轻薄透气，舒适不闷热（4/4）",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 14.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "轻薄透气，舒适不闷热（4/4）\r"
+            }
+          ]
+        },
+        {
+          "para_idx": 2,
+          "alignment": 1,
+          "text": "吸湿排汗性能好，汗湿后衣服不会黏在身上（4/4）；",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 14.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "吸湿排汗性能好，汗湿后衣服不会黏在身上（4/4）；\r"
+            }
+          ]
+        },
+        {
+          "para_idx": 3,
+          "alignment": 1,
+          "text": "速干性能极好（4/4）大部分时间都很干爽（1/4）几乎感受不到身上有汗（1/4）；",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 14.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "速干性能极好（4/4）大部分时间都很干爽（1/4）几乎感受不到身上有汗（1/4）；"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slide_index": 2,
+      "name": "TextBox 22",
+      "left": 481.79998779296875,
+      "top": 388.8932189941406,
+      "width": 338.3345642089844,
+      "height": 106.05567169189453,
+      "shape_type": 17,
+      "text": "肩部挖空偏小，会勒腋下，影响摆臂（2/4）；\r后背开叉偏高，跑动过程后背会漏出小三角，晒太阳会痛，风大了会受凉，开车可向下调整四指宽（约5cm）（1/4）；",
+      "font_name": "微软雅黑",
+      "font_size": 14.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 21,
+      "paragraphs": [
+        {
+          "para_idx": 1,
+          "alignment": 1,
+          "text": "肩部挖空偏小，会勒腋下，影响摆臂（2/4）；",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 14.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "肩部挖空偏小，会勒腋下，影响摆臂（2/4）；\r"
+            }
+          ]
+        },
+        {
+          "para_idx": 2,
+          "alignment": 1,
+          "text": "后背开叉偏高，跑动过程后背会漏出小三角，晒太阳会痛，风大了会受凉，开车可向下调整四指宽（约5cm）（1/4）；",
+          "runs": [
+            {
+              "rgb": 0,
+              "bold": 0,
+              "size": 14.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "后背开叉偏高，跑动过程后背会漏出小三角，晒太阳会痛，风大了会受凉，开车可向下调整四指宽（约5cm）（1/4）；"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "slide_index": 2,
+      "name": "Rectangle 25",
+      "left": 343.921875,
+      "top": 12.177873611450195,
+      "width": 266.4862976074219,
+      "height": 24.23440933227539,
+      "shape_type": 1,
+      "text": "I  <面料信息>",
+      "font_name": "微软雅黑",
+      "font_size": 14.0,
+      "has_chart": false,
+      "in_group": false,
+      "z_order": 22,
+      "paragraphs": [
+        {
+          "para_idx": 1,
+          "alignment": 1,
+          "text": "I  <面料信息>",
+          "runs": [
+            {
+              "rgb": 16777215,
+              "bold": -1,
+              "size": 14.0,
+              "italic": 0,
+              "font_name": "微软雅黑",
+              "text": "I  <面料信息>"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

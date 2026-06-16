@@ -1,0 +1,1776 @@
+{
+  "verdict": "PASS",
+  "mode": "production",
+  "contract": "D:/Technique Support/Claude Code Learning/3rd-ppt-prj/pipeline-progress/_acceptance_contract.auto.json",
+  "slide_pairs": [
+    "2:2"
+  ],
+  "summary": {
+    "must_fix": 0,
+    "warn": 0,
+    "tolerated": 0
+  },
+  "args": {
+    "new": "D:/Technique Support/Claude Code Learning/3rd-ppt-prj/pipeline-output/claude-ppt 1.0.pptx",
+    "template": "D:/Technique Support/Claude Code Learning/3rd-ppt-prj/template/empty and standard-apparel.pptx",
+    "layers": [
+      "L0",
+      "L1",
+      "L2",
+      "L3",
+      "L4",
+      "L5"
+    ],
+    "pipeline_trace": ""
+  },
+  "layers": [
+    {
+      "layer": "L0",
+      "passed": 22,
+      "warnings": 0,
+      "tolerated": 0,
+      "must_fix_violations": 0,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [],
+      "findings": [
+        {
+          "rule_id": "L0_pair_Straight Connector 4",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 4",
+          "slide": 2,
+          "message": "Straight Connector 4 ↔ Straight Connector 4 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Straight Connector 5",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 5",
+          "slide": 2,
+          "message": "Straight Connector 5 ↔ Straight Connector 5 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 1",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 1",
+          "slide": 2,
+          "message": "TextBox 1 ↔ TextBox 1 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 3",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 3",
+          "slide": 2,
+          "message": "Oval 3 ↔ Oval 3 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 6",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 6",
+          "slide": 2,
+          "message": "TextBox 6 ↔ TextBox 6 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 12",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 12",
+          "slide": 2,
+          "message": "Chart 12 ↔ Chart 12 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 13",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 13",
+          "slide": 2,
+          "message": "Oval 13 ↔ Oval 13 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 14",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 14",
+          "slide": 2,
+          "message": "TextBox 14 ↔ TextBox 14 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 15",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 15",
+          "slide": 2,
+          "message": "Chart 15 ↔ Chart 15 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 16",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 16",
+          "slide": 2,
+          "message": "Oval 16 ↔ Oval 16 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 17",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 17",
+          "slide": 2,
+          "message": "TextBox 17 ↔ TextBox 17 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 18",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 18",
+          "slide": 2,
+          "message": "Chart 18 ↔ Chart 18 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Oval 19",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 19",
+          "slide": 2,
+          "message": "Oval 19 ↔ Oval 19 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 20",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 20",
+          "slide": 2,
+          "message": "TextBox 20 ↔ TextBox 20 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Chart 21",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 21",
+          "slide": 2,
+          "message": "Chart 21 ↔ Chart 21 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 23",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 23",
+          "slide": 2,
+          "message": "TextBox 23 ↔ TextBox 23 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 24",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 24",
+          "slide": 2,
+          "message": "TextBox 24 ↔ TextBox 24 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 26",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 26",
+          "slide": 2,
+          "message": "TextBox 26 ↔ TextBox 26 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 32",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 32",
+          "slide": 2,
+          "message": "TextBox 32 ↔ TextBox 32 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 8",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 8",
+          "slide": 2,
+          "message": "TextBox 8 ↔ TextBox 8 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_TextBox 22",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 22",
+          "slide": 2,
+          "message": "TextBox 22 ↔ TextBox 22 via exact",
+          "detail": {}
+        },
+        {
+          "rule_id": "L0_pair_Rectangle 25",
+          "layer": "L0",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Rectangle 25",
+          "slide": 2,
+          "message": "Rectangle 25 ↔ Rectangle 25 via exact",
+          "detail": {}
+        }
+      ]
+    },
+    {
+      "layer": "L1",
+      "passed": 0,
+      "warnings": 0,
+      "tolerated": 0,
+      "must_fix_violations": 0,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [
+        "L1: no rules in contract"
+      ],
+      "findings": []
+    },
+    {
+      "layer": "L2",
+      "passed": 38,
+      "warnings": 0,
+      "tolerated": 0,
+      "must_fix_violations": 0,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [
+        "L2: 无契约规则，已应用默认 geometry + autosize"
+      ],
+      "findings": [
+        {
+          "rule_id": "geometry_global::Straight Connector 4",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 4",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 339.6033935546875,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "template": {
+              "left": 339.6033935546875,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Straight Connector 5",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Straight Connector 5",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 54.619998931884766,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "template": {
+              "left": 54.619998931884766,
+              "top": 87.20015716552734,
+              "width": 284.9833984375,
+              "height": 0.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 1",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 1",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 43.0,
+              "top": 53.0,
+              "width": 250.0,
+              "height": 31.504566192626953
+            },
+            "template": {
+              "left": 43.0,
+              "top": 53.0,
+              "width": 250.0,
+              "height": 31.504566192626953
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Oval 3",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 3",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 38.0,
+              "top": 98.0,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "template": {
+              "left": 38.0,
+              "top": 98.0,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 6",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 6",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 33.0,
+              "top": 138.0,
+              "width": 125.0,
+              "height": 32.0
+            },
+            "template": {
+              "left": 33.0,
+              "top": 138.0,
+              "width": 125.0,
+              "height": 32.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Chart 12",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 12",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 128.0,
+              "top": 80.0,
+              "width": 190.0,
+              "height": 150.0
+            },
+            "template": {
+              "left": 128.0,
+              "top": 80.0,
+              "width": 190.0,
+              "height": 150.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Oval 13",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 13",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 330.0,
+              "top": 98.0,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "template": {
+              "left": 330.0,
+              "top": 98.0,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 14",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 14",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 325.0,
+              "top": 138.0,
+              "width": 125.0,
+              "height": 32.0
+            },
+            "template": {
+              "left": 325.0,
+              "top": 138.0,
+              "width": 125.0,
+              "height": 32.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Chart 15",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 15",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 420.0,
+              "top": 102.6796875,
+              "width": 190.0,
+              "height": 98.03874206542969
+            },
+            "template": {
+              "left": 420.0,
+              "top": 102.6796875,
+              "width": 190.0,
+              "height": 98.03874206542969
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Oval 16",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 16",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 38.0,
+              "top": 230.310546875,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "template": {
+              "left": 38.0,
+              "top": 230.310546875,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 17",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 17",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 33.0,
+              "top": 270.310546875,
+              "width": 125.0,
+              "height": 32.0
+            },
+            "template": {
+              "left": 33.0,
+              "top": 270.310546875,
+              "width": 125.0,
+              "height": 32.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Chart 18",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 18",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 128.0,
+              "top": 240.66015625,
+              "width": 190.0,
+              "height": 98.03905487060547
+            },
+            "template": {
+              "left": 128.0,
+              "top": 240.66015625,
+              "width": 190.0,
+              "height": 98.03905487060547
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Oval 19",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Oval 19",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 330.0,
+              "top": 230.310546875,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "template": {
+              "left": 330.0,
+              "top": 230.310546875,
+              "width": 113.0,
+              "height": 113.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 20",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 20",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 325.0,
+              "top": 270.310546875,
+              "width": 125.0,
+              "height": 32.0
+            },
+            "template": {
+              "left": 325.0,
+              "top": 270.310546875,
+              "width": 125.0,
+              "height": 32.0
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Chart 21",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Chart 21",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 420.0,
+              "top": 240.66015625,
+              "width": 190.0,
+              "height": 98.03905487060547
+            },
+            "template": {
+              "left": 420.0,
+              "top": 240.66015625,
+              "width": 190.0,
+              "height": 98.03905487060547
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 23",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 23",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 20.705591201782227,
+              "top": 358.1748046875,
+              "width": 442.2846374511719,
+              "height": 153.07086181640625
+            },
+            "template": {
+              "left": 20.705591201782227,
+              "top": 358.1748046875,
+              "width": 442.2846374511719,
+              "height": 153.07086181640625
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 24",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 24",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 831.1573486328125,
+              "top": 53.4693717956543,
+              "width": 125.12299346923828,
+              "height": 89.0611801147461
+            },
+            "template": {
+              "left": 831.1573486328125,
+              "top": 53.4693717956543,
+              "width": 125.12299346923828,
+              "height": 89.0611801147461
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 26",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 26",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 480.0,
+              "top": 358.1748046875,
+              "width": 348.708740234375,
+              "height": 153.07086181640625
+            },
+            "template": {
+              "left": 480.0,
+              "top": 358.1748046875,
+              "width": 348.708740234375,
+              "height": 153.07086181640625
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 32",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 32",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 20.705591201782227,
+              "top": 8.97220516204834,
+              "width": 578.3627319335938,
+              "height": 29.081260681152344
+            },
+            "template": {
+              "left": 20.705591201782227,
+              "top": 8.97220516204834,
+              "width": 578.3627319335938,
+              "height": 29.081260681152344
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 8",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 8",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 28.777873992919922,
+              "top": 388.8932189941406,
+              "width": 426.1400146484375,
+              "height": 106.05567169189453
+            },
+            "template": {
+              "left": 28.777873992919922,
+              "top": 388.8932189941406,
+              "width": 426.1400146484375,
+              "height": 106.05567169189453
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::TextBox 22",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "TextBox 22",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 481.79998779296875,
+              "top": 388.8932189941406,
+              "width": 338.3345642089844,
+              "height": 106.05567169189453
+            },
+            "template": {
+              "left": 481.79998779296875,
+              "top": 388.8932189941406,
+              "width": 338.3345642089844,
+              "height": 106.05567169189453
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "geometry_global::Rectangle 25",
+          "layer": "L2",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": "Rectangle 25",
+          "slide": 2,
+          "message": "geom diff worst=left=0.00 (tol=2.0)",
+          "detail": {
+            "new": {
+              "left": 343.921875,
+              "top": 12.177873611450195,
+              "width": 266.4862976074219,
+              "height": 24.23440933227539
+            },
+            "template": {
+              "left": 343.921875,
+              "top": 12.177873611450195,
+              "width": 266.4862976074219,
+              "height": 24.23440933227539
+            },
+            "diffs": {
+              "left": 0.0,
+              "top": 0.0,
+              "width": 0.0,
+              "height": 0.0
+            },
+            "tolerance": 2.0
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 1",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 1",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Oval 3",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "Oval 3",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 6",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 6",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Oval 13",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "Oval 13",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 14",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 14",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Oval 16",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "Oval 16",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 17",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 17",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Oval 19",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "Oval 19",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 20",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 20",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 23",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 23",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 24",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 24",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 26",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 26",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 32",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 32",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 8",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 8",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::TextBox 22",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 22",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        },
+        {
+          "rule_id": "autosize_global::Rectangle 25",
+          "layer": "L2",
+          "severity": "warn",
+          "passed": true,
+          "shape": "Rectangle 25",
+          "slide": 2,
+          "message": "autosize: new=1 template=1",
+          "detail": {
+            "new": 1,
+            "template": 1
+          }
+        }
+      ]
+    },
+    {
+      "layer": "L3",
+      "passed": 10,
+      "warnings": 0,
+      "tolerated": 0,
+      "must_fix_violations": 0,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [],
+      "findings": [
+        {
+          "rule_id": "TextBox_6_paras::TextBox 6",
+          "layer": "L3",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 6",
+          "slide": 2,
+          "message": "paragraphs_match_signature (dims=['rgb', 'bold', 'size']): 1 paras, all ok",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "paragraphs": [
+              {
+                "para_idx": 1,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    -1,
+                    20.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    -1,
+                    20.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "版型"
+                ],
+                "new_alignment": 2,
+                "expected_alignment": 2
+              }
+            ]
+          }
+        },
+        {
+          "rule_id": "TextBox_14_paras::TextBox 14",
+          "layer": "L3",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 14",
+          "slide": 2,
+          "message": "paragraphs_match_signature (dims=['rgb', 'bold', 'size']): 1 paras, all ok",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "paragraphs": [
+              {
+                "para_idx": 1,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    -1,
+                    20.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    -1,
+                    20.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "面料"
+                ],
+                "new_alignment": 2,
+                "expected_alignment": 2
+              }
+            ]
+          }
+        },
+        {
+          "rule_id": "TextBox_17_paras::TextBox 17",
+          "layer": "L3",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 17",
+          "slide": 2,
+          "message": "paragraphs_match_signature (dims=['rgb', 'bold', 'size']): 1 paras, all ok",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "paragraphs": [
+              {
+                "para_idx": 1,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    -1,
+                    20.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    -1,
+                    20.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "吸湿排汗"
+                ],
+                "new_alignment": 2,
+                "expected_alignment": 2
+              }
+            ]
+          }
+        },
+        {
+          "rule_id": "TextBox_20_paras::TextBox 20",
+          "layer": "L3",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 20",
+          "slide": 2,
+          "message": "paragraphs_match_signature (dims=['rgb', 'bold', 'size']): 1 paras, all ok",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "paragraphs": [
+              {
+                "para_idx": 1,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    -1,
+                    20.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    -1,
+                    20.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "速干"
+                ],
+                "new_alignment": 2,
+                "expected_alignment": 2
+              }
+            ]
+          }
+        },
+        {
+          "rule_id": "TextBox_23_paras::TextBox 23",
+          "layer": "L3",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 23",
+          "slide": 2,
+          "message": "paragraphs_match_signature (dims=['rgb', 'bold', 'size']): 1 paras, all ok",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "paragraphs": [
+              {
+                "para_idx": 1,
+                "ok": true,
+                "new_seq": [
+                  [
+                    192,
+                    -1,
+                    14.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    192,
+                    -1,
+                    14.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "优点 strengths"
+                ],
+                "new_alignment": 2,
+                "expected_alignment": 2
+              }
+            ]
+          }
+        },
+        {
+          "rule_id": "TextBox_24_paras::TextBox 24",
+          "layer": "L3",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 24",
+          "slide": 2,
+          "message": "paragraphs_match_signature (dims=['rgb', 'bold', 'size']): 5 paras, all ok",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "paragraphs": [
+              {
+                "para_idx": 1,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    -1,
+                    9.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    -1,
+                    9.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "受试者信息 Information\r"
+                ],
+                "new_alignment": 2,
+                "expected_alignment": 2
+              },
+              {
+                "para_idx": 2,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    0,
+                    9.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    0,
+                    9.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "A: 160CM / 50 KG\r"
+                ],
+                "new_alignment": 2,
+                "expected_alignment": 2
+              },
+              {
+                "para_idx": 3,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    0,
+                    9.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    0,
+                    9.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "B: 165CM / 52 KG\r"
+                ],
+                "new_alignment": 2,
+                "expected_alignment": 2
+              },
+              {
+                "para_idx": 4,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    0,
+                    9.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    0,
+                    9.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "C: 162CM / 58 KG\r"
+                ],
+                "new_alignment": 2,
+                "expected_alignment": 2
+              },
+              {
+                "para_idx": 5,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    0,
+                    9.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    0,
+                    9.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "D: 168CM / 60 KG"
+                ],
+                "new_alignment": 2,
+                "expected_alignment": 2
+              }
+            ]
+          }
+        },
+        {
+          "rule_id": "TextBox_26_paras::TextBox 26",
+          "layer": "L3",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 26",
+          "slide": 2,
+          "message": "paragraphs_match_signature (dims=['rgb', 'bold', 'size']): 1 paras, all ok",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "paragraphs": [
+              {
+                "para_idx": 1,
+                "ok": true,
+                "new_seq": [
+                  [
+                    12611584,
+                    -1,
+                    14.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    12611584,
+                    -1,
+                    14.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "缺点 drawbacks"
+                ],
+                "new_alignment": 2,
+                "expected_alignment": 2
+              }
+            ]
+          }
+        },
+        {
+          "rule_id": "TextBox_8_paras::TextBox 8",
+          "layer": "L3",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 8",
+          "slide": 2,
+          "message": "paragraphs_match_signature (dims=['rgb', 'bold', 'size']): 3 paras, all ok",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "paragraphs": [
+              {
+                "para_idx": 1,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    0,
+                    14.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    0,
+                    14.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "轻薄透气，舒适不闷热（4/4）\r"
+                ],
+                "new_alignment": 1,
+                "expected_alignment": 1
+              },
+              {
+                "para_idx": 2,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    0,
+                    14.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    0,
+                    14.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "吸湿排汗性能好，汗湿后衣服不会黏在身上（4/4）；\r"
+                ],
+                "new_alignment": 1,
+                "expected_alignment": 1
+              },
+              {
+                "para_idx": 3,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    0,
+                    14.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    0,
+                    14.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "速干性能极好（4/4）大部分时间都很干爽（1/4）几乎感受不到身上有汗（1/4）；"
+                ],
+                "new_alignment": 1,
+                "expected_alignment": 1
+              }
+            ]
+          }
+        },
+        {
+          "rule_id": "TextBox_22_paras::TextBox 22",
+          "layer": "L3",
+          "severity": "warn",
+          "passed": true,
+          "shape": "TextBox 22",
+          "slide": 2,
+          "message": "paragraphs_match_signature (dims=['rgb', 'bold', 'size']): 2 paras, all ok",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "paragraphs": [
+              {
+                "para_idx": 1,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    0,
+                    14.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    0,
+                    14.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "肩部挖空偏小，会勒腋下，影响摆臂（2/4）；\r"
+                ],
+                "new_alignment": 1,
+                "expected_alignment": 1
+              },
+              {
+                "para_idx": 2,
+                "ok": true,
+                "new_seq": [
+                  [
+                    0,
+                    0,
+                    14.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    0,
+                    0,
+                    14.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "后背开叉偏高，跑动过程后背会漏出小三角，晒太阳会痛，风大了会受凉，开车可向下调整四指宽（约5cm）（1/4）；"
+                ],
+                "new_alignment": 1,
+                "expected_alignment": 1
+              }
+            ]
+          }
+        },
+        {
+          "rule_id": "Rectangle_25_paras::Rectangle 25",
+          "layer": "L3",
+          "severity": "warn",
+          "passed": true,
+          "shape": "Rectangle 25",
+          "slide": 2,
+          "message": "paragraphs_match_signature (dims=['rgb', 'bold', 'size']): 1 paras, all ok",
+          "detail": {
+            "dims": [
+              "rgb",
+              "bold",
+              "size"
+            ],
+            "paragraphs": [
+              {
+                "para_idx": 1,
+                "ok": true,
+                "new_seq": [
+                  [
+                    16777215,
+                    -1,
+                    14.0
+                  ]
+                ],
+                "expected_seq": [
+                  [
+                    16777215,
+                    -1,
+                    14.0
+                  ]
+                ],
+                "new_runs_text": [
+                  "I  <面料信息>"
+                ],
+                "new_alignment": 1,
+                "expected_alignment": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "layer": "L4",
+      "passed": 0,
+      "warnings": 0,
+      "tolerated": 0,
+      "must_fix_violations": 0,
+      "degraded": true,
+      "degraded_reason": "无 pipeline trace（path=None）；L4 规则全部降级为 warn，无法验证 COM 失败 / GPT 调用类暗坑。",
+      "notes": [],
+      "findings": []
+    },
+    {
+      "layer": "L5",
+      "passed": 1,
+      "warnings": 0,
+      "tolerated": 0,
+      "must_fix_violations": 0,
+      "degraded": false,
+      "degraded_reason": "",
+      "notes": [],
+      "findings": [
+        {
+          "rule_id": "L5_ssim_p2",
+          "layer": "L5",
+          "severity": "must_fix",
+          "passed": true,
+          "shape": null,
+          "slide": 2,
+          "message": "SSIM=1.0000 (threshold=0.85)",
+          "detail": {
+            "ssim": 1.0,
+            "threshold": 0.85,
+            "png_new": "D:\\Technique Support\\Claude Code Learning\\3rd-ppt-prj\\pipeline-progress\\acceptance-out\\visual\\new_002.png",
+            "png_template": "D:\\Technique Support\\Claude Code Learning\\3rd-ppt-prj\\pipeline-progress\\acceptance-out\\visual\\template_002.png"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -30,6 +30,50 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+# ---------------------------------------------------------------------------
+# Pipeline trace (供 ppt-acceptance-check L4 行为层断言用)
+# 来源：office-com-helpers skill 的 TraceLogger。无 skill 安装时降级 no-op。
+# 由 main() 通过环境变量 PPT_PIPELINE_TRACE 触发开/关。
+# event 名与 src/apparel_ppt.py 保持对齐：com_api_failed_but_continued / shape_write_end
+# ---------------------------------------------------------------------------
+import os as _os
+_TraceLogger = None
+try:
+    _OCH_PATH = _os.path.expanduser(r"~/.claude/skills/office-com-helpers")
+    if _os.path.isdir(_OCH_PATH) and _OCH_PATH not in sys.path:
+        sys.path.insert(0, _OCH_PATH)
+    from office_com_helpers import TraceLogger as _TraceLogger  # type: ignore
+except Exception:
+    _TraceLogger = None
+
+_TRACE = None  # type: ignore  # set by main() when PPT_PIPELINE_TRACE env var is given
+
+
+def _trace_event(name: str, **fields) -> None:
+    """No-op when _TRACE is None。事件直接落 jsonl。"""
+    if _TRACE is not None:
+        try:
+            _TRACE.event(name, **fields)
+        except Exception:
+            pass
+
+
+class _NoopShapeWrite:
+    """no-op context manager (when _TRACE is None or TraceLogger 不可用)."""
+    def __enter__(self):
+        return {}
+    def __exit__(self, *a):
+        return False
+
+
+def _trace_shape(shape: str, strategy: str, slide=None):
+    if _TRACE is not None:
+        try:
+            return _TRACE.shape_write(shape, strategy, slide=slide)
+        except Exception:
+            return _NoopShapeWrite()
+    return _NoopShapeWrite()
+
 from pipeline.ppt_pipeline_common import (
     OUTPUT_DIR,
     PROGRESS_DIR,
@@ -117,6 +161,7 @@ def _write_text(shp, content: str) -> dict:
             "readback_len": len(rb_text),
         }
     except Exception as e:
+        _trace_event("com_api_failed_but_continued", shape=name, reason=str(e), where="_write_text")
         return {"shape_name": name, "updated": False, "reason": str(e)}
 
 
@@ -177,6 +222,7 @@ def _write_chart(shp, content: str) -> dict:
             "data_rows": len(labels),
         }
     except Exception as e:
+        _trace_event("com_api_failed_but_continued", shape=name, reason=str(e), where="_write_chart")
         return {"shape_name": name, "updated": False, "reason": str(e)}
 
 
@@ -278,6 +324,7 @@ def _replace_image(slide, shp, img_path: str) -> dict:
             "img_path": img_path,
         }
     except Exception as e:
+        _trace_event("com_api_failed_but_continued", shape=name, reason=str(e), where="_replace_image")
         return {"shape_name": name, "updated": False, "reason": str(e)}
 
 
@@ -303,20 +350,21 @@ def apply_shape(slide, item: dict, shape_detail: dict = None) -> dict:
 
     # Route to appropriate writer
     color_hint = item.get("color_hint", "")
-    if strategy == "extract_image":
-        if content.startswith("IMAGE:"):
-            result = _replace_image(slide, shp, content[6:].strip())
+    with _trace_shape(name, strategy or role) as _sw:
+        if strategy == "extract_image":
+            if content.startswith("IMAGE:"):
+                result = _replace_image(slide, shp, content[6:].strip())
+            else:
+                result = {"shape_name": name, "updated": False, "reason": "extract_image: no IMAGE: path in content"}
+        elif role == "chart" or bool(com_get(shp, "HasChart", False)):
+            result = _write_chart(shp, content)
+        elif bool(com_get(shp, "HasTextFrame", 0)):
+            result = _write_text(shp, content)
+            # Post-write: auto-detect 【】keywords → red/blue by section context
+            if result.get("updated"):
+                _apply_keyword_color(shp)
         else:
-            result = {"shape_name": name, "updated": False, "reason": "extract_image: no IMAGE: path in content"}
-    elif role == "chart" or bool(com_get(shp, "HasChart", False)):
-        result = _write_chart(shp, content)
-    elif bool(com_get(shp, "HasTextFrame", 0)):
-        result = _write_text(shp, content)
-        # Post-write: auto-detect 【】keywords → red/blue by section context
-        if result.get("updated"):
-            _apply_keyword_color(shp)
-    else:
-        result = {"shape_name": name, "updated": False, "reason": "unsupported shape type"}
+            result = {"shape_name": name, "updated": False, "reason": "unsupported shape type"}
 
     result["match_method"] = match_method
     return result
@@ -601,6 +649,17 @@ def main() -> int:
     ap.add_argument("--version", default="1.0")
     args = ap.parse_args()
 
+    # TraceLogger: 由环境变量 PPT_PIPELINE_TRACE 触发；未给则保持 None（no-op）
+    global _TRACE
+    _trace_owned = False
+    _trace_path = _os.environ.get("PPT_PIPELINE_TRACE", "").strip()
+    if _trace_path and _TraceLogger is not None and _TRACE is None:
+        try:
+            _TRACE = _TraceLogger(_trace_path)
+            _trace_owned = True
+        except Exception:
+            _TRACE = None
+
     out_ppt = OUTPUT_DIR / f"claude-ppt {args.version}.pptx"
 
     if not TEMPLATE_PATH.exists():
@@ -631,7 +690,7 @@ def main() -> int:
         safe_print(f"[BLOCKED] {e}")
         return 0
 
-    app = win32com.client.Dispatch("PowerPoint.Application")
+    app = win32com.client.DispatchEx("PowerPoint.Application")
     app.DisplayAlerts = 0
     app.Visible = True
     src = app.Presentations.Open(str(TEMPLATE_PATH))
@@ -722,6 +781,12 @@ def main() -> int:
         com_call(src, "Close")
         com_call(dst, "Close")
         com_call(app, "Quit")
+        if _trace_owned and _TRACE is not None:
+            try:
+                _TRACE.close()
+            except Exception:
+                pass
+            _TRACE = None
 
 
 if __name__ == "__main__":

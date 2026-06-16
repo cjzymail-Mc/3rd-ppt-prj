@@ -1,7 +1,7 @@
 {
   "env": {
-      "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-    },
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "permissions": {
     "allow": [
       "Bash(*)",
@@ -11,8 +11,7 @@
       "Edit(*)",
       "WebSearch(*)",
       "WebFetch(*)",
-      "mcp__*",
-      "Bash(PPT_TEMPLATE_PATH=\"D:/Technique Support/Claude Code Learning/3rd-ppt-prj/template/empty and standard-apparel.pptx\" python pipeline/01_shape_detail.py --force)"
+      "mcp__*"
     ],
     "ask": [
       "Bash(rm *)",

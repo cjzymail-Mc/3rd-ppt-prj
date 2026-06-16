@@ -23,6 +23,22 @@ from pathlib import Path
 # ensure project root is on sys.path so pipeline package can find ppt_pipeline_common
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+# ── import canonical paragraph-aware walker (Step 1b, plan §3.5.2 边界2) ──
+# 权威 walker 定义在 acceptance skill 侧；Step1 跨边界 import（不 vendor 镜像）。
+# 用 Path.home() 不 hardcode 用户名。
+_SKILL_DIR = Path.home() / ".claude" / "skills" / "ppt-acceptance-check"
+if str(_SKILL_DIR) not in sys.path:
+    sys.path.insert(0, str(_SKILL_DIR))
+try:
+    from paragraph_runs import extract_paragraph_runs, MERGE_DIMS  # noqa: F401
+    _WALKER_AVAILABLE = True
+except ImportError:
+    _WALKER_AVAILABLE = False
+
+    def extract_paragraph_runs(shape):  # type: ignore[misc]
+        """Fallback stub if skill not installed — returns empty list."""
+        return []
+
 from pipeline.ppt_pipeline_common import (
     PROGRESS_DIR,
     SHAPE_DETAIL_XLSX,
@@ -76,6 +92,10 @@ def shape_obj(slide_index: int, shp, idx: int) -> dict:
     text = _safe_text(shp)
     font_name, font_size = _safe_font(shp)
 
+    # plan §3.5.2 / §7: 新增 paragraphs 键（paragraph-aware感知），不改已有键。
+    # paragraphs 不进 diff key 元组（diff key 用在下方 blank_keys/key，不含此字段）。
+    paragraphs = extract_paragraph_runs(shp)
+
     return {
         "slide_index": slide_index,
         "name": safe_text(name),
@@ -90,6 +110,7 @@ def shape_obj(slide_index: int, shp, idx: int) -> dict:
         "has_chart": _safe_has_chart(shp),
         "in_group": is_in_group(shp),
         "z_order": int(com_get(shp, "ZOrderPosition", 0) or 0),
+        "paragraphs": paragraphs,  # NEW: paragraph-aware run 矩阵（空 list = 无文本）
     }
 
 
@@ -141,10 +162,11 @@ def main() -> int:
         safe_print(f"[BLOCKED] {e}")
         return 0
 
-    app = win32com.client.Dispatch("PowerPoint.Application")
+    # 隔离进程打开模板（DispatchEx，绝不 attach 用户正在编辑的 PowerPoint）。
+    # Step1 只读模板，故 ReadOnly + WithWindow=False（镜像 inspect-ppt-template skill 的安全开法）。
+    app = win32com.client.DispatchEx("PowerPoint.Application")
     app.DisplayAlerts = 0
-    app.Visible = True
-    pres = app.Presentations.Open(str(TEMPLATE_PATH))
+    pres = app.Presentations.Open(str(TEMPLATE_PATH), ReadOnly=True, Untitled=False, WithWindow=False)
 
     try:
         blank = pres.Slides(1)
@@ -196,11 +218,74 @@ def main() -> int:
             "fingerprints": fp_items,
         })
 
+        # ── 烤草稿契约（plan §3.5 / §6 Step1b）─────────────────────────────
+        # 放在 generate_shape_detail_xlsx 之前：草稿契约是关键产物，xlsx 是人审便利产物。
+        # xlsx 崩溃不应阻断草稿生成。
+        # 对每个有 runs 的文本 shape 生成 paragraphs_match_signature 草稿规则。
+        # 全部默认 severity: "warn"（护栏#4：严格度由人工 curate 决定，草稿不擅自定 must_fix）。
+        # expected_paragraphs.runs 只保留 {rgb, bold, size}（MERGE_DIMS，护栏#1）。
+        # 禁止写/改真契约（护栏#2）；草稿只落 pipeline-progress/。
+        import re
+
+        def _slug(shape_name: str) -> str:
+            """shape 名 → id 合法 slug（非字母数字下划线替换为 _）。"""
+            return re.sub(r"[^\w]", "_", shape_name).strip("_")
+
+        draft_rules = []
+        for s in new_shapes:
+            paras = s.get("paragraphs") or []
+            # 只取"至少一段含 run"的 shape
+            has_runs = any(p.get("runs") for p in paras)
+            if not has_runs:
+                continue
+
+            # expected_paragraphs: 只留 {rgb, bold, size}（MERGE_DIMS 三键）+ alignment
+            ep = []
+            for p in paras:
+                runs_slim = [
+                    {"rgb": r.get("rgb"), "bold": r.get("bold"), "size": r.get("size")}
+                    for r in p.get("runs", [])
+                ]
+                ep.append({
+                    "alignment": p.get("alignment"),
+                    "runs": runs_slim,
+                })
+
+            draft_rules.append({
+                "_comment": (
+                    "AUTO-DRAFT by Step1 — 草稿需人审："
+                    "① severity（升级类 shape 期望值可能是模板旧态，要用外部真相覆盖，护栏#2）"
+                    "② 自由文本类应降 warn 或删，禁刚性 run 数断言（护栏#4）"
+                ),
+                "id": f"{_slug(s['name'])}_paras",
+                "shape": s["name"],
+                "layer": "L3",
+                "slide": s["slide_index"],
+                "check": "paragraphs_match_signature",
+                "expected_paragraphs": ep,
+                "severity": "warn",
+            })
+
+        out_draft = PROGRESS_DIR / "01-acceptance_draft.json"
+        write_json(out_draft, {
+            "_comment": (
+                "Step1 自动生成的草稿契约片段。"
+                "人工 curate 后并入 acceptance/{name}.json。禁直接当门禁。"
+            ),
+            "rules": draft_rules,
+        })
+        safe_print(f"[OK] Draft contract: {out_draft.name} ({len(draft_rules)} rules)")
+        # ─────────────────────────────────────────────────────────────────────
+
         # Write human-readable XLSX — merge existing annotations if present
-        generate_shape_detail_xlsx(new_shapes, existing_annos=existing_annos)
+        # xlsx 是人审便利产物；失败时 warning，不阻断（JSON + 草稿已落地）。
+        try:
+            generate_shape_detail_xlsx(new_shapes, existing_annos=existing_annos)
+        except Exception as _xlsx_err:
+            safe_print(f"[WARN] xlsx 未生成（JSON 和草稿契约已落地）: {_xlsx_err}")
 
         safe_print(f"[OK] {len(new_shapes)} new shapes. "
-              f"Wrote {OUT_JSON.name}, {OUT_FP.name}, {OUT_XLSX.name}")
+              f"Wrote {OUT_JSON.name}, {OUT_FP.name}")
         return 0
     finally:
         com_call(pres, "Close")

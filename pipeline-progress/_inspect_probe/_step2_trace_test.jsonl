@@ -1,0 +1,3 @@
+{"ts": "2026-05-28T16:43:48", "event": "com_api_failed_but_continued", "shape": "FakeShape", "reason": "forced COM write failure", "where": "_write_text"}
+{"ts": "2026-05-28T16:43:48", "event": "shape_write_start", "shape": "FakeShape2", "strategy": "text", "slide": null}
+{"ts": "2026-05-28T16:43:48", "event": "shape_write_end", "shape": "FakeShape2", "strategy": "text", "slide": null, "ok": true}

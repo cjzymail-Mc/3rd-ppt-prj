@@ -61,10 +61,10 @@
 | 任务类型 | 默认路径 |
 |--|--|
 | 完全新模板 | ① → ② → ③a/③b → ④ → 卡住时 ⑤ |
-| 已知模板加新 shape | 直接 ④（/developer 改 SHAPES 列表） |
+| 已知模板加新 shape | 直接 ④（/developer 改 SHAPES 列表）；想带回归保证走 `/tweak` |
 | 已知模板 bug 修复 | 直接 ⑤（路线判断类，主 Claude） |
 | prompt 文案调优 | 直接 ④（/developer 改 _build_rich_prompt） |
-| shape 微调 | 直接 ④（/developer + skills/fine-tuned-shapes.md） |
+| shape 微调 | `/tweak`（plan-2026-05-28 §6 Step 4 落地，带 acceptance 回归）；或直接 ④ + skills/fine-tuned-shapes.md（不要回归保证时） |
 | chart 路线问题（fix4 类） | 直接 ⑤（主 Claude） |
 
 完整流程图、各阶段动作清单、工具索引详见 `plan3（工作流5阶段定稿）.md` 与 `.claude/memory/feedback_workflow_routing.md`。

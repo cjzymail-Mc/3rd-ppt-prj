@@ -177,3 +177,54 @@ apparel 今日给 RR 53 / RR 55 加"同 shape 多字号 + 多颜色"视觉升级
 - [[feedback-chart-write]] fix3 chart 三连——"代码 vs 模板"差异检测的另一侧例子（chart series.Values 也是"模板=旧"时静默 PASS 类型）
 - `acceptance/apparel.json` 新增 2 条 `p13_rr53_two_run_signature` / `p13_rr55_two_run_signature` 是首批样板
 - `~/.claude/skills/inspect-ppt-template/SKILL.md` "## 全字段模式" 章节是 `expected_runs` 取数源指南
+
+---
+
+## 2026-05-28 续：自动闭环 = 自动化版红旗 4（Step 5 实装前的强护栏）
+
+**问题命名**：把"验收 → 自动修复 → 重跑验收"自动化连成闭环时，会退化成一个**自动化版**的红旗 4。
+
+**Why（plan-2026-05-28 §5 首次写出）**：现有红旗 1/2/4/5 都是 developer **人工自审**层面的绕道（改 contract / 改 trace event 名 / 代码内 hardcode 期望值 / 模板=旧时盲区）。当把"自动修复"接到"自动验收"后头跑闭环——**生成器在闭环里反复改自己直到通过验收**——如果验收标准是生成器侧能改的，它必然收敛到"作弊通过"。验证者 ≠ 被验证者的护栏从 contract / trace event / hardcode 这些**点状层面**被推到了"闭环本身"这个**结构层面**，旧的人工 git diff 复查兜不住。
+
+**护栏三条不可分（与 plan §5 锁死，缺一即触发红旗）**：
+
+| # | 护栏 | 不可让 | 兜底 |
+|---|---|---|---|
+| 1 | 契约期望值**只能**来自外部真相（Excel 真实数据 `expected_from: excel:` / inspect 目标态 / 用户人工） | 生成器 / developer / 自动闭环本身 | 红旗 4 已封禁的 hardcode 自证 → 自动化版同款 |
+| 2 | 自动重试**硬上限**（plan §5 写 2 轮；当前 `/tweak` Step 4 阶段取 **0 轮**——单次跑、不自动重试） | 闭环无限刷"直到 must_fix=0" | 对齐 CLAUDE.md §0「连续失败 2 次熔断」 |
+| 3 | 验收编排权留主 Claude（审查者 ≠ 被审查者），自动闭环只能改"被审查物"，**不能碰"审查标准"** | 闭环代码读写 `acceptance/*.json` / 闭环代码改 trace event 白名单 / 闭环代码动 walker 维度 | 延续 [Step A 责任拆分](#2026-05-27-修正责任拆分step-a) |
+
+**How to apply**：
+
+1. **Step 5（自动优化闭环）实装前必读本节**。任何"自动化把 acceptance 跑通"的设计在评审时按三条护栏逐项 challenge：契约期望值能不能被闭环写？重试有没有硬上限？审查标准是不是被审查物的一部分？
+2. **`/tweak` 命令是当前安全态**（plan §6 Step 4 落地）：6 步薄编排单次跑、不自动重试，相当于把护栏 2 严格化为 0 轮。Step 5 启动后才放宽到 ≤2 轮。
+3. **任何"AI 自循环改到通过"类需求**先回这一节判别——不是 acceptance gate 场景的也同理（例：`/loop /code-review --fix` 类的链路；GPT 自评 + 自修类的链路）。
+
+**关联**：
+- 上方[[feedback-acceptance-gate]] 红旗 1/2/4/5 是**点状**绕道；本节红旗是**结构性**绕道（自动化把点状绕道串成可达态）
+- `.claude/commands/tweak.md`「硬约束（plan §5 三护栏）」节是落地实例
+- `[feature03-transplant-II Apparel]/plan-2026-05-28-工作流简化（验收能力贯通Pipeline·共享真相产物）.md` §5「⚠️ 关键警告」+ §11.5 第 2 项（Step 5 待办）
+
+---
+
+## 2026-05-29 续：L3 是两套 walker 并存 + apparel 物理隔离（改 walker 前先定爆炸半径）
+
+**事实**：`layers/runs.py` 的 5 个 L3 check 分两套底层 walker，**互不相干**：
+
+| check | 底层 walker | 位置 |
+|---|---|---|
+| `runs_match_template` / `runs_match_signature` / `has_color_runs` / `has_bold_runs` | **局部** `_walk_runs`（runs.py 内，4 维 rgb/bold/italic/size，不可配） | `layers/runs.py` |
+| `paragraphs_match_signature` | **权威** `extract_paragraph_runs`（paragraph_runs.py，段落感知 + `merge_dims` 可配，单一真相） | `~/.claude/skills/ppt-acceptance-check/paragraph_runs.py` |
+
+**关键推论（决定回归爆炸半径）**：**apparel.json 的 L3 规则全走局部 `_walk_runs`**（5 条 `runs_match_template` + 2 条 `runs_match_signature`），**一条都不经权威 walker**。所以改 `paragraph_runs.py`（权威 walker）对 apparel L3 **物理零影响**——2026-05-29 读侧 4 维扩展（underline/baseline/中英混排 + `merge_dims` 参数）后跑 apparel 回归，改前/改后 L3 findings **byte 级一致**（L0=29 / L3=9 / PASS），根因就在这里，不是"碰巧没破"。
+
+**Why**：plan §4 缺口 D「别造第二个 walker」是前瞻原则；但实际**第二个 walker（局部 `_walk_runs`）早已存在**。两者并存是历史 tech debt，不在本次范围内统一（统一 = 大改 apparel 依赖面，风险高）。
+
+**How to apply**：
+1. 改权威 walker 前先 grep `acceptance/*.json` 看目标契约用的是 `paragraphs_match_signature`（→ 受影响）还是 `runs_match_*`（→ 不受影响），据此定回归范围，别盲目全量回归或盲目假定无影响。
+2. 想给 `runs_match_*` 系列加可断言维度（如 underline）**不能只改权威 walker**——得改局部 `_walk_runs`；但那会逼近"扩第二个 walker"，先回 plan §4 缺口 D + 本节权衡是否值得。
+3. 离线回归 apparel（无需开 PPT）：`ppt_acceptance_check.py --new acceptance/apparel_v4_smoke.pptx --template template/apparel-page13-14-template.pptx --slide-pairs 20:13,21:14 --contract acceptance/apparel.json --layers L0,L3 --mode smoke`。
+
+**关联**：
+- [[feedback-acceptance-gate]] 上方红旗 5 节已提两个 walker 名，本节点破"并存 + apparel 只用局部"这个决定爆炸半径的事实
+- `[feature03-transplant-II Apparel]/plan-2026-05-29-复杂格式能力评估·读写非对称·读侧维度扩展.md` §4 缺口 D + §7 落地记录

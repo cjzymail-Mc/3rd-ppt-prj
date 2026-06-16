@@ -1,0 +1,203 @@
+{
+  "generated_at": "2026-05-28T16:34:05",
+  "fingerprints": [
+    {
+      "name": "Oval 3",
+      "shape_type": 1,
+      "left": 38.0,
+      "top": 98.0,
+      "width": 113.0,
+      "height": 113.0,
+      "z_order": 4,
+      "text_prefix": "",
+      "in_group": false
+    },
+    {
+      "name": "TextBox 6",
+      "shape_type": 17,
+      "left": 33.0,
+      "top": 138.0,
+      "width": 125.0,
+      "height": 32.0,
+      "z_order": 5,
+      "text_prefix": "版型",
+      "in_group": false
+    },
+    {
+      "name": "Chart 12",
+      "shape_type": 3,
+      "left": 128.0,
+      "top": 80.0,
+      "width": 190.0,
+      "height": 150.0,
+      "z_order": 6,
+      "text_prefix": "",
+      "in_group": false
+    },
+    {
+      "name": "Oval 13",
+      "shape_type": 1,
+      "left": 330.0,
+      "top": 98.0,
+      "width": 113.0,
+      "height": 113.0,
+      "z_order": 7,
+      "text_prefix": "",
+      "in_group": false
+    },
+    {
+      "name": "TextBox 14",
+      "shape_type": 17,
+      "left": 325.0,
+      "top": 138.0,
+      "width": 125.0,
+      "height": 32.0,
+      "z_order": 8,
+      "text_prefix": "面料",
+      "in_group": false
+    },
+    {
+      "name": "Chart 15",
+      "shape_type": 3,
+      "left": 420.0,
+      "top": 102.7,
+      "width": 190.0,
+      "height": 98.0,
+      "z_order": 9,
+      "text_prefix": "",
+      "in_group": false
+    },
+    {
+      "name": "Oval 16",
+      "shape_type": 1,
+      "left": 38.0,
+      "top": 230.3,
+      "width": 113.0,
+      "height": 113.0,
+      "z_order": 10,
+      "text_prefix": "",
+      "in_group": false
+    },
+    {
+      "name": "TextBox 17",
+      "shape_type": 17,
+      "left": 33.0,
+      "top": 270.3,
+      "width": 125.0,
+      "height": 32.0,
+      "z_order": 11,
+      "text_prefix": "吸湿排汗",
+      "in_group": false
+    },
+    {
+      "name": "Chart 18",
+      "shape_type": 3,
+      "left": 128.0,
+      "top": 240.7,
+      "width": 190.0,
+      "height": 98.0,
+      "z_order": 12,
+      "text_prefix": "",
+      "in_group": false
+    },
+    {
+      "name": "Oval 19",
+      "shape_type": 1,
+      "left": 330.0,
+      "top": 230.3,
+      "width": 113.0,
+      "height": 113.0,
+      "z_order": 13,
+      "text_prefix": "",
+      "in_group": false
+    },
+    {
+      "name": "TextBox 20",
+      "shape_type": 17,
+      "left": 325.0,
+      "top": 270.3,
+      "width": 125.0,
+      "height": 32.0,
+      "z_order": 14,
+      "text_prefix": "速干",
+      "in_group": false
+    },
+    {
+      "name": "Chart 21",
+      "shape_type": 3,
+      "left": 420.0,
+      "top": 240.7,
+      "width": 190.0,
+      "height": 98.0,
+      "z_order": 15,
+      "text_prefix": "",
+      "in_group": false
+    },
+    {
+      "name": "TextBox 23",
+      "shape_type": 17,
+      "left": 20.7,
+      "top": 358.2,
+      "width": 442.3,
+      "height": 153.1,
+      "z_order": 16,
+      "text_prefix": "优点 strengths",
+      "in_group": false
+    },
+    {
+      "name": "TextBox 24",
+      "shape_type": 17,
+      "left": 831.2,
+      "top": 53.5,
+      "width": 125.1,
+      "height": 89.1,
+      "z_order": 17,
+      "text_prefix": "受试者信息 Information\rA:",
+      "in_group": false
+    },
+    {
+      "name": "TextBox 26",
+      "shape_type": 17,
+      "left": 480.0,
+      "top": 358.2,
+      "width": 348.7,
+      "height": 153.1,
+      "z_order": 18,
+      "text_prefix": "缺点 drawbacks",
+      "in_group": false
+    },
+    {
+      "name": "TextBox 8",
+      "shape_type": 17,
+      "left": 28.8,
+      "top": 388.9,
+      "width": 426.1,
+      "height": 106.1,
+      "z_order": 20,
+      "text_prefix": "轻薄透气，舒适不闷热（4/4）\r吸湿排汗",
+      "in_group": false
+    },
+    {
+      "name": "TextBox 22",
+      "shape_type": 17,
+      "left": 481.8,
+      "top": 388.9,
+      "width": 338.3,
+      "height": 106.1,
+      "z_order": 21,
+      "text_prefix": "肩部挖空偏小，会勒腋下，影响摆臂（2/4",
+      "in_group": false
+    },
+    {
+      "name": "Rectangle 25",
+      "shape_type": 1,
+      "left": 343.9,
+      "top": 12.2,
+      "width": 266.5,
+      "height": 24.2,
+      "z_order": 22,
+      "text_prefix": "I  <面料信息>",
+      "in_group": false
+    }
+  ]
+}

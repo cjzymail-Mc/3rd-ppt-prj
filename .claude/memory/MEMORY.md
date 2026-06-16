@@ -5,7 +5,7 @@
 
 ## Feedback
 - [feedback_hybrid_workflow.md](feedback_hybrid_workflow.md) — Pipeline先行+LLM精调，不要纯LLM硬啃
-- [feedback_com_constraints.md](feedback_com_constraints.md) — 必须用COM，禁openpyxl/python-pptx/numpy + COM规范表（含 \n→\r、PNG加密绕过、字体显式）
+- [feedback_com_constraints.md](feedback_com_constraints.md) — 必须用COM，禁openpyxl/python-pptx/numpy + COM规范表（含 \n→\r、PNG加密绕过、字体显式、Dispatch vs DispatchEx 雷区判据）
 - [feedback_output_style.md](feedback_output_style.md) — 只说结论，不展示diff
 - [feedback_chart_write.md](feedback_chart_write.md) — 分发场景chart强制从零制表，禁用_write_chart原位改（fix4）
 - [feedback_debug_protocol.md](feedback_debug_protocol.md) — COM/OLE/模板 bug 调试流程：grep优先、质疑约定、2次失败熔断（fix3→fix4 血的教训）
@@ -19,7 +19,7 @@
 - [feedback_unit_normalize_bmi.md](feedback_unit_normalize_bmi.md) — 100KG 实为 100 斤等填错，粗修 m→cm + 斤→kg 后 BMI∈[16,32] 交叉验证（apparel-fix1）
 - [feedback_python_stdout_encoding.md](feedback_python_stdout_encoding.md) — Bash 工具跑 python 输出中文要 PYTHONIOENCODING + io.TextIOWrapper 双保险；chcp/set 是 cmd 语法在 git bash 失效
 - [feedback_perf_rewrite_validate.md](feedback_perf_rewrite_validate.md) — 重写老 selection 链路前先 print 边界单元格 diff，end('up'/'down') 在连续非空区会越过表头（test_detail off-by-one 教训）
-- [feedback_acceptance_gate.md](feedback_acceptance_gate.md) — PPT 交付必过 ppt-acceptance-check（L0+L1+L4）；**责任分离（2026-05-27）**：developer 只落 trace + 契约就绪，主 Claude 编排者跑验收 + 判读 report（防自审绕道）
+- [feedback_acceptance_gate.md](feedback_acceptance_gate.md) — PPT 交付必过 ppt-acceptance-check（L0+L1+L4）；**责任分离（2026-05-27）**：developer 只落 trace + 契约就绪，主 Claude 跑验收 + 判读（防点状绕道：红旗 1/2/4/5）；**自动闭环护栏（2026-05-28）**：自动闭环 = 结构性绕道 = 自动化版红旗 4，三护栏不可分（外部真相 / 重试硬上限 / 编排权留主 Claude）
 
 ## Project
 - [project_4agent_architecture.md](project_4agent_architecture.md) — 4-Agent 混合工作流 + fix_type/output_contract/COM DispatchEx（2026-03-17/19）
